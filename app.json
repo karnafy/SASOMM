@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "MONNY",
+    "slug": "monny",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo-monny.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#E8EEF5"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.monny.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E8EEF5"
+      },
+      "package": "com.monny.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d8bbca95-9c0e-4cd4-a345-52d3076b39ec"
+      }
+    },
+    "owner": "karnafstudio"
+  }
+}
