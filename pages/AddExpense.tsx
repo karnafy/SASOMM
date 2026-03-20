@@ -11,14 +11,16 @@ import {
   Image,
   Alert,
   Pressable,
-  Switch,
   ActivityIndicator,
-  I18nManager,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { AppScreen, Project, Supplier, Currency, Expense, Income } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, neuPressed, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { ScreenTopBar } from '../components/ui/ScreenTopBar';
+import { ToggleSwitch } from '../components/ui/ToggleSwitch';
+import { GradientButton } from '../components/ui/GradientButton';
 
 interface AddExpenseProps {
   onNavigate: (screen: AppScreen, id?: string) => void;
@@ -42,6 +44,7 @@ interface AddExpenseProps {
   autoCapture?: boolean;
   initialType?: 'expense' | 'income';
   preselectedSupplierId?: string | null;
+  preselectedProjectId?: string | null;
   editActivity?: (Expense | Income) & { projectId?: string };
   globalCurrency: Currency;
   convertAmount: (amount: number, from?: Currency, to?: Currency) => number;
@@ -63,6 +66,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   autoCapture,
   initialType = 'expense',
   preselectedSupplierId,
+  preselectedProjectId,
   editActivity,
   globalCurrency,
   convertAmount,
@@ -74,7 +78,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   const [currency, setCurrency] = useState<Currency>(editActivity?.currency || 'ILS');
   const [description, setDescription] = useState(editActivity?.title || '');
   const [selectedProjectId, setSelectedProjectId] = useState(
-    editActivity?.projectId || projects[0]?.id || ''
+    editActivity?.projectId || preselectedProjectId || projects[0]?.id || ''
   );
   const [selectedSupplierId, setSelectedSupplierId] = useState(
     editActivity?.supplierId || preselectedSupplierId || ''
@@ -92,6 +96,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   // Modal states
   const [projectPickerVisible, setProjectPickerVisible] = useState(false);
   const [supplierPickerVisible, setSupplierPickerVisible] = useState(false);
+  const [imagePickerVisible, setImagePickerVisible] = useState(false);
 
   const isExp = transactionType === 'expense';
   const activeCategories = isExp ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
@@ -144,53 +149,61 @@ const AddExpense: React.FC<AddExpenseProps> = ({
     paymentMethod, includesVat, editActivity, onSave,
   ]);
 
-  const handlePickImage = useCallback(async () => {
-    Alert.alert(
-      '\u05EA\u05D9\u05E2\u05D5\u05D3',
-      '\u05D1\u05D7\u05E8 \u05DE\u05E7\u05D5\u05E8',
-      [
-        {
-          text: '\u05DE\u05E6\u05DC\u05DE\u05D4',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05DE\u05E6\u05DC\u05DE\u05D4');
-              return;
-            }
-            const result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images'],
-              quality: 0.7,
-            });
-            if (!result.canceled && result.assets.length > 0) {
-              setReceiptImages((prev) => [...prev, result.assets[0].uri]);
-            }
-          },
-        },
-        {
-          text: '\u05D2\u05DC\u05E8\u05D9\u05D4',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4');
-              return;
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'],
-              quality: 0.7,
-              allowsMultipleSelection: true,
-            });
-            if (!result.canceled && result.assets.length > 0) {
-              setReceiptImages((prev) => [
-                ...prev,
-                ...result.assets.map((a: ImagePicker.ImagePickerAsset) => a.uri),
-              ]);
-            }
-          },
-        },
-        { text: '\u05D1\u05D9\u05D8\u05D5\u05DC', style: 'cancel' },
-      ]
-    );
+  const handlePickFromCamera = useCallback(async () => {
+    setImagePickerVisible(false);
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05DE\u05E6\u05DC\u05DE\u05D4');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        setReceiptImages((prev) => [...prev, result.assets[0].uri]);
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+    }
   }, []);
+
+  const handlePickFromGallery = useCallback(async () => {
+    setImagePickerVisible(false);
+    try {
+      // On web, skip permission request (not needed and can cause issues)
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4');
+          return;
+        }
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        allowsMultipleSelection: Platform.OS !== 'web',
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        setReceiptImages((prev) => [
+          ...prev,
+          ...result.assets.map((a: ImagePicker.ImagePickerAsset) => a.uri),
+        ]);
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+    }
+  }, []);
+
+  const handlePickImage = useCallback(() => {
+    if (Platform.OS === 'web') {
+      // On web, skip the alert and go straight to file picker
+      handlePickFromGallery();
+    } else {
+      setImagePickerVisible(true);
+    }
+  }, [handlePickFromGallery]);
 
   const removeImage = useCallback((index: number) => {
     setReceiptImages((prev) => prev.filter((_, i) => i !== index));
@@ -294,20 +307,16 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={[styles.headerBtn, neuRaised]} onPress={goBack}>
-          <MaterialIcons name="close" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {editActivity
+      <ScreenTopBar
+        title={
+          editActivity
             ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05EA\u05E0\u05D5\u05E2\u05D4'
             : isExp
             ? '\u05D4\u05D5\u05E6\u05D0\u05D4 \u05D7\u05D3\u05E9\u05D4'
-            : '\u05D4\u05DB\u05E0\u05E1\u05D4 \u05D7\u05D3\u05E9\u05D4'}
-        </Text>
-        <View style={styles.headerSpacer} />
-      </View>
+            : '\u05D4\u05DB\u05E0\u05E1\u05D4 \u05D7\u05D3\u05E9\u05D4'
+        }
+        onBack={goBack}
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -315,8 +324,8 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Type Toggle */}
-        <View style={[styles.typeToggleContainer, neuPressed]}>
+        {/* Type Toggle — segmented control */}
+        <View style={styles.typeToggleContainer}>
           <TouchableOpacity
             style={[
               styles.typeToggleBtn,
@@ -354,30 +363,28 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* Amount Input Card */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabel}>
             {isExp ? '\u05E1\u05DB\u05D5\u05DD \u05D4\u05D4\u05D5\u05E6\u05D0\u05D4' : '\u05E1\u05DB\u05D5\u05DD \u05D4\u05D4\u05DB\u05E0\u05E1\u05D4'}
           </Text>
 
-          {/* Currency Pills */}
+          {/* Currency chips */}
           <View style={styles.currencyRow}>
             {CURRENCIES.map((curr) => (
               <TouchableOpacity
                 key={curr}
                 style={[
-                  styles.currencyPill,
+                  styles.currencyChip,
                   currency === curr
                     ? { backgroundColor: typeColor }
-                    : [styles.currencyPillInactive, neuPressed],
+                    : styles.currencyChipInactive,
                 ]}
                 onPress={() => setCurrency(curr)}
               >
                 <Text
                   style={[
-                    styles.currencyPillText,
-                    currency === curr
-                      ? styles.currencyPillTextActive
-                      : styles.currencyPillTextInactive,
+                    styles.currencyChipText,
+                    currency === curr ? styles.currencyChipTextActive : styles.currencyChipTextInactive,
                   ]}
                 >
                   {CURRENCY_SYMBOLS[curr]} {curr}
@@ -386,8 +393,8 @@ const AddExpense: React.FC<AddExpenseProps> = ({
             ))}
           </View>
 
-          {/* Amount Input */}
-          <View style={[styles.amountInputContainer, neuPressed]}>
+          {/* Large centered amount */}
+          <View style={styles.amountInputContainer}>
             <Text style={[styles.amountSymbol, { color: typeColor }]}>
               {CURRENCY_SYMBOLS[currency]}
             </Text>
@@ -404,18 +411,13 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* VAT Toggle */}
-        <View style={[styles.vatCard, neuRaised]}>
+        <View style={styles.vatCard}>
           <Text style={styles.vatLabel}>{'\u05DB\u05D5\u05DC\u05DC \u05DE\u05E2"\u05DE'}</Text>
-          <Switch
-            value={includesVat}
-            onValueChange={setIncludesVat}
-            trackColor={{ false: colors.neuShadow, true: colors.primary }}
-            thumbColor={colors.white}
-          />
+          <ToggleSwitch value={includesVat} onToggle={() => setIncludesVat((v) => !v)} />
         </View>
 
         {/* Payment Method */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelLeft}>{'\u05E9\u05D9\u05D8\u05EA \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
           <View style={styles.chipsRow}>
             {PAYMENT_METHODS.map((method) => (
@@ -425,7 +427,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                   styles.chip,
                   paymentMethod === method
                     ? styles.chipActive
-                    : [styles.chipInactive, neuRaised],
+                    : styles.chipInactive,
                 ]}
                 onPress={() => setPaymentMethod(method)}
               >
@@ -445,7 +447,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* Project Selector */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardLabelLeft}>{'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
             <TouchableOpacity
@@ -457,7 +459,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
             </TouchableOpacity>
           </View>
           <TouchableOpacity
-            style={[styles.pickerButton, neuPressed]}
+            style={styles.pickerButton}
             onPress={() => setProjectPickerVisible(true)}
           >
             <Text style={styles.pickerButtonText}>
@@ -468,7 +470,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* Supplier Selector */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardLabelLeft}>
               {isExp ? '\u05E1\u05E4\u05E7' : '\u05DE\u05E7\u05D5\u05E8'}
@@ -482,7 +484,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
             </TouchableOpacity>
           </View>
           <TouchableOpacity
-            style={[styles.pickerButton, neuPressed]}
+            style={styles.pickerButton}
             onPress={() => setSupplierPickerVisible(true)}
           >
             <Text
@@ -498,10 +500,10 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* Description */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelLeft}>{'\u05EA\u05D9\u05D0\u05D5\u05E8'}</Text>
           <TextInput
-            style={[styles.textInput, neuPressed]}
+            style={styles.textInput}
             placeholder={isExp ? '\u05DC\u05DE\u05D4 \u05E9\u05D9\u05DE\u05E9 \u05D4\u05EA\u05E9\u05DC\u05D5\u05DD?' : '\u05E4\u05D9\u05E8\u05D5\u05D8 \u05D4\u05D4\u05DB\u05E0\u05E1\u05D4...'}
             placeholderTextColor={colors.textTertiary}
             value={description}
@@ -511,7 +513,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* Category */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelLeft}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
           {!isAddingCategory ? (
             <View style={styles.chipsRow}>
@@ -522,7 +524,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                     styles.chip,
                     category === cat
                       ? styles.chipActive
-                      : [styles.chipInactive, neuRaised],
+                      : styles.chipInactive,
                   ]}
                   onPress={() => setCategory(cat)}
                 >
@@ -548,7 +550,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
           ) : (
             <View style={styles.newCategoryRow}>
               <TextInput
-                style={[styles.textInput, neuPressed, { flex: 1 }]}
+                style={[styles.textInput, { flex: 1 }]}
                 placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05D7\u05D3\u05E9\u05D4...'}
                 placeholderTextColor={colors.textTertiary}
                 value={newCategory}
@@ -557,7 +559,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                 textAlign="right"
               />
               <TouchableOpacity
-                style={[styles.closeCategoryBtn, neuRaised]}
+                style={styles.closeCategoryBtn}
                 onPress={() => setIsAddingCategory(false)}
               >
                 <MaterialIcons name="close" size={22} color={colors.error} />
@@ -567,11 +569,11 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         </View>
 
         {/* Receipt Images */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelLeft}>{'\u05EA\u05D9\u05E2\u05D5\u05D3'}</Text>
           <View style={styles.imagesGrid}>
             {receiptImages.map((img, index) => (
-              <View key={index} style={[styles.imageThumb, neuPressed]}>
+              <View key={index} style={styles.imageThumb}>
                 <Image source={{ uri: img }} style={styles.imageThumbImg} />
                 <TouchableOpacity
                   style={styles.imageRemoveBtn}
@@ -594,37 +596,43 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
       {/* Save Button - Fixed Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.saveBtn,
-            amount && !isSaving
-              ? { backgroundColor: typeColor }
-              : styles.saveBtnDisabled,
-          ]}
+        <GradientButton
+          label={
+            isSaving
+              ? '\u05E9\u05D5\u05DE\u05E8...'
+              : editActivity
+              ? '\u05E2\u05D3\u05DB\u05DF'
+              : '\u05E9\u05DE\u05D5\u05E8'
+          }
           onPress={handleSave}
           disabled={!amount || isSaving}
-          activeOpacity={0.8}
-        >
-          {isSaving ? (
-            <ActivityIndicator color={colors.white} size="small" />
-          ) : (
-            <>
-              <Text style={[styles.saveBtnText, !amount && styles.saveBtnTextDisabled]}>
-                {editActivity ? '\u05E2\u05D3\u05DB\u05DF' : '\u05E9\u05DE\u05D5\u05E8'}
-              </Text>
-              <MaterialIcons
-                name="check-circle"
-                size={22}
-                color={amount ? colors.white : colors.textTertiary}
-              />
-            </>
-          )}
-        </TouchableOpacity>
+          style={styles.saveButton}
+        />
       </View>
 
       {/* Modals */}
       {renderProjectPicker()}
       {renderSupplierPicker()}
+
+      {/* Image Source Picker Modal (native only, web uses file picker directly) */}
+      <Modal visible={imagePickerVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setImagePickerVisible(false)}>
+          <View style={styles.imagePickerModal}>
+            <Text style={styles.imagePickerTitle}>{'\u05EA\u05D9\u05E2\u05D5\u05D3 - \u05D1\u05D7\u05E8 \u05DE\u05E7\u05D5\u05E8'}</Text>
+            <TouchableOpacity style={styles.imagePickerOption} onPress={handlePickFromCamera}>
+              <MaterialIcons name="camera-alt" size={22} color={colors.primary} />
+              <Text style={styles.imagePickerOptionText}>{'\u05DE\u05E6\u05DC\u05DE\u05D4'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.imagePickerOption} onPress={handlePickFromGallery}>
+              <MaterialIcons name="photo-library" size={22} color={colors.primary} />
+              <Text style={styles.imagePickerOptionText}>{'\u05D2\u05DC\u05E8\u05D9\u05D4'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.imagePickerCancel} onPress={() => setImagePickerVisible(false)}>
+              <Text style={styles.imagePickerCancelText}>{'\u05D1\u05D9\u05D8\u05D5\u05DC'}</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
@@ -634,33 +642,7 @@ export default AddExpense;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.neuBg,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  headerSpacer: {
-    width: 44,
+    backgroundColor: colors.bgPrimary,
   },
 
   // Scroll
@@ -677,9 +659,11 @@ const styles = StyleSheet.create({
   typeToggleContainer: {
     flexDirection: 'row',
     borderRadius: radii.lg,
-    padding: 6,
+    padding: 4,
     gap: 4,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   typeToggleBtn: {
     flex: 1,
@@ -689,7 +673,7 @@ const styles = StyleSheet.create({
   },
   typeToggleText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
   typeToggleTextActive: {
@@ -701,12 +685,14 @@ const styles = StyleSheet.create({
 
   // Cards
   card: {
-    borderRadius: radii['3xl'],
+    borderRadius: radii['2xl'],
     padding: spacing.xl,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   cardLabel: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -715,7 +701,7 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   cardLabelLeft: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -730,50 +716,54 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
 
-  // Currency
+  // Currency chips
   currencyRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
-  currencyPill: {
+  currencyChip: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
   },
-  currencyPillInactive: {
-    backgroundColor: colors.neuBg,
+  currencyChipInactive: {
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
-  currencyPillText: {
+  currencyChipText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
-  currencyPillTextActive: {
+  currencyChipTextActive: {
     color: colors.white,
   },
-  currencyPillTextInactive: {
+  currencyChipTextInactive: {
     color: colors.textTertiary,
   },
 
-  // Amount Input
+  // Amount Input — large centered
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.lg,
     padding: spacing.lg,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   amountSymbol: {
     fontSize: 30,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     marginRight: spacing.sm,
   },
   amountInput: {
     flex: 1,
-    fontSize: 48,
-    fontWeight: '700',
+    fontSize: 44,
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     padding: 0,
@@ -787,11 +777,13 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   vatLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
     writingDirection: 'rtl',
   },
@@ -811,15 +803,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   chipInactive: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   chipText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
   chipTextActive: {
-    color: colors.white,
+    color: colors.bgPrimary,
   },
   chipTextInactive: {
     color: colors.textSecondary,
@@ -832,7 +826,7 @@ const styles = StyleSheet.create({
   },
   chipAddText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.primary,
     writingDirection: 'rtl',
   },
@@ -845,7 +839,7 @@ const styles = StyleSheet.create({
   },
   addNewText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.primary,
     writingDirection: 'rtl',
   },
@@ -855,14 +849,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   pickerButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
@@ -872,13 +868,15 @@ const styles = StyleSheet.create({
 
   // Text Input
   textInput: {
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
@@ -895,7 +893,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
 
   // Receipt Images
@@ -909,6 +909,9 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: radii.lg,
     overflow: 'hidden',
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   imageThumbImg: {
     width: '100%',
@@ -935,49 +938,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    backgroundColor: colors.bgTertiary,
   },
   imageAddText: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: fonts.semibold,
   },
 
   // Footer / Save Button
   footer: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
+    borderTopWidth: 1,
+    borderTopColor: colors.subtleBorder,
   },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: 16,
-    borderRadius: radii.lg,
-  },
-  saveBtnDisabled: {
-    backgroundColor: colors.neuShadow,
-  },
-  saveBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.white,
-    writingDirection: 'rtl',
-  },
-  saveBtnTextDisabled: {
-    color: colors.textTertiary,
+  saveButton: {
+    width: '100%',
   },
 
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
     borderTopLeftRadius: radii['3xl'],
     borderTopRightRadius: radii['3xl'],
+    borderTopWidth: 1,
+    borderColor: colors.subtleBorder,
     maxHeight: '60%',
     paddingBottom: 40,
   },
@@ -988,11 +979,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.neuShadow + '40',
+    borderBottomColor: colors.subtleBorder,
   },
   modalTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
@@ -1003,14 +994,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.neuShadow + '40',
+    borderBottomColor: colors.subtleBorder,
   },
   pickerItemActive: {
     backgroundColor: colors.primary + '10',
   },
   pickerItemText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
@@ -1018,6 +1009,53 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   pickerItemPlaceholder: {
+    color: colors.textTertiary,
+  },
+
+  // Image Source Picker Modal
+  imagePickerModal: {
+    backgroundColor: colors.bgSecondary,
+    borderTopLeftRadius: radii['3xl'],
+    borderTopRightRadius: radii['3xl'],
+    borderTopWidth: 1,
+    borderColor: colors.subtleBorder,
+    padding: spacing.xl,
+    paddingBottom: 40,
+    gap: spacing.md,
+  },
+  imagePickerTitle: {
+    fontSize: 16,
+    fontFamily: fonts.bold,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+    writingDirection: 'rtl',
+  },
+  imagePickerOption: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  imagePickerOptionText: {
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.textPrimary,
+    writingDirection: 'rtl',
+  },
+  imagePickerCancel: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  imagePickerCancelText: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
   },
 });

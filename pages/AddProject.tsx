@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppScreen, MainCategory, MAIN_CATEGORIES, Project, Currency } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, neuPressed, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { ScreenTopBar } from '../components/ui/ScreenTopBar';
+import { GradientButton } from '../components/ui/GradientButton';
 
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
@@ -20,6 +22,7 @@ interface AddProjectProps {
   goBack: () => void;
   onSave: (name: string, budget: number, category: string, mainCategory?: MainCategory) => Promise<void>;
   project?: Project;
+  preselectedMainCategory?: MainCategory;
   globalCurrency: Currency;
   convertAmount: (amount: number, from?: Currency, to?: Currency) => number;
 }
@@ -89,6 +92,7 @@ const AddProject: React.FC<AddProjectProps> = ({
   goBack,
   onSave,
   project,
+  preselectedMainCategory,
   globalCurrency,
   convertAmount,
 }) => {
@@ -99,7 +103,7 @@ const AddProject: React.FC<AddProjectProps> = ({
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(globalCurrency);
   const [category, setCategory] = useState(project?.category || '\u05DB\u05DC\u05DC\u05D9');
   const [mainCategory, setMainCategory] = useState<MainCategory>(
-    project?.mainCategory || 'projects'
+    project?.mainCategory || preselectedMainCategory || 'projects'
   );
   const [selectedIcon, setSelectedIcon] = useState<IconName>(
     (project?.icon as IconName) || 'folder'
@@ -140,16 +144,10 @@ const AddProject: React.FC<AddProjectProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={[styles.headerBtn, neuRaised]} onPress={goBack}>
-          <MaterialIcons name="close" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {project ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8' : '\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9'}
-        </Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScreenTopBar
+        title={project ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8' : '\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9'}
+        onBack={goBack}
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -158,7 +156,7 @@ const AddProject: React.FC<AddProjectProps> = ({
         showsVerticalScrollIndicator={false}
       >
         {/* Budget Input Card */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelCenter}>
             {'\u05EA\u05E7\u05E6\u05D9\u05D1 \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}
           </Text>
@@ -176,25 +174,25 @@ const AddProject: React.FC<AddProjectProps> = ({
             </View>
           )}
 
-          {/* Currency Pills */}
+          {/* Currency chips — same style as CurrencyToggle */}
           <View style={styles.currencyRow}>
             {CURRENCIES.map((curr) => (
               <TouchableOpacity
                 key={curr.val}
                 style={[
-                  styles.currencyPill,
+                  styles.currencyChip,
                   selectedCurrency === curr.val
-                    ? styles.currencyPillActive
-                    : [styles.currencyPillInactive, neuPressed],
+                    ? styles.currencyChipActive
+                    : styles.currencyChipInactive,
                 ]}
                 onPress={() => setSelectedCurrency(curr.val)}
               >
                 <Text
                   style={[
-                    styles.currencyPillText,
+                    styles.currencyChipText,
                     selectedCurrency === curr.val
-                      ? styles.currencyPillTextActive
-                      : styles.currencyPillTextInactive,
+                      ? styles.currencyChipTextActive
+                      : styles.currencyChipTextInactive,
                   ]}
                 >
                   {curr.symbol} {curr.val}
@@ -203,8 +201,8 @@ const AddProject: React.FC<AddProjectProps> = ({
             ))}
           </View>
 
-          {/* Amount Input */}
-          <View style={[styles.amountInputContainer, neuPressed]}>
+          {/* Large centered amount */}
+          <View style={styles.amountInputContainer}>
             <Text style={styles.amountSymbol}>{currentSymbol}</Text>
             <TextInput
               style={styles.amountInput}
@@ -219,12 +217,12 @@ const AddProject: React.FC<AddProjectProps> = ({
         </View>
 
         {/* Project Name */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
             {'\u05E9\u05DD \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}
           </Text>
           <TextInput
-            style={[styles.textInput, neuPressed]}
+            style={styles.textInput}
             placeholder={'\u05DC\u05D3\u05D5\u05D2\u05DE\u05D4: \u05E9\u05D9\u05E4\u05D5\u05E5 \u05D3\u05D9\u05E8\u05D4 \u05EA\u05DC \u05D0\u05D1\u05D9\u05D1'}
             placeholderTextColor={colors.textTertiary}
             value={name}
@@ -233,8 +231,8 @@ const AddProject: React.FC<AddProjectProps> = ({
           />
         </View>
 
-        {/* Main Category */}
-        <View style={[styles.card, neuRaised]}>
+        {/* Main Category — 3-option selector */}
+        <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
             {'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05E8\u05D0\u05E9\u05D9\u05EA'}
           </Text>
@@ -246,7 +244,7 @@ const AddProject: React.FC<AddProjectProps> = ({
                   styles.mainCategoryBtn,
                   mainCategory === cat
                     ? styles.mainCategoryBtnActive
-                    : [styles.mainCategoryBtnInactive, neuRaised],
+                    : styles.mainCategoryBtnInactive,
                 ]}
                 onPress={() => setMainCategory(cat)}
               >
@@ -266,7 +264,7 @@ const AddProject: React.FC<AddProjectProps> = ({
         </View>
 
         {/* Sub Category */}
-        <View style={[styles.card, neuRaised]}>
+        <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
             {'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05EA \u05DE\u05E9\u05E0\u05D4'}
           </Text>
@@ -279,7 +277,7 @@ const AddProject: React.FC<AddProjectProps> = ({
                     styles.chip,
                     category === cat
                       ? styles.chipActiveAccent
-                      : [styles.chipInactive, neuRaised],
+                      : styles.chipInactive,
                   ]}
                   onPress={() => setCategory(cat)}
                 >
@@ -305,7 +303,7 @@ const AddProject: React.FC<AddProjectProps> = ({
           ) : (
             <View style={styles.newCategoryRow}>
               <TextInput
-                style={[styles.textInput, neuPressed, { flex: 1 }]}
+                style={[styles.textInput, { flex: 1 }]}
                 placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05D7\u05D3\u05E9\u05D4...'}
                 placeholderTextColor={colors.textTertiary}
                 value={newCategory}
@@ -314,7 +312,7 @@ const AddProject: React.FC<AddProjectProps> = ({
                 textAlign="right"
               />
               <TouchableOpacity
-                style={[styles.closeCategoryBtn, neuRaised]}
+                style={styles.closeCategoryBtn}
                 onPress={() => setIsAddingCategory(false)}
               >
                 <MaterialIcons name="close" size={22} color={colors.error} />
@@ -323,8 +321,8 @@ const AddProject: React.FC<AddProjectProps> = ({
           )}
         </View>
 
-        {/* Icon Selector */}
-        <View style={[styles.card, neuRaised]}>
+        {/* Icon Selector — grid in bgTertiary circles, selected gets primary border */}
+        <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
             {'\u05D0\u05D9\u05E7\u05D5\u05DF'}
           </Text>
@@ -336,14 +334,14 @@ const AddProject: React.FC<AddProjectProps> = ({
                   styles.iconBtn,
                   selectedIcon === iconName
                     ? styles.iconBtnActive
-                    : [styles.iconBtnInactive, neuRaised],
+                    : styles.iconBtnInactive,
                 ]}
                 onPress={() => setSelectedIcon(iconName)}
               >
                 <MaterialIcons
                   name={iconName}
                   size={22}
-                  color={selectedIcon === iconName ? colors.white : colors.textSecondary}
+                  color={selectedIcon === iconName ? colors.primary : colors.textSecondary}
                 />
               </TouchableOpacity>
             ))}
@@ -373,23 +371,18 @@ const AddProject: React.FC<AddProjectProps> = ({
 
       {/* Save Button - Fixed Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
+        <GradientButton
+          label={
+            isSaving
+              ? '\u05E9\u05D5\u05DE\u05E8...'
+              : project
+              ? '\u05E9\u05DE\u05D5\u05E8 \u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD'
+              : '\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'
+          }
           onPress={handleSave}
           disabled={isSaving}
-          activeOpacity={0.8}
-        >
-          {isSaving ? (
-            <ActivityIndicator color={colors.white} size="small" />
-          ) : (
-            <>
-              <Text style={styles.saveBtnText}>
-                {project ? '\u05E9\u05DE\u05D5\u05E8 \u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD' : '\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}
-              </Text>
-              <MaterialIcons name="rocket-launch" size={20} color={colors.white} />
-            </>
-          )}
-        </TouchableOpacity>
+          style={styles.saveButton}
+        />
       </View>
     </View>
   );
@@ -400,33 +393,7 @@ export default AddProject;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.neuBg,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  headerSpacer: {
-    width: 44,
+    backgroundColor: colors.bgPrimary,
   },
 
   // Scroll
@@ -441,12 +408,14 @@ const styles = StyleSheet.create({
 
   // Cards
   card: {
-    borderRadius: radii['3xl'],
+    borderRadius: radii['2xl'],
     padding: spacing.xl,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   cardLabelCenter: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -455,7 +424,7 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   cardLabelRight: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -478,58 +447,62 @@ const styles = StyleSheet.create({
   },
   previousBudgetValue: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.primary,
   },
 
-  // Currency
+  // Currency chips
   currencyRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
-  currencyPill: {
+  currencyChip: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
   },
-  currencyPillActive: {
+  currencyChipActive: {
     backgroundColor: colors.primary,
   },
-  currencyPillInactive: {
-    backgroundColor: colors.neuBg,
+  currencyChipInactive: {
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
-  currencyPillText: {
+  currencyChipText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
-  currencyPillTextActive: {
-    color: colors.white,
+  currencyChipTextActive: {
+    color: colors.bgPrimary,
   },
-  currencyPillTextInactive: {
+  currencyChipTextInactive: {
     color: colors.textTertiary,
   },
 
-  // Amount Input
+  // Large centered amount
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.lg,
     padding: spacing.lg,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   amountSymbol: {
     fontSize: 30,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.primary,
     marginRight: spacing.sm,
   },
   amountInput: {
     flex: 1,
-    fontSize: 48,
-    fontWeight: '700',
+    fontSize: 44,
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     padding: 0,
@@ -537,18 +510,20 @@ const styles = StyleSheet.create({
 
   // Text Input
   textInput: {
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
 
-  // Main Category
+  // Main Category — 3-option segmented
   mainCategoryGrid: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -558,20 +533,23 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radii.md,
     alignItems: 'center',
+    borderWidth: 1,
   },
   mainCategoryBtnActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   mainCategoryBtnInactive: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderColor: colors.subtleBorder,
   },
   mainCategoryText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
   mainCategoryTextActive: {
-    color: colors.white,
+    color: colors.bgPrimary,
   },
   mainCategoryTextInactive: {
     color: colors.textSecondary,
@@ -592,11 +570,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   chipInactive: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   chipText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
   chipTextActive: {
@@ -613,7 +593,7 @@ const styles = StyleSheet.create({
   },
   chipAddAccentText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.accent,
     writingDirection: 'rtl',
   },
@@ -630,10 +610,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
 
-  // Icon Grid
+  // Icon Grid — circles in bgTertiary, selected gets primary border
   iconGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -642,15 +624,18 @@ const styles = StyleSheet.create({
   iconBtn: {
     width: 48,
     height: 48,
-    borderRadius: radii.md,
+    borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
   },
   iconBtnActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.bgTertiary,
+    borderColor: colors.primary,
   },
   iconBtnInactive: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderColor: 'transparent',
   },
   showMoreBtn: {
     flexDirection: 'row',
@@ -661,7 +646,7 @@ const styles = StyleSheet.create({
   },
   showMoreText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.primary,
     writingDirection: 'rtl',
   },
@@ -670,24 +655,11 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
+    borderTopWidth: 1,
+    borderTopColor: colors.subtleBorder,
   },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: 16,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primary,
-  },
-  saveBtnDisabled: {
-    opacity: 0.7,
-  },
-  saveBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.white,
-    writingDirection: 'rtl',
+  saveButton: {
+    width: '100%',
   },
 });

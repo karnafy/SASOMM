@@ -13,7 +13,9 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { AppScreen } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { ScreenTopBar } from '../components/ui/ScreenTopBar';
+import { GradientButton } from '../components/ui/GradientButton';
 
 interface AddSupplierProps {
   onNavigate: (screen: AppScreen) => void;
@@ -85,37 +87,18 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
 
   return (
     <View style={styles.container}>
+      <ScreenTopBar
+        title={'\u05DB\u05E8\u05D8\u05D9\u05E1 \u05E1\u05E4\u05E7 \u05D7\u05D3\u05E9'}
+        onBack={goBack}
+      />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={[styles.headerBtn, neuRaised]}
-              onPress={goBack}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="close" size={28} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <View style={styles.headerCenter}>
-              <Text style={styles.headerSubtitle}>
-                {'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E7\u05E9\u05E8\u05D9 \u05E2\u05D1\u05D5\u05D3\u05D4'}
-              </Text>
-              <Text style={styles.headerTitle}>
-                {'\u05DB\u05E8\u05D8\u05D9\u05E1 \u05E1\u05E4\u05E7 \u05D7\u05D3\u05E9'}
-              </Text>
-            </View>
-
-            <View style={styles.headerPlaceholder} />
-          </View>
-        </View>
-
-        {/* Avatar Section */}
+        {/* Avatar picker — large circle + camera icon overlay */}
         <View style={styles.avatarSection}>
           <TouchableOpacity
             style={styles.avatarUploadWrap}
@@ -126,7 +109,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <Image source={{ uri: avatar }} style={styles.avatarImage} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <MaterialIcons name="person-add" size={56} color={colors.textTertiary} />
+                <MaterialIcons name="person-add" size={48} color={colors.textTertiary} />
                 <Text style={styles.avatarPlaceholderText}>
                   {'\u05DC\u05D7\u05E5 \u05DC\u05D4\u05E2\u05DC\u05D0\u05D4'}
                 </Text>
@@ -134,7 +117,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
             )}
           </TouchableOpacity>
           <View style={styles.cameraIconBadge}>
-            <MaterialIcons name="add-a-photo" size={22} color={colors.white} />
+            <MaterialIcons name="add-a-photo" size={18} color={colors.bgPrimary} />
           </View>
         </View>
 
@@ -146,20 +129,16 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <Text style={styles.fieldLabel}>
                 {'\u05E9\u05DD \u05D4\u05E1\u05E4\u05E7 / \u05D4\u05E2\u05E1\u05E7 *'}
               </Text>
-              <MaterialIcons name="badge" size={18} color="rgba(0, 217, 217, 0.3)" />
+              <MaterialIcons name="badge" size={16} color={colors.textTertiary} />
             </View>
-            <View style={styles.inputWrap}>
-              <TextInput
-                style={styles.textInput}
-                placeholder={
-                  '\u05DC\u05D3\u05D5\u05D2\u05DE\u05D4: \u05D0.\u05D0 \u05D0\u05D9\u05E0\u05E1\u05D8\u05DC\u05E6\u05D9\u05D4'
-                }
-                placeholderTextColor="rgba(148, 163, 184, 0.5)"
-                value={name}
-                onChangeText={setName}
-                textAlign="right"
-              />
-            </View>
+            <TextInput
+              style={styles.textInput}
+              placeholder={'\u05DC\u05D3\u05D5\u05D2\u05DE\u05D4: \u05D0.\u05D0 \u05D0\u05D9\u05E0\u05E1\u05D8\u05DC\u05E6\u05D9\u05D4'}
+              placeholderTextColor={colors.textTertiary}
+              value={name}
+              onChangeText={setName}
+              textAlign="right"
+            />
           </View>
 
           {/* Phone Field */}
@@ -168,23 +147,17 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <Text style={styles.fieldLabel}>
                 {'\u05DE\u05E1\u05E4\u05E8 \u05D8\u05DC\u05E4\u05D5\u05DF \u05DC\u05D6\u05D9\u05D4\u05D5\u05D9'}
               </Text>
-              <MaterialIcons
-                name="call"
-                size={18}
-                color="rgba(16, 185, 129, 0.4)"
-              />
+              <MaterialIcons name="call" size={16} color={colors.textTertiary} />
             </View>
-            <View style={styles.inputWrap}>
-              <TextInput
-                style={[styles.textInput, styles.textInputLtr]}
-                placeholder="052-1234567"
-                placeholderTextColor="rgba(148, 163, 184, 0.5)"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                textAlign="left"
-              />
-            </View>
+            <TextInput
+              style={[styles.textInput, styles.textInputLtr]}
+              placeholder="052-1234567"
+              placeholderTextColor={colors.textTertiary}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              textAlign="left"
+            />
           </View>
 
           {/* Category Field */}
@@ -204,7 +177,6 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
                       key={cat}
                       style={[
                         styles.categoryChip,
-                        neuRaised,
                         isSelected && styles.categoryChipSelected,
                       ]}
                       onPress={() => setCategory(cat)}
@@ -222,11 +194,11 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
                   );
                 })}
                 <TouchableOpacity
-                  style={[styles.categoryChipAdd]}
+                  style={styles.categoryChipAdd}
                   onPress={() => setIsAddingCategory(true)}
                   activeOpacity={0.8}
                 >
-                  <MaterialIcons name="add" size={16} color={colors.accentDark} />
+                  <MaterialIcons name="add" size={14} color={colors.accent} />
                   <Text style={styles.categoryChipAddText}>
                     {'\u05D0\u05D7\u05E8'}
                   </Text>
@@ -235,10 +207,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
             ) : (
               <View style={styles.newCategoryRow}>
                 <TextInput
-                  style={styles.newCategoryInput}
-                  placeholder={
-                    '\u05D4\u05E7\u05DC\u05D3 \u05E9\u05DD \u05EA\u05D7\u05D5\u05DD...'
-                  }
+                  style={[styles.textInput, { flex: 1 }]}
+                  placeholder={'\u05D4\u05E7\u05DC\u05D3 \u05E9\u05DD \u05EA\u05D7\u05D5\u05DD...'}
                   placeholderTextColor={colors.textTertiary}
                   value={newCategory}
                   onChangeText={setNewCategory}
@@ -246,14 +216,14 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
                   textAlign="right"
                 />
                 <TouchableOpacity
-                  style={[styles.newCategoryCancelBtn, neuRaised]}
+                  style={styles.newCategoryCancelBtn}
                   onPress={() => {
                     setIsAddingCategory(false);
                     setNewCategory('');
                   }}
                   activeOpacity={0.8}
                 >
-                  <MaterialIcons name="close" size={24} color={colors.error} />
+                  <MaterialIcons name="close" size={22} color={colors.error} />
                 </TouchableOpacity>
               </View>
             )}
@@ -263,32 +233,16 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
 
       {/* Save Button */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
+        <GradientButton
+          label={
+            isSaving
+              ? '\u05DE\u05E2\u05D1\u05D3 \u05DE\u05E2\u05E8\u05DB\u05EA...'
+              : '\u05D0\u05E9\u05E8 \u05D5\u05E9\u05DE\u05D5\u05E8 \u05E1\u05E4\u05E7'
+          }
           onPress={handleSave}
           disabled={!canSave}
-          activeOpacity={0.85}
-        >
-          {isSaving ? (
-            <>
-              <Text style={styles.saveBtnText}>
-                {'\u05DE\u05E2\u05D1\u05D3 \u05DE\u05E2\u05E8\u05DB\u05EA...'}
-              </Text>
-              <ActivityIndicator size="small" color={colors.white} />
-            </>
-          ) : (
-            <>
-              <Text style={[styles.saveBtnText, !canSave && styles.saveBtnTextDisabled]}>
-                {'\u05D0\u05E9\u05E8 \u05D5\u05E9\u05DE\u05D5\u05E8 \u05E1\u05E4\u05E7'}
-              </Text>
-              <MaterialIcons
-                name="verified-user"
-                size={28}
-                color={canSave ? colors.white : colors.textTertiary}
-              />
-            </>
-          )}
-        </TouchableOpacity>
+          style={styles.saveButton}
+        />
       </View>
     </View>
   );
@@ -299,7 +253,7 @@ export default AddSupplier;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
   },
   scrollView: {
     flex: 1,
@@ -308,60 +262,20 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
 
-  // Header
-  header: {
-    paddingHorizontal: spacing['3xl'],
-    paddingTop: spacing['3xl'],
-    paddingBottom: spacing.lg,
-  },
-  headerRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.lg,
-    backgroundColor: colors.neuBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    alignItems: 'center',
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginBottom: 2,
-    writingDirection: 'rtl',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  headerPlaceholder: {
-    width: 56,
-  },
-
-  // Avatar Section
+  // Avatar Section — large circle + camera badge
   avatarSection: {
     alignItems: 'center',
+    marginTop: spacing['2xl'],
     marginBottom: spacing['3xl'],
     position: 'relative',
   },
   avatarUploadWrap: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 6,
-    borderColor: colors.white,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 2,
+    borderColor: colors.subtleBorder,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -369,33 +283,33 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 90,
+    borderRadius: 80,
   },
   avatarPlaceholder: {
     alignItems: 'center',
     gap: spacing.sm,
   },
   avatarPlaceholderText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 1,
     writingDirection: 'rtl',
   },
   cameraIconBadge: {
     position: 'absolute',
     bottom: 0,
     right: '50%',
-    marginRight: -90,
-    width: 52,
-    height: 52,
+    marginRight: -80,
+    width: 40,
+    height: 40,
     borderRadius: radii['2xl'],
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: colors.white,
+    borderColor: colors.bgPrimary,
   },
 
   // Form
@@ -404,44 +318,38 @@ const styles = StyleSheet.create({
     gap: spacing['3xl'],
   },
   fieldGroup: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   fieldLabelRow: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
   },
   fieldLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.textTertiary,
+    fontSize: 11,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 1,
     writingDirection: 'rtl',
-  },
-  inputWrap: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 28,
-    paddingHorizontal: spacing['2xl'],
-    paddingVertical: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    height: 64,
-    justifyContent: 'center',
   },
   textInput: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 14,
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     writingDirection: 'rtl',
     textAlign: 'right',
-    paddingVertical: 0,
   },
   textInputLtr: {
     writingDirection: 'ltr',
     textAlign: 'left',
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
 
   // Categories
@@ -453,41 +361,40 @@ const styles = StyleSheet.create({
   categoryChip: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   categoryChipSelected: {
     borderColor: colors.accent,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: colors.bgTertiary,
   },
   categoryChipText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
+    fontSize: 12,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
     writingDirection: 'rtl',
   },
   categoryChipTextSelected: {
-    color: colors.accentDark,
+    color: colors.accent,
   },
   categoryChipAdd: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderRadius: 22,
-    backgroundColor: 'rgba(139, 92, 246, 0.05)',
-    borderWidth: 2,
-    borderColor: 'rgba(139, 92, 246, 0.3)',
+    borderRadius: radii.lg,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
     borderStyle: 'dashed',
+    borderColor: colors.accent + '4D',
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: spacing.xs,
   },
   categoryChipAddText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.accentDark,
+    fontSize: 12,
+    fontFamily: fonts.semibold,
+    color: colors.accent,
     writingDirection: 'rtl',
   },
   newCategoryRow: {
@@ -495,25 +402,13 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     alignItems: 'center',
   },
-  newCategoryInput: {
-    flex: 1,
-    height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: radii['2xl'],
-    paddingHorizontal: spacing.xl,
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
   newCategoryCancelBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: radii['2xl'],
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    width: 48,
+    height: 48,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -527,28 +422,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['3xl'],
     paddingBottom: spacing['3xl'],
     paddingTop: spacing.xl,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
+    borderTopWidth: 1,
+    borderTopColor: colors.subtleBorder,
   },
-  saveBtn: {
-    height: 72,
-    backgroundColor: colors.primary,
-    borderRadius: 32,
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.lg,
-  },
-  saveBtnDisabled: {
-    backgroundColor: '#CBD5E1',
-    opacity: 0.6,
-  },
-  saveBtnText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.white,
-    writingDirection: 'rtl',
-  },
-  saveBtnTextDisabled: {
-    color: colors.textTertiary,
+  saveButton: {
+    width: '100%',
   },
 });
