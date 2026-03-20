@@ -6,11 +6,13 @@ import {
   StyleSheet,
   Modal,
   Pressable,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AppScreen } from '@monn/shared';
-import { colors, neuRaisedLg, radii } from '../theme';
+import { colors, fonts, glowFab, radii } from '../theme';
 
 interface BottomNavProps {
   currentScreen: AppScreen;
@@ -55,7 +57,7 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
       <Modal visible={isMenuOpen} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setIsMenuOpen(false)}>
           <View style={[styles.quickActionsContainer, { bottom: 100 + insets.bottom }]}>
-            <View style={[styles.quickActionsCard, neuRaisedLg]}>
+            <View style={styles.quickActionsCard}>
               <View style={styles.quickActionsGrid}>
                 {quickActions.map((action) => (
                   <TouchableOpacity
@@ -63,7 +65,12 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
                     style={styles.quickActionItem}
                     onPress={() => handleAction(action.screen)}
                   >
-                    <View style={[styles.quickActionIcon, { backgroundColor: colors.neuBg }, neuRaisedLg]}>
+                    <View
+                      style={[
+                        styles.quickActionIcon,
+                        { backgroundColor: action.color + '26' },
+                      ]}
+                    >
                       <MaterialIcons name={action.icon} size={22} color={action.color} />
                     </View>
                     <Text style={styles.quickActionLabel}>{action.label}</Text>
@@ -77,21 +84,28 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
 
       {/* Bottom Navigation Bar */}
       <View style={[styles.navContainer, { paddingBottom: insets.bottom + 8 }]}>
-        <View style={[styles.navBar, neuRaisedLg]}>
+        <View style={styles.navBar}>
           {navItems.map((item, index) => {
             if (item.isCenter) {
               return (
                 <TouchableOpacity
                   key={index}
-                  style={styles.centerButton}
+                  style={styles.centerButtonWrap}
                   onPress={() => setIsMenuOpen(!isMenuOpen)}
                   activeOpacity={0.8}
                 >
-                  <MaterialIcons
-                    name={isMenuOpen ? 'close' : 'add'}
-                    size={28}
-                    color={colors.white}
-                  />
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.centerButton, glowFab]}
+                  >
+                    <MaterialIcons
+                      name={isMenuOpen ? 'close' : 'add'}
+                      size={26}
+                      color={colors.white}
+                    />
+                  </LinearGradient>
                 </TouchableOpacity>
               );
             }
@@ -106,13 +120,12 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
                 style={styles.navItem}
                 onPress={() => item.screen && onNavigate(item.screen)}
               >
-                <View style={[styles.navIconWrap, isActive && styles.navIconActive]}>
-                  <MaterialIcons
-                    name={item.icon}
-                    size={22}
-                    color={isActive ? colors.primary : colors.textTertiary}
-                  />
-                </View>
+                {isActive && <View style={styles.activeGlowDot} />}
+                <MaterialIcons
+                  name={item.icon}
+                  size={22}
+                  color={isActive ? colors.primary : colors.textTertiary}
+                />
                 <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
                   {item.label}
                 </Text>
@@ -128,7 +141,7 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.1)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   quickActionsContainer: {
     position: 'absolute',
@@ -136,8 +149,10 @@ const styles = StyleSheet.create({
     right: 16,
   },
   quickActionsCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: radii.lg,
     padding: 20,
   },
   quickActionsGrid: {
@@ -149,15 +164,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.xl,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quickActionLabel: {
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
   },
   navContainer: {
@@ -165,16 +180,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 12,
   },
   navBar: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
+    backgroundColor: colors.bgSecondary,
+    borderTopWidth: 1,
+    borderTopColor: colors.subtleBorder,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingVertical: 8,
-    paddingHorizontal: 8,
   },
   navItem: {
     alignItems: 'center',
@@ -182,28 +196,36 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 12,
   },
-  navIconWrap: {
-    padding: 8,
-    borderRadius: radii.xl,
-  },
-  navIconActive: {
-    backgroundColor: colors.neuBg,
+  activeGlowDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: 2,
   },
   navLabel: {
     fontSize: 9,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
   },
   navLabelActive: {
     color: colors.primary,
   },
+  centerButtonWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -28,
+  },
   centerButton: {
     width: 56,
     height: 56,
-    borderRadius: radii.xl,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -24,
-    backgroundColor: colors.primary,
   },
 });
