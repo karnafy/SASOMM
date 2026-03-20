@@ -4,16 +4,30 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  Image,
   ScrollView,
   Alert,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
+
+const openExternalURL = (url: string) => {
+  if (Platform.OS === 'web') {
+    window.open(url, '_blank');
+  } else {
+    openExternalURL(url);
+  }
+};
 import * as ImagePicker from 'expo-image-picker';
 import { AppScreen, Supplier, Project, Currency } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { GradientHeader } from '../components/ui/GradientHeader';
+import { GlassCard } from '../components/ui/GlassCard';
+import { DarkCard } from '../components/ui/DarkCard';
+import { AvatarCircle } from '../components/ui/AvatarCircle';
+import { CircleIconButton } from '../components/ui/CircleIconButton';
+import { TransactionRow } from '../components/ui/TransactionRow';
+import { SectionHeader } from '../components/ui/SectionHeader';
 
 interface SupplierDetailProps {
   onNavigate: (screen: AppScreen, id?: string, scan?: boolean, txType?: 'expense' | 'income') => void;
@@ -105,7 +119,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
     const message = encodeURIComponent(
       `\u05E9\u05DC\u05D5\u05DD ${supplier.name}, \u05E8\u05E6\u05D9\u05EA\u05D9 \u05DC\u05D1\u05E8\u05E8 \u05DC\u05D2\u05D1\u05D9 \u05DE\u05E6\u05D1 \u05D4\u05D7\u05E9\u05D1\u05D5\u05DF \u05E9\u05DC\u05D9 \u05D1\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9\u05EA MONNY.`
     );
-    Linking.openURL(`https://wa.me/${formattedPhone}?text=${message}`);
+    openExternalURL(`https://wa.me/${formattedPhone}?text=${message}`);
   };
 
   const handleCall = () => {
@@ -116,12 +130,12 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
       );
       return;
     }
-    Linking.openURL(`tel:${supplier.phone}`);
+    openExternalURL(`tel:${supplier.phone}`);
   };
 
   const handleEmail = () => {
     const email = `${supplier.name.replace(/\s+/g, '.')}@example.com`.toLowerCase();
-    Linking.openURL(`mailto:${email}?subject=MONNY - \u05E4\u05E0\u05D9\u05D4 \u05DE\u05E1\u05E4\u05E7`);
+    openExternalURL(`mailto:${email}?subject=MONNY - \u05E4\u05E0\u05D9\u05D4 \u05DE\u05E1\u05E4\u05E7`);
   };
 
   // Build transaction list from projects
@@ -177,233 +191,239 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.headerBtn, neuRaised]}
-            onPress={() => (isEditing ? handleCancel() : goBack())}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons
-              name={isEditing ? 'close' : 'chevron-right'}
-              size={28}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
+        {/* Gradient Header Zone */}
+        <GradientHeader>
+          {/* Nav Row */}
+          <View style={styles.navRow}>
+            <TouchableOpacity
+              style={styles.navBtn}
+              onPress={() => (isEditing ? handleCancel() : goBack())}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons
+                name={isEditing ? 'close' : 'chevron-right'}
+                size={26}
+                color={colors.white}
+              />
+            </TouchableOpacity>
 
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerSubtitle}>
-              {'\u05DB\u05E8\u05D8\u05D9\u05E1 \u05E1\u05E4\u05E7'}
-            </Text>
-            <Text style={styles.headerTitle}>
-              {isEditing
-                ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D8\u05D9\u05DD'
-                : '\u05E4\u05E8\u05D8\u05D9 \u05D4\u05EA\u05E7\u05E9\u05E8\u05D5\u05EA'}
-            </Text>
+            <View style={styles.navCenter}>
+              <Text style={styles.navSubtitle}>
+                {'\u05DB\u05E8\u05D8\u05D9\u05E1 \u05E1\u05E4\u05E7'}
+              </Text>
+              <Text style={styles.navTitle}>
+                {isEditing
+                  ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D8\u05D9\u05DD'
+                  : '\u05E4\u05E8\u05D8\u05D9 \u05D4\u05EA\u05E7\u05E9\u05E8\u05D5\u05EA'}
+              </Text>
+            </View>
+
+            {isEditing ? (
+              <TouchableOpacity
+                style={styles.navBtnPrimary}
+                onPress={handleSave}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="check" size={26} color={colors.white} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.navBtn}
+                onPress={() => setIsEditing(true)}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="edit" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
 
+          {/* Avatar + Info (view mode) or Edit fields (edit mode) */}
           {isEditing ? (
-            <TouchableOpacity
-              style={styles.headerBtnPrimary}
-              onPress={handleSave}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="check" size={28} color={colors.white} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.headerBtn, neuRaised]}
-              onPress={() => setIsEditing(true)}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="edit" size={28} color={colors.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
+            /* Edit Mode — in gradient zone */
+            <View style={styles.editContainer}>
+              <TouchableOpacity
+                style={styles.avatarEditWrap}
+                onPress={handlePickImage}
+                activeOpacity={0.8}
+              >
+                <AvatarCircle
+                  name={editName}
+                  size={72}
+                  imageUri={editAvatar}
+                  gradientColors={['#6B2FA0', '#00D9D9']}
+                />
+                <View style={styles.avatarOverlay}>
+                  <MaterialIcons name="photo-camera" size={22} color={colors.white} />
+                </View>
+              </TouchableOpacity>
 
-        {/* Profile Card */}
-        <View style={styles.profileSection}>
-          <View style={[styles.profileCard, neuRaisedLg]}>
-            {isEditing ? (
-              /* Edit Mode */
-              <>
-                <TouchableOpacity
-                  style={styles.avatarLargeWrap}
-                  onPress={handlePickImage}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={{ uri: editAvatar }}
-                    style={styles.avatarLargeImage}
+              <View style={styles.editFieldsContainer}>
+                {/* Name */}
+                <View style={styles.editField}>
+                  <Text style={styles.editLabel}>{'\u05E9\u05DD'}</Text>
+                  <TextInput
+                    style={styles.editInput}
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder={'\u05E9\u05DD \u05D4\u05E1\u05E4\u05E7'}
+                    placeholderTextColor={colors.textTertiary}
+                    textAlign="right"
                   />
-                  <View style={styles.avatarOverlay}>
-                    <MaterialIcons name="photo-camera" size={28} color={colors.white} />
-                  </View>
-                </TouchableOpacity>
-
-                <View style={styles.editFieldsContainer}>
-                  {/* Name */}
-                  <View style={styles.editField}>
-                    <Text style={styles.editLabel}>
-                      {'\u05E9\u05DD'}
-                    </Text>
-                    <TextInput
-                      style={styles.editInput}
-                      value={editName}
-                      onChangeText={setEditName}
-                      placeholder={'\u05E9\u05DD \u05D4\u05E1\u05E4\u05E7'}
-                      placeholderTextColor={colors.textTertiary}
-                      textAlign="right"
-                    />
-                  </View>
-
-                  {/* Category */}
-                  <View style={styles.editField}>
-                    <Text style={styles.editLabel}>
-                      {'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}
-                    </Text>
-                    <TextInput
-                      style={styles.editInput}
-                      value={editCategory}
-                      onChangeText={setEditCategory}
-                      placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}
-                      placeholderTextColor={colors.textTertiary}
-                      textAlign="right"
-                    />
-                  </View>
-
-                  {/* Phone */}
-                  <View style={styles.editField}>
-                    <Text style={styles.editLabel}>
-                      {'\u05D8\u05DC\u05E4\u05D5\u05DF'}
-                    </Text>
-                    <TextInput
-                      style={[styles.editInput, styles.editInputLtr]}
-                      value={editPhone}
-                      onChangeText={setEditPhone}
-                      placeholder="050-1234567"
-                      placeholderTextColor={colors.textTertiary}
-                      keyboardType="phone-pad"
-                      textAlign="left"
-                    />
-                  </View>
                 </View>
 
-                {/* Balance Summary (Edit mode) */}
-                <View style={styles.balanceRow}>
-                  <View style={styles.balanceCol}>
-                    <Text style={styles.balanceLabel}>
+                {/* Category */}
+                <View style={styles.editField}>
+                  <Text style={styles.editLabel}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
+                  <TextInput
+                    style={styles.editInput}
+                    value={editCategory}
+                    onChangeText={setEditCategory}
+                    placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}
+                    placeholderTextColor={colors.textTertiary}
+                    textAlign="right"
+                  />
+                </View>
+
+                {/* Phone */}
+                <View style={styles.editField}>
+                  <Text style={styles.editLabel}>{'\u05D8\u05DC\u05E4\u05D5\u05DF'}</Text>
+                  <TextInput
+                    style={[styles.editInput, styles.editInputLtr]}
+                    value={editPhone}
+                    onChangeText={setEditPhone}
+                    placeholder="050-1234567"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="phone-pad"
+                    textAlign="left"
+                  />
+                </View>
+              </View>
+
+              {/* Balance summary in edit mode */}
+              <GlassCard style={styles.summaryCard}>
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryCol}>
+                    <Text style={styles.summaryLabel}>
                       {'\u05DE\u05E6\u05D1 \u05D9\u05EA\u05E8\u05D4'}
                     </Text>
-                    <Text style={[styles.balanceAmount, { color: statusColor }]}>
+                    <Text style={[styles.summaryAmount, { color: statusColor }]}>
                       {currencySymbols['ILS']}
                       {supplier.amount.toLocaleString()}
                       {balanceSign}
                     </Text>
                   </View>
-                  <View style={styles.balanceDivider} />
-                  <View style={styles.balanceCol}>
-                    <Text style={styles.balanceLabel}>
+                  <View style={styles.summaryDivider} />
+                  <View style={styles.summaryCol}>
+                    <Text style={styles.summaryLabel}>
                       {'\u05E1\u05D8\u05D8\u05D5\u05E1'}
                     </Text>
-                    <Text style={[styles.balanceStatus, { color: statusColor }]}>
+                    <Text style={[styles.summaryStatusText, { color: statusColor }]}>
                       {statusLabel}
                     </Text>
                   </View>
                 </View>
-              </>
-            ) : (
-              /* View Mode */
-              <>
-                <View style={styles.avatarLargeWrap}>
-                  <Image
-                    source={{ uri: supplier.avatar }}
-                    style={styles.avatarLargeImage}
-                  />
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: statusColor },
-                    ]}
-                  />
-                </View>
+              </GlassCard>
+            </View>
+          ) : (
+            /* View Mode — in gradient zone */
+            <View style={styles.profileContainer}>
+              <AvatarCircle
+                name={supplier.name}
+                size={72}
+                imageUri={supplier.avatar}
+                gradientColors={['#6B2FA0', '#00D9D9']}
+              />
+              <Text style={styles.supplierName}>{supplier.name}</Text>
+              <Text style={styles.supplierCategory}>{supplier.category}</Text>
+              {supplier.phone ? (
+                <Text style={styles.supplierPhone}>{supplier.phone}</Text>
+              ) : null}
 
-                <Text style={styles.supplierName}>{supplier.name}</Text>
-                <Text style={styles.supplierCategory}>{supplier.category}</Text>
-
-                {/* Balance Summary */}
-                <View style={styles.balanceRow}>
-                  <View style={styles.balanceCol}>
-                    <Text style={styles.balanceLabel}>
-                      {'\u05DE\u05E6\u05D1 \u05D9\u05EA\u05E8\u05D4'}
+              {/* Glass summary card */}
+              <GlassCard style={styles.summaryCard}>
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryCol}>
+                    <Text style={styles.summaryLabel}>
+                      {'\u05D9\u05EA\u05E8\u05D4'}
                     </Text>
-                    <Text style={[styles.balanceAmount, { color: statusColor }]}>
+                    <Text style={[styles.summaryAmount, { color: statusColor }]}>
+                      {balanceSign}
                       {currencySymbols['ILS']}
                       {supplier.amount.toLocaleString()}
-                      {balanceSign}
                     </Text>
                   </View>
-                  <View style={styles.balanceDivider} />
-                  <View style={styles.balanceCol}>
-                    <Text style={styles.balanceLabel}>
-                      {'\u05D8\u05DC\u05E4\u05D5\u05DF'}
+                  <View style={styles.summaryDivider} />
+                  <View style={styles.summaryCol}>
+                    <Text style={styles.summaryLabel}>
+                      {'\u05E1\u05D8\u05D8\u05D5\u05E1'}
                     </Text>
-                    <Text style={styles.phoneDisplay}>
-                      {supplier.phone || '\u05DC\u05D0 \u05D4\u05D5\u05D2\u05D3\u05E8'}
+                    <View style={[styles.statusBadge, { borderColor: statusColor }]}>
+                      <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+                        {statusLabel}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.summaryDivider} />
+                  <View style={styles.summaryCol}>
+                    <Text style={styles.summaryLabel}>
+                      {'\u05E4\u05E2\u05D5\u05DC\u05D5\u05EA'}
+                    </Text>
+                    <Text style={styles.summaryCount}>
+                      {supplierTransactions.length}
                     </Text>
                   </View>
                 </View>
+              </GlassCard>
+            </View>
+          )}
 
-                {/* Contact Action Buttons */}
-                <View style={styles.contactActions}>
-                  <TouchableOpacity
-                    style={[styles.contactActionBtn, neuRaised]}
-                    onPress={handleCall}
-                    activeOpacity={0.8}
-                  >
-                    <MaterialIcons name="phone" size={22} color={colors.primary} />
-                    <Text style={styles.contactActionLabel}>
-                      {'\u05D4\u05EA\u05E7\u05E9\u05E8'}
-                    </Text>
-                  </TouchableOpacity>
+          {/* Quick Action Buttons (view mode only) */}
+          {!isEditing && (
+            <View style={styles.quickActions}>
+              <CircleIconButton
+                icon="chat"
+                color="#25D366"
+                size={52}
+                label="WhatsApp"
+                onPress={handleWhatsApp}
+              />
+              <CircleIconButton
+                icon="phone"
+                color={colors.primary}
+                size={52}
+                label={'\u05D4\u05EA\u05E7\u05E9\u05E8'}
+                onPress={handleCall}
+              />
+              <CircleIconButton
+                icon="payments"
+                color={colors.accent}
+                size={52}
+                label={'\u05EA\u05E9\u05DC\u05D5\u05DD'}
+                onPress={() => onNavigate(AppScreen.ADD_EXPENSE, supplier.id)}
+              />
+              <CircleIconButton
+                icon="mail"
+                color={colors.textSecondary}
+                size={52}
+                label={'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}
+                onPress={handleEmail}
+              />
+            </View>
+          )}
 
-                  <TouchableOpacity
-                    style={[styles.contactActionBtn, neuRaised]}
-                    onPress={handleWhatsApp}
-                    activeOpacity={0.8}
-                  >
-                    <MaterialIcons name="chat" size={22} color={colors.success} />
-                    <Text style={styles.contactActionLabel}>WhatsApp</Text>
-                  </TouchableOpacity>
+          {/* Bottom padding to create gradient overlap */}
+          <View style={{ height: spacing.xl }} />
+        </GradientHeader>
 
-                  <TouchableOpacity
-                    style={[styles.contactActionBtn, neuRaised]}
-                    onPress={handleEmail}
-                    activeOpacity={0.8}
-                  >
-                    <MaterialIcons name="mail" size={22} color={colors.textSecondary} />
-                    <Text style={styles.contactActionLabel}>
-                      {'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
+        {/* Dark Zone */}
 
         {/* Linked Projects */}
         {linkedProjects.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                {'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05DE\u05E9\u05D5\u05D9\u05DB\u05D9\u05DD'}
-              </Text>
-              <Text style={styles.sectionCount}>
-                {linkedProjects.length}{' '}
-                {'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD'}
-              </Text>
-            </View>
+            <SectionHeader
+              title={'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05DE\u05E9\u05D5\u05D9\u05DB\u05D9\u05DD'}
+              linkText={`${linkedProjects.length} \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD`}
+            />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -411,14 +431,13 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
               style={styles.linkedProjectsScroll}
             >
               {linkedProjects.map((project) => (
-                <TouchableOpacity
+                <DarkCard
                   key={project.id}
-                  style={[styles.linkedProjectCard, neuRaised]}
+                  style={styles.linkedProjectCard}
                   onPress={() => onNavigate(AppScreen.PROJECT_DETAIL, project.id)}
-                  activeOpacity={0.85}
                 >
                   <View style={styles.linkedProjectIcon}>
-                    <MaterialIcons name="folder" size={28} color={colors.primaryDark} />
+                    <MaterialIcons name="folder" size={24} color={colors.primary} />
                   </View>
                   <Text style={styles.linkedProjectName} numberOfLines={1}>
                     {project.name}
@@ -426,7 +445,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                   <Text style={styles.linkedProjectCategory}>
                     {project.category}
                   </Text>
-                </TouchableOpacity>
+                </DarkCard>
               ))}
             </ScrollView>
           </View>
@@ -434,97 +453,41 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
         {/* Transaction History */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {'\u05D4\u05D9\u05E1\u05D8\u05D5\u05E8\u05D9\u05D9\u05EA \u05E2\u05E1\u05E7\u05D0\u05D5\u05EA'}
-            </Text>
-            <Text style={styles.sectionCount}>
-              {supplierTransactions.length}{' '}
-              {'\u05E4\u05E2\u05D5\u05DC\u05D5\u05EA'}
-            </Text>
-          </View>
+          <SectionHeader
+            title={'\u05D4\u05D9\u05E1\u05D8\u05D5\u05E8\u05D9\u05D9\u05EA \u05E2\u05E1\u05E7\u05D0\u05D5\u05EA'}
+            linkText={
+              supplierTransactions.length > 0
+                ? `${supplierTransactions.length} \u05E4\u05E2\u05D5\u05DC\u05D5\u05EA`
+                : undefined
+            }
+          />
 
           {supplierTransactions.length > 0 ? (
-            supplierTransactions.map((tx) => (
-              <TouchableOpacity
-                key={tx.id}
-                style={[styles.transactionCard, neuRaised]}
-                onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, tx.id)}
-                activeOpacity={0.85}
-              >
-                {/* Icon */}
-                <View
-                  style={[
-                    styles.txIcon,
-                    {
-                      backgroundColor:
-                        tx.type === 'income'
-                          ? 'rgba(16, 185, 129, 0.1)'
-                          : 'rgba(0, 217, 217, 0.1)',
-                    },
-                  ]}
-                >
-                  <MaterialIcons
-                    name={tx.type === 'income' ? 'add-card' : 'receipt-long'}
-                    size={24}
-                    color={tx.type === 'income' ? colors.success : colors.primary}
-                  />
-                </View>
-
-                {/* Info */}
-                <View style={styles.txInfo}>
-                  <Text style={styles.txTitle} numberOfLines={1}>
-                    {tx.title}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      onNavigate(AppScreen.PROJECT_DETAIL, tx.projectId)
-                    }
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.txProjectRow}>
-                      <MaterialIcons
-                        name="folder-open"
-                        size={12}
-                        color={colors.primaryDark}
-                      />
-                      <Text style={styles.txProjectName}>{tx.projectName}</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <Text style={styles.txDate}>{tx.date}</Text>
-                </View>
-
-                {/* Amount */}
-                <View style={styles.txAmountWrap}>
-                  <Text
-                    style={[
-                      styles.txAmount,
-                      {
-                        color:
-                          tx.type === 'income' ? colors.success : colors.error,
-                      },
-                    ]}
-                  >
-                    {tx.type === 'income' ? '+' : '-'}
-                    {currencySymbols[tx.currency || 'ILS']}
-                    {tx.amount.toLocaleString()}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <View style={styles.emptyTransactions}>
-              <View style={[styles.emptyIcon, neuRaised]}>
-                <MaterialIcons
-                  name="history-edu"
-                  size={32}
-                  color={colors.textTertiary}
+            <DarkCard style={styles.transactionsCard}>
+              {supplierTransactions.map((tx) => (
+                <TransactionRow
+                  key={tx.id}
+                  icon={tx.type === 'income' ? 'add-card' : 'receipt-long'}
+                  iconColor={tx.type === 'income' ? colors.success : colors.primary}
+                  title={tx.title}
+                  meta={`${tx.projectName} · ${tx.date}`}
+                  amount={`${tx.type === 'income' ? '+' : '-'}${currencySymbols[tx.currency || 'ILS']}${tx.amount.toLocaleString()}`}
+                  isIncome={tx.type === 'income'}
+                  onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, tx.id)}
                 />
-              </View>
+              ))}
+            </DarkCard>
+          ) : (
+            <DarkCard style={styles.emptyTransactions}>
+              <MaterialIcons
+                name="history-edu"
+                size={32}
+                color={colors.textTertiary}
+              />
               <Text style={styles.emptyText}>
                 {'\u05D0\u05D9\u05DF \u05E2\u05D3\u05D9\u05D9\u05DF \u05D4\u05D9\u05E1\u05D8\u05D5\u05E8\u05D9\u05D9\u05EA \u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD'}
               </Text>
-            </View>
+            </DarkCard>
           )}
         </View>
       </ScrollView>
@@ -555,7 +518,7 @@ export default SupplierDetail;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
   },
   scrollView: {
     flex: 1,
@@ -564,77 +527,151 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
 
-  // Header
-  header: {
+  // Nav Row (inside GradientHeader)
+  navRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing['3xl'],
-    paddingVertical: spacing['3xl'],
-    backgroundColor: colors.neuBg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
-  headerBtn: {
-    width: 56,
-    height: 56,
+  navBtn: {
+    width: 44,
+    height: 44,
     borderRadius: radii.lg,
-    backgroundColor: colors.neuBg,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
-  headerBtnPrimary: {
-    width: 56,
-    height: 56,
+  navBtnPrimary: {
+    width: 44,
+    height: 44,
     borderRadius: radii.lg,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerCenter: {
+  navCenter: {
     alignItems: 'center',
   },
-  headerSubtitle: {
-    fontSize: 10,
-    fontWeight: '800',
+  navSubtitle: {
+    fontSize: 11,
+    fontFamily: fonts.extrabold,
     color: colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 2,
     marginBottom: 2,
-    writingDirection: 'rtl',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
+  navTitle: {
+    fontSize: 18,
+    fontFamily: fonts.extrabold,
+    color: colors.white,
   },
 
-  // Profile Card
-  profileSection: {
-    paddingHorizontal: spacing['3xl'],
-    marginBottom: spacing['2xl'],
-  },
-  profileCard: {
-    borderRadius: 36,
-    padding: spacing['3xl'],
+  // Profile (view mode)
+  profileContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  supplierName: {
+    fontSize: 24,
+    fontFamily: fonts.extrabold,
+    color: colors.white,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    writingDirection: 'rtl',
+  },
+  supplierCategory: {
+    fontSize: 11,
+    fontFamily: fonts.extrabold,
+    color: 'rgba(255,255,255,0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    writingDirection: 'rtl',
+  },
+  supplierPhone: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.5,
   },
 
-  // Avatar
-  avatarLargeWrap: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
-    overflow: 'hidden',
-    marginBottom: spacing['2xl'],
-    borderWidth: 3,
-    borderColor: colors.white,
-    position: 'relative',
-  },
-  avatarLargeImage: {
+  // Summary Glass Card
+  summaryCard: {
     width: '100%',
-    height: '100%',
-    borderRadius: 56,
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.md,
+  },
+  summaryRow: {
+    flexDirection: 'row-reverse',
+    padding: spacing.lg,
+  },
+  summaryCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  summaryDivider: {
+    width: 1,
+    backgroundColor: colors.glassBorder,
+    marginVertical: 4,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    fontFamily: fonts.extrabold,
+    color: 'rgba(255,255,255,0.5)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  summaryAmount: {
+    fontSize: 20,
+    fontFamily: fonts.extrabold,
+    letterSpacing: -0.5,
+  },
+  summaryCount: {
+    fontSize: 20,
+    fontFamily: fonts.extrabold,
+    color: colors.white,
+  },
+  summaryStatusText: {
+    fontSize: 15,
+    fontFamily: fonts.extrabold,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    borderWidth: 1,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+  },
+
+  // Quick Actions
+  quickActions: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'center',
+    gap: spacing['2xl'],
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+  },
+
+  // Edit Mode (inside gradient)
+  editContainer: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  avatarEditWrap: {
+    position: 'relative',
+    marginBottom: spacing.sm,
   },
   avatarOverlay: {
     position: 'absolute',
@@ -642,297 +679,106 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 56,
+    borderRadius: 36,
   },
-  statusBadge: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 3,
-    borderColor: colors.white,
-  },
-
-  // Supplier info (view mode)
-  supplierName: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 4,
-    writingDirection: 'rtl',
-    textAlign: 'center',
-  },
-  supplierCategory: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 3,
-    marginBottom: spacing['3xl'],
-    writingDirection: 'rtl',
-    textAlign: 'center',
-  },
-
-  // Balance Row
-  balanceRow: {
-    flexDirection: 'row-reverse',
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  balanceCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  balanceDivider: {
-    width: 1,
-    backgroundColor: 'rgba(203, 213, 225, 0.5)',
-    marginVertical: 4,
-  },
-  balanceLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginBottom: 6,
-    writingDirection: 'rtl',
-  },
-  balanceAmount: {
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -1,
-  },
-  balanceStatus: {
-    fontSize: 16,
-    fontWeight: '800',
-    writingDirection: 'rtl',
-  },
-  phoneDisplay: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
-  },
-
-  // Contact Actions
-  contactActions: {
-    flexDirection: 'row-reverse',
-    gap: spacing.lg,
-    width: '100%',
-    marginTop: spacing['3xl'],
-  },
-  contactActionBtn: {
-    flex: 1,
-    height: 56,
-    borderRadius: radii['2xl'],
-    backgroundColor: colors.neuBg,
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  contactActionLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.textSecondary,
-    writingDirection: 'rtl',
-  },
-
-  // Edit fields
   editFieldsContainer: {
     width: '100%',
-    gap: spacing.lg,
-    marginBottom: spacing['2xl'],
+    gap: spacing.md,
   },
   editField: {
     width: '100%',
   },
   editLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: colors.textTertiary,
+    fontSize: 11,
+    fontFamily: fonts.extrabold,
+    color: 'rgba(255,255,255,0.6)',
     textTransform: 'uppercase',
     letterSpacing: 2,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
   editInput: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: radii.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    color: colors.white,
     writingDirection: 'rtl',
     textAlign: 'right',
     borderWidth: 1,
-    borderColor: 'rgba(200, 208, 224, 0.4)',
+    borderColor: colors.glassBorder,
   },
   editInputLtr: {
     writingDirection: 'ltr',
     textAlign: 'left',
   },
 
-  // Sections
+  // Sections (dark zone)
   section: {
-    marginTop: spacing['2xl'],
-    paddingHorizontal: spacing['3xl'],
-  },
-  sectionHeader: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  sectionCount: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    writingDirection: 'rtl',
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.xl,
   },
 
   // Linked Projects
   linkedProjectsScroll: {
-    marginHorizontal: -spacing['3xl'],
+    marginHorizontal: -spacing.xl,
   },
   linkedProjectsList: {
-    paddingHorizontal: spacing['3xl'],
-    gap: spacing.lg,
-  },
-  linkedProjectCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
-    minWidth: 150,
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
+  linkedProjectCard: {
+    padding: spacing.lg,
+    minWidth: 140,
+    gap: spacing.sm,
+  },
   linkedProjectIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.lg,
-    backgroundColor: 'rgba(0, 217, 217, 0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    backgroundColor: 'rgba(0,217,217,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   linkedProjectName: {
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
   linkedProjectCategory: {
-    fontSize: 9,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 1,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
 
   // Transactions
-  transactionCard: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 28,
-    padding: spacing.xl,
-    marginBottom: spacing.lg,
-    gap: spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  txIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  txInfo: {
-    flex: 1,
-  },
-  txTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  txProjectRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
-  txProjectName: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.primaryDark,
-    textTransform: 'uppercase',
-    writingDirection: 'rtl',
-  },
-  txDate: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.textTertiary,
-    marginTop: 2,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  txAmountWrap: {
-    alignItems: 'flex-start',
-  },
-  txAmount: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -1,
+  transactionsCard: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
   },
 
-  // Empty State
+  // Empty Transactions
   emptyTransactions: {
     alignItems: 'center',
-    paddingVertical: 48,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: radii['2xl'],
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing['2xl'],
+    paddingVertical: spacing['3xl'],
+    gap: spacing.md,
   },
   emptyText: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
     writingDirection: 'rtl',
     textAlign: 'center',
   },
@@ -943,28 +789,28 @@ const styles = StyleSheet.create({
     bottom: 100,
     left: 0,
     right: 0,
-    paddingHorizontal: spacing['3xl'],
+    paddingHorizontal: spacing.xl,
   },
   paymentBtn: {
-    height: 60,
+    height: 56,
     backgroundColor: colors.primary,
-    borderRadius: 24,
+    borderRadius: radii['2xl'],
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   paymentBtnIcon: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: radii.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   paymentBtnText: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: fonts.extrabold,
     color: colors.white,
     writingDirection: 'rtl',
   },

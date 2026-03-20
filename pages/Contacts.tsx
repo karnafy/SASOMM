@@ -4,13 +4,16 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  Image,
   FlatList,
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppScreen, Supplier, Currency } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { GradientHeader } from '../components/ui/GradientHeader';
+import { DarkCard } from '../components/ui/DarkCard';
+import { AvatarCircle } from '../components/ui/AvatarCircle';
+import { SectionHeader } from '../components/ui/SectionHeader';
 
 interface ContactsProps {
   onNavigate: (screen: AppScreen, id?: string) => void;
@@ -77,16 +80,18 @@ const Contacts: React.FC<ContactsProps> = ({
     });
 
     return (
-      <TouchableOpacity
-        style={[styles.supplierCard, neuRaised]}
-        activeOpacity={0.85}
+      <DarkCard
+        style={styles.supplierCard}
         onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, contact.id)}
       >
         {/* Avatar */}
         <View style={styles.avatarContainer}>
-          <View style={[styles.avatarWrap, neuRaised]}>
-            <Image source={{ uri: contact.avatar }} style={styles.avatar} />
-          </View>
+          <AvatarCircle
+            name={contact.name}
+            size={48}
+            imageUri={contact.avatar}
+            gradientColors={['#6B2FA0', '#00D9D9']}
+          />
           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
         </View>
 
@@ -107,7 +112,7 @@ const Contacts: React.FC<ContactsProps> = ({
           </Text>
           <Text style={styles.lastActiveText}>{contact.lastActive}</Text>
         </View>
-      </TouchableOpacity>
+      </DarkCard>
     );
   };
 
@@ -122,15 +127,16 @@ const Contacts: React.FC<ContactsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Gradient Header Zone */}
+      <GradientHeader>
+        {/* Title Row */}
         <View style={styles.headerRow}>
           <TouchableOpacity
-            style={[styles.headerBtn, neuRaised]}
+            style={styles.headerBtn}
             onPress={goBack}
             activeOpacity={0.8}
           >
-            <MaterialIcons name="arrow-forward" size={22} color={colors.textSecondary} />
+            <MaterialIcons name="arrow-forward" size={22} color={colors.white} />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>
@@ -138,7 +144,7 @@ const Contacts: React.FC<ContactsProps> = ({
           </Text>
 
           <TouchableOpacity
-            style={[styles.headerBtnPrimary]}
+            style={styles.headerBtnPrimary}
             onPress={() => onNavigate(AppScreen.ADD_SUPPLIER)}
             activeOpacity={0.8}
           >
@@ -146,7 +152,7 @@ const Contacts: React.FC<ContactsProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Search */}
+        {/* Search Bar */}
         <View style={styles.searchBar}>
           <MaterialIcons name="search" size={20} color={colors.textTertiary} />
           <TextInput
@@ -168,10 +174,7 @@ const Contacts: React.FC<ContactsProps> = ({
             return (
               <TouchableOpacity
                 key={tab.id}
-                style={[
-                  styles.tab,
-                  isActive ? styles.tabActive : [styles.tabInactive, neuRaised],
-                ]}
+                style={[styles.tab, isActive && styles.tabActive]}
                 onPress={() => setActiveTab(tab.id)}
                 activeOpacity={0.8}
               >
@@ -183,13 +186,14 @@ const Contacts: React.FC<ContactsProps> = ({
                 >
                   {tab.label}
                 </Text>
+                {isActive && <View style={styles.tabUnderline} />}
               </TouchableOpacity>
             );
           })}
         </View>
-      </View>
+      </GradientHeader>
 
-      {/* Supplier List */}
+      {/* Dark Zone — Supplier List */}
       <FlatList
         data={filteredContacts}
         keyExtractor={(item) => item.id}
@@ -207,127 +211,126 @@ export default Contacts;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
   },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    backgroundColor: colors.neuBg,
-  },
+  // Header
   headerRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   headerBtn: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: radii.lg,
-    backgroundColor: colors.neuBg,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   headerBtnPrimary: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: radii.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontFamily: fonts.bold,
+    color: colors.white,
     writingDirection: 'rtl',
     textAlign: 'center',
   },
+  // Search Bar
   searchBar: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: colors.neuBg,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: radii.lg,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    marginHorizontal: spacing.xl,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(200, 208, 224, 0.4)',
+    borderColor: colors.glassBorder,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: colors.textPrimary,
-    marginRight: spacing.md,
+    fontFamily: fonts.regular,
+    color: colors.white,
+    marginRight: spacing.sm,
     writingDirection: 'rtl',
     textAlign: 'right',
     paddingVertical: 0,
   },
+  // Filter Tabs
   tabsRow: {
     flexDirection: 'row-reverse',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.md,
+    gap: spacing.xs,
   },
   tab: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radii.md,
+    alignItems: 'center',
+    position: 'relative',
   },
-  tabActive: {
-    backgroundColor: colors.primary,
-  },
-  tabInactive: {
-    backgroundColor: colors.neuBg,
-  },
+  tabActive: {},
   tabText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
   tabTextActive: {
-    color: colors.white,
+    color: colors.primary,
   },
   tabTextInactive: {
     color: colors.textTertiary,
   },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.primary,
+    borderRadius: 1,
+  },
+  // List
   listContent: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.lg,
     paddingBottom: 120,
   },
+  // Supplier Card
   supplierCard: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: colors.neuBg,
-    borderRadius: radii.lg,
     padding: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   avatarContainer: {
     position: 'relative',
   },
-  avatarWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.lg,
-    overflow: 'hidden',
-    backgroundColor: colors.neuBg,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.lg,
-  },
   statusDot: {
     position: 'absolute',
-    top: -4,
-    left: -4,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    top: -2,
+    left: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.neuBg,
+    borderColor: colors.bgSecondary,
   },
   contactInfo: {
     flex: 1,
@@ -335,13 +338,14 @@ const styles = StyleSheet.create({
   },
   contactName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
   contactCategory: {
     fontSize: 12,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
     writingDirection: 'rtl',
     textAlign: 'right',
@@ -353,23 +357,28 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   lastActiveText: {
-    fontSize: 10,
+    fontSize: 11,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
     marginTop: 2,
   },
+  // Empty State
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    borderRadius: radii['2xl'],
-    backgroundColor: colors.neuBg,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     marginTop: spacing.xl,
   },
   emptyText: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
     marginTop: spacing.md,
     writingDirection: 'rtl',
