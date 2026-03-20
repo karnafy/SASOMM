@@ -7,7 +7,6 @@ import {
   TextInput,
   StyleSheet,
   Alert,
-  Image,
   Modal,
   Pressable,
 } from 'react-native';
@@ -15,7 +14,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { AppScreen, Currency } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { GradientHeader } from '../components/ui/GradientHeader';
+import { GlassCard } from '../components/ui/GlassCard';
+import { DarkCard } from '../components/ui/DarkCard';
+import { AvatarCircle } from '../components/ui/AvatarCircle';
+import { ScreenTopBar } from '../components/ui/ScreenTopBar';
 
 interface PersonalAreaProps {
   onNavigate: (screen: AppScreen) => void;
@@ -197,7 +201,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
           style={styles.photoModalOverlay}
           onPress={() => setShowPhotoModal(false)}
         >
-          <View style={[styles.photoModalCard, neuRaisedLg]}>
+          <DarkCard style={styles.photoModalCard}>
             <Text style={styles.photoModalTitle}>{'\u05D1\u05D7\u05E8 \u05EA\u05DE\u05D5\u05E0\u05EA \u05E4\u05E8\u05D5\u05E4\u05D9\u05DC'}</Text>
 
             <TouchableOpacity
@@ -240,43 +244,41 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
             >
               <Text style={styles.photoModalCancelText}>{'\u05D1\u05D9\u05D8\u05D5\u05DC'}</Text>
             </TouchableOpacity>
-          </View>
+          </DarkCard>
         </Pressable>
       </Modal>
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.headerBtn, neuRaised]}
-          onPress={() => goBack()}
-        >
-          <MaterialIcons name="arrow-forward" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{'\u05D0\u05D9\u05D6\u05D5\u05E8 \u05D0\u05D9\u05E9\u05D9'}</Text>
-        <View style={{ width: 44 }} />
-      </View>
+      {/* Header with gradient + centered avatar */}
+      <GradientHeader style={styles.headerContainer}>
+        <ScreenTopBar title={'\u05D0\u05D9\u05D6\u05D5\u05E8 \u05D0\u05D9\u05E9\u05D9'} onBack={goBack} />
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={() => setShowPhotoModal(true)} style={styles.avatarTouchable}>
+            <AvatarCircle
+              name={userName}
+              size={100}
+              imageUri={userAvatar ?? undefined}
+            />
+            <View style={styles.avatarCameraBadge}>
+              <MaterialIcons name="photo-camera" size={14} color={colors.white} />
+            </View>
+          </TouchableOpacity>
+          {!isEditing && (
+            <>
+              <Text style={styles.profileName}>{userName}</Text>
+              <Text style={styles.profileEmail}>{userEmail}</Text>
+              <Text style={styles.profilePhone}>{userPhone}</Text>
+            </>
+          )}
+        </View>
+      </GradientHeader>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Card */}
-        <View style={[styles.profileCard, neuRaisedLg]}>
-          <TouchableOpacity
-            style={styles.avatarContainer}
-            onPress={() => setShowPhotoModal(true)}
-          >
-            {userAvatar ? (
-              <Image source={{ uri: userAvatar }} style={styles.avatarImage} />
-            ) : (
-              <MaterialIcons name="person" size={48} color={colors.primary} />
-            )}
-            <View style={styles.avatarOverlay}>
-              <MaterialIcons name="photo-camera" size={20} color={colors.white} />
-            </View>
-          </TouchableOpacity>
-
+        {/* User Info / Edit Form */}
+        <GlassCard style={styles.infoCard}>
           {isEditing ? (
             <View style={styles.editForm}>
               <TextInput
@@ -310,77 +312,108 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               </TouchableOpacity>
             </View>
           ) : (
-            <>
-              <Text style={styles.profileName}>{userName}</Text>
-              <Text style={styles.profileEmail}>{userEmail}</Text>
-              <Text style={styles.profilePhone}>{userPhone}</Text>
+            <View style={styles.profileDetails}>
+              <View style={styles.profileRow}>
+                <MaterialIcons name="person" size={18} color={colors.primary} />
+                <Text style={styles.profileDetailLabel}>{'\u05E9\u05DD'}</Text>
+                <Text style={styles.profileDetailValue}>{userName}</Text>
+              </View>
+              <View style={[styles.profileRow, styles.profileRowBorder]}>
+                <MaterialIcons name="email" size={18} color={colors.primary} />
+                <Text style={styles.profileDetailLabel}>{'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}</Text>
+                <Text style={styles.profileDetailValue}>{userEmail}</Text>
+              </View>
+              <View style={[styles.profileRow, styles.profileRowBorder]}>
+                <MaterialIcons name="phone" size={18} color={colors.primary} />
+                <Text style={styles.profileDetailLabel}>{'\u05D8\u05DC\u05E4\u05D5\u05DF'}</Text>
+                <Text style={styles.profileDetailValue}>{userPhone}</Text>
+              </View>
               <TouchableOpacity
-                style={[styles.editProfileBtn, neuRaised]}
+                style={styles.editProfileBtn}
                 onPress={() => setIsEditing(true)}
               >
-                <MaterialIcons name="edit" size={18} color={colors.primary} />
+                <MaterialIcons name="edit" size={16} color={colors.primary} />
                 <Text style={styles.editProfileText}>{'\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D5\u05E4\u05D9\u05DC'}</Text>
               </TouchableOpacity>
-            </>
+            </View>
           )}
-        </View>
+        </GlassCard>
 
         {/* Settings Section */}
-        <View style={[styles.settingsCard, neuRaised]}>
-          <View style={styles.settingsHeader}>
-            <Text style={styles.settingsHeaderText}>{'\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
+        <DarkCard style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionHeaderText}>{'\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
           </View>
           {settingsItems.map((item, i) => (
             <View
               key={i}
               style={[
-                styles.settingsItem,
-                i < settingsItems.length - 1 && styles.settingsItemBorder,
+                styles.sectionItem,
+                i < settingsItems.length - 1 && styles.sectionItemBorder,
               ]}
             >
-              <View style={styles.settingsItemLeft}>
-                <MaterialIcons name={item.icon} size={22} color={colors.primary} />
-                <Text style={styles.settingsItemLabel}>{item.label}</Text>
+              <View style={styles.sectionItemLeft}>
+                <MaterialIcons name={item.icon} size={20} color={colors.primary} />
+                <Text style={styles.sectionItemLabel}>{item.label}</Text>
               </View>
-              <Text style={styles.settingsItemValue}>{item.value}</Text>
+              <Text style={styles.sectionItemValue}>{item.value}</Text>
             </View>
           ))}
-        </View>
+        </DarkCard>
 
         {/* Quick Links */}
-        <View style={[styles.settingsCard, neuRaised]}>
-          <View style={styles.settingsHeader}>
-            <Text style={styles.settingsHeaderText}>{'\u05E7\u05D9\u05E9\u05D5\u05E8\u05D9\u05DD \u05DE\u05D4\u05D9\u05E8\u05D9\u05DD'}</Text>
+        <DarkCard style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionHeaderText}>{'\u05E7\u05D9\u05E9\u05D5\u05E8\u05D9\u05DD \u05DE\u05D4\u05D9\u05E8\u05D9\u05DD'}</Text>
           </View>
           {quickLinks.map((item, i) => (
             <TouchableOpacity
               key={i}
               style={[
-                styles.settingsItem,
-                i < quickLinks.length - 1 && styles.settingsItemBorder,
+                styles.sectionItem,
+                i < quickLinks.length - 1 && styles.sectionItemBorder,
               ]}
               onPress={item.onPress}
             >
-              <View style={styles.settingsItemLeft}>
+              <View style={styles.sectionItemLeft}>
                 <MaterialIcons
                   name={item.icon}
-                  size={22}
+                  size={20}
                   color={colors.textSecondary}
                 />
-                <Text style={styles.settingsItemLabel}>{item.label}</Text>
+                <Text style={styles.sectionItemLabel}>{item.label}</Text>
               </View>
               <MaterialIcons
                 name="chevron-left"
-                size={22}
+                size={20}
                 color={colors.textTertiary}
               />
             </TouchableOpacity>
           ))}
+        </DarkCard>
+
+        {/* Future Feature Placeholders */}
+        <View style={styles.placeholderRow}>
+          <DarkCard style={styles.placeholderCard}>
+            <MaterialIcons name="lock" size={22} color={colors.textTertiary} />
+            <Text style={styles.placeholderLabel}>{'\u05D0\u05D1\u05D8\u05D7\u05D4'}</Text>
+            <Text style={styles.placeholderSoon}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+          </DarkCard>
+          <DarkCard style={styles.placeholderCard}>
+            <MaterialIcons name="backup" size={22} color={colors.textTertiary} />
+            <Text style={styles.placeholderLabel}>{'\u05D2\u05D9\u05D1\u05D5\u05D9'}</Text>
+            <Text style={styles.placeholderSoon}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+          </DarkCard>
+          <DarkCard style={styles.placeholderCard}>
+            <MaterialIcons name="cloud-sync" size={22} color={colors.textTertiary} />
+            <Text style={styles.placeholderLabel}>{'\u05E1\u05E0\u05DB\u05E8\u05D5\u05DF'}</Text>
+            <Text style={styles.placeholderSoon}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+          </DarkCard>
         </View>
 
         {/* Logout */}
         <TouchableOpacity
-          style={[styles.logoutBtn, neuRaised]}
+          style={styles.logoutBtn}
           onPress={() => {
             Alert.alert(
               '\u05D4\u05EA\u05E0\u05EA\u05E7\u05D5\u05EA',
@@ -399,7 +432,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
             );
           }}
         >
-          <MaterialIcons name="logout" size={22} color={colors.error} />
+          <MaterialIcons name="logout" size={20} color={colors.error} />
           <Text style={styles.logoutText}>{'\u05D4\u05EA\u05E0\u05EA\u05E7\u05D5\u05EA'}</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -410,115 +443,129 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.neuBg,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.neuBg,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 120,
-    gap: 20,
+    backgroundColor: colors.bgPrimary,
   },
 
-  // Profile
-  profileCard: {
-    borderRadius: radii['2xl'],
-    padding: spacing['2xl'],
+  // Header / avatar hero
+  headerContainer: {
+    paddingBottom: spacing['2xl'],
+  },
+  avatarSection: {
     alignItems: 'center',
-    backgroundColor: colors.neuBg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
-  avatarContainer: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: 'rgba(0,0,0,0.04)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    overflow: 'hidden',
+  avatarTouchable: {
+    position: 'relative',
+    marginBottom: 12,
   },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarOverlay: {
+  avatarCameraBadge: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 30,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    bottom: 2,
+    right: 2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.bgPrimary,
   },
   profileName: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     marginBottom: 4,
     writingDirection: 'rtl',
   },
   profileEmail: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 2,
   },
   profilePhone: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textTertiary,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: 120,
+    gap: 16,
+  },
+
+  // Info card
+  infoCard: {
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+  },
+  profileDetails: {
+    paddingVertical: 4,
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: 14,
+  },
+  profileRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: colors.subtleBorder,
+  },
+  profileDetailLabel: {
+    fontSize: 13,
+    color: colors.textTertiary,
+    flex: 1,
+    writingDirection: 'rtl',
+  },
+  profileDetailValue: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
+    color: colors.textPrimary,
+    writingDirection: 'rtl',
   },
   editProfileBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 16,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 12,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: radii.md,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   editProfileText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: fonts.semibold,
     color: colors.primary,
     writingDirection: 'rtl',
   },
 
   // Edit form
   editForm: {
-    width: '100%',
     gap: 12,
+    padding: spacing.xl,
   },
   editInput: {
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.bgTertiary,
     borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
   },
   saveBtn: {
@@ -530,56 +577,79 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.white,
+    fontFamily: fonts.bold,
+    color: colors.bgPrimary,
     writingDirection: 'rtl',
   },
 
-  // Settings
-  settingsCard: {
-    borderRadius: radii['2xl'],
+  // Section cards
+  sectionCard: {
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    backgroundColor: colors.neuBg,
   },
-  settingsHeader: {
+  sectionHeader: {
     paddingHorizontal: spacing.xl,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderBottomColor: colors.subtleBorder,
   },
-  settingsHeaderText: {
-    fontSize: 10,
-    fontWeight: '700',
+  sectionHeaderText: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
-  settingsItem: {
+  sectionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingVertical: 16,
+    paddingVertical: 15,
   },
-  settingsItemBorder: {
+  sectionItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.04)',
+    borderBottomColor: colors.subtleBorder,
   },
-  settingsItemLeft: {
+  sectionItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  settingsItemLabel: {
+  sectionItemLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
-  settingsItemValue: {
-    fontSize: 14,
+  sectionItemValue: {
+    fontSize: 13,
+    color: colors.textTertiary,
+    writingDirection: 'rtl',
+  },
+
+  // Placeholder future features
+  placeholderRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  placeholderCard: {
+    flex: 1,
+    padding: 14,
+    alignItems: 'center',
+    borderRadius: radii.lg,
+    gap: 6,
+  },
+  placeholderLabel: {
+    fontSize: 12,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
+    writingDirection: 'rtl',
+  },
+  placeholderSoon: {
+    fontSize: 10,
     color: colors.textTertiary,
     writingDirection: 'rtl',
   },
@@ -592,11 +662,13 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderRadius: radii.lg,
-    backgroundColor: colors.neuBg,
+    backgroundColor: 'rgba(255,77,106,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,77,106,0.2)',
   },
   logoutText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontFamily: fonts.bold,
     color: colors.error,
     writingDirection: 'rtl',
   },
@@ -604,18 +676,21 @@ const styles = StyleSheet.create({
   // Photo Modal
   photoModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'flex-end',
   },
   photoModalCard: {
-    backgroundColor: colors.neuBg,
     borderTopLeftRadius: radii['2xl'],
     borderTopRightRadius: radii['2xl'],
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   photoModalTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
@@ -625,21 +700,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.04)',
+    borderBottomColor: colors.subtleBorder,
   },
   photoModalIcon: {
     width: 44,
     height: 44,
     borderRadius: radii.lg,
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.bgTertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   photoModalItemText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
@@ -650,7 +725,7 @@ const styles = StyleSheet.create({
   },
   photoModalCancelText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     writingDirection: 'rtl',
   },

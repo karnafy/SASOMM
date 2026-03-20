@@ -12,7 +12,10 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppScreen, Currency } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { ScreenTopBar } from '../components/ui/ScreenTopBar';
+import { DarkCard } from '../components/ui/DarkCard';
+import { CurrencyToggle } from '../components/ui/CurrencyToggle';
 
 interface SettingsProps {
   onNavigate: (screen: AppScreen) => void;
@@ -47,7 +50,6 @@ const Settings: React.FC<SettingsProps> = ({
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [autoBackup, setAutoBackup] = useState(true);
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
   // Load settings
   useEffect(() => {
@@ -128,7 +130,7 @@ const Settings: React.FC<SettingsProps> = ({
     <View
       style={[
         styles.toggle,
-        { backgroundColor: value ? colors.success : 'rgba(0,0,0,0.1)' },
+        { backgroundColor: value ? colors.success : colors.bgTertiary },
       ]}
     >
       <View
@@ -142,8 +144,31 @@ const Settings: React.FC<SettingsProps> = ({
 
   const renderSettings = () => (
     <View style={styles.sections}>
+      {/* Default Currency — CurrencyToggle */}
+      <DarkCard style={styles.settingsCard}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardHeaderText}>{'\u05DE\u05D8\u05D1\u05E2 \u05D1\u05E8\u05D9\u05E8\u05EA \u05DE\u05D7\u05D3\u05DC'}</Text>
+        </View>
+        <View style={styles.currencyToggleRow}>
+          <MaterialIcons name="payment" size={20} color={colors.primary} />
+          <Text style={styles.settingLabel}>{'\u05D1\u05D7\u05E8 \u05DE\u05D8\u05D1\u05E2'}</Text>
+          <View style={styles.currencyToggleWrapper}>
+            {setGlobalCurrency ? (
+              <CurrencyToggle
+                selected={globalCurrency}
+                onSelect={setGlobalCurrency}
+              />
+            ) : (
+              <Text style={styles.settingValue}>
+                {currencySymbols[globalCurrency]} {globalCurrency}
+              </Text>
+            )}
+          </View>
+        </View>
+      </DarkCard>
+
       {/* App Settings */}
-      <View style={[styles.settingsCard, neuRaised]}>
+      <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardHeaderText}>{'\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA \u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4'}</Text>
         </View>
@@ -151,28 +176,11 @@ const Settings: React.FC<SettingsProps> = ({
         {/* Language */}
         <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
-            <MaterialIcons name="language" size={22} color={colors.primary} />
+            <MaterialIcons name="language" size={20} color={colors.primary} />
             <Text style={styles.settingLabel}>{'\u05E9\u05E4\u05D4'}</Text>
           </View>
           <Text style={styles.settingValue}>{'\u05E2\u05D1\u05E8\u05D9\u05EA'}</Text>
         </View>
-
-        {/* Currency */}
-        <TouchableOpacity
-          style={[styles.settingItem, styles.settingItemBorder]}
-          onPress={() => setShowCurrencyModal(true)}
-        >
-          <View style={styles.settingLeft}>
-            <MaterialIcons name="payment" size={22} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05DE\u05D8\u05D1\u05E2 \u05D1\u05E8\u05D9\u05E8\u05EA \u05DE\u05D7\u05D3\u05DC'}</Text>
-          </View>
-          <View style={styles.settingRight}>
-            <Text style={styles.currencyDisplay}>
-              {currencySymbols[globalCurrency]} {globalCurrency}
-            </Text>
-            <MaterialIcons name="chevron-left" size={20} color={colors.textTertiary} />
-          </View>
-        </TouchableOpacity>
 
         {/* Notifications */}
         <TouchableOpacity
@@ -184,27 +192,39 @@ const Settings: React.FC<SettingsProps> = ({
           }}
         >
           <View style={styles.settingLeft}>
-            <MaterialIcons name="notifications" size={22} color={colors.primary} />
+            <MaterialIcons name="notifications" size={20} color={colors.primary} />
             <Text style={styles.settingLabel}>{'\u05D4\u05EA\u05E8\u05D0\u05D5\u05EA'}</Text>
           </View>
           {renderToggle(notifications)}
         </TouchableOpacity>
 
-        {/* Dark Mode */}
-        <TouchableOpacity
-          style={[styles.settingItem, styles.settingItemBorder]}
-          onPress={() => {
-            const newVal = !darkMode;
-            setDarkMode(newVal);
-            saveSetting('darkMode', newVal);
-          }}
-        >
+        {/* Theme placeholder */}
+        <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
-            <MaterialIcons name="dark-mode" size={22} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05DE\u05E6\u05D1 \u05DB\u05D4\u05D4'}</Text>
+            <MaterialIcons name="dark-mode" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>{'\u05E2\u05D9\u05E6\u05D5\u05D1'}</Text>
           </View>
-          {renderToggle(darkMode)}
-        </TouchableOpacity>
+          <View style={styles.settingRight}>
+            <Text style={styles.settingValue}>{'\u05DB\u05D4\u05D4'}</Text>
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Export placeholder */}
+        <View style={[styles.settingItem, styles.settingItemBorder]}>
+          <View style={styles.settingLeft}>
+            <MaterialIcons name="file-download" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>{'\u05D9\u05D9\u05E6\u05D5\u05D0 \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD'}</Text>
+          </View>
+          <View style={styles.settingRight}>
+            <Text style={styles.settingValue}>CSV</Text>
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+            </View>
+          </View>
+        </View>
 
         {/* Auto Backup */}
         <TouchableOpacity
@@ -216,35 +236,35 @@ const Settings: React.FC<SettingsProps> = ({
           }}
         >
           <View style={styles.settingLeft}>
-            <MaterialIcons name="backup" size={22} color={colors.primary} />
+            <MaterialIcons name="backup" size={20} color={colors.primary} />
             <Text style={styles.settingLabel}>{'\u05D2\u05D9\u05D1\u05D5\u05D9 \u05D0\u05D5\u05D8\u05D5\u05DE\u05D8\u05D9'}</Text>
           </View>
           {renderToggle(autoBackup)}
         </TouchableOpacity>
-      </View>
+      </DarkCard>
 
       {/* Data Management */}
-      <View style={[styles.settingsCard, neuRaised]}>
+      <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardHeaderText}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD'}</Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.settingItem, styles.settingItemBorder]}
+          style={styles.settingItem}
           onPress={handleClearData}
         >
           <View style={styles.settingLeft}>
-            <MaterialIcons name="delete-forever" size={22} color={colors.error} />
+            <MaterialIcons name="delete-forever" size={20} color={colors.error} />
             <Text style={[styles.settingLabel, { color: colors.error }]}>
               {'\u05DE\u05D7\u05D9\u05E7\u05EA \u05DB\u05DC \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD'}
             </Text>
           </View>
           <MaterialIcons name="chevron-left" size={20} color={colors.error} />
         </TouchableOpacity>
-      </View>
+      </DarkCard>
 
       {/* Legal */}
-      <View style={[styles.settingsCard, neuRaised]}>
+      <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardHeaderText}>{'\u05DE\u05D9\u05D3\u05E2 \u05DE\u05E9\u05E4\u05D8\u05D9'}</Text>
         </View>
@@ -274,7 +294,7 @@ const Settings: React.FC<SettingsProps> = ({
             <View style={styles.settingLeft}>
               <MaterialIcons
                 name={item.icon}
-                size={22}
+                size={20}
                 color={colors.textSecondary}
               />
               <Text style={styles.settingLabel}>{item.label}</Text>
@@ -286,7 +306,7 @@ const Settings: React.FC<SettingsProps> = ({
             />
           </TouchableOpacity>
         ))}
-      </View>
+      </DarkCard>
 
       {/* Version */}
       <View style={styles.versionContainer}>
@@ -306,7 +326,7 @@ const Settings: React.FC<SettingsProps> = ({
         <Text style={styles.backLinkText}>{'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
       </TouchableOpacity>
 
-      <View style={[styles.contentCard, neuRaised]}>
+      <DarkCard style={styles.contentCard}>
         <View style={styles.contentTitleRow}>
           <MaterialIcons name="gavel" size={22} color={colors.primary} />
           <Text style={styles.contentTitle}>
@@ -341,7 +361,7 @@ const Settings: React.FC<SettingsProps> = ({
         <View style={styles.legalFooter}>
           <Text style={styles.legalFooterText}>{'\u05E2\u05D3\u05DB\u05D5\u05DF \u05D0\u05D7\u05E8\u05D5\u05DF: \u05E4\u05D1\u05E8\u05D5\u05D0\u05E8'} 2024</Text>
         </View>
-      </View>
+      </DarkCard>
     </View>
   );
 
@@ -355,7 +375,7 @@ const Settings: React.FC<SettingsProps> = ({
         <Text style={styles.backLinkText}>{'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
       </TouchableOpacity>
 
-      <View style={[styles.contentCard, neuRaised]}>
+      <DarkCard style={styles.contentCard}>
         <View style={styles.contentTitleRow}>
           <MaterialIcons name="privacy-tip" size={22} color={colors.primary} />
           <Text style={styles.contentTitle}>{'\u05DE\u05D3\u05D9\u05E0\u05D9\u05D5\u05EA \u05E4\u05E8\u05D8\u05D9\u05D5\u05EA'}</Text>
@@ -388,7 +408,7 @@ const Settings: React.FC<SettingsProps> = ({
         <View style={styles.legalFooter}>
           <Text style={styles.legalFooterText}>{'\u05E2\u05D3\u05DB\u05D5\u05DF \u05D0\u05D7\u05E8\u05D5\u05DF: \u05E4\u05D1\u05E8\u05D5\u05D0\u05E8'} 2024</Text>
         </View>
-      </View>
+      </DarkCard>
     </View>
   );
 
@@ -402,7 +422,7 @@ const Settings: React.FC<SettingsProps> = ({
         <Text style={styles.backLinkText}>{'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
       </TouchableOpacity>
 
-      <View style={[styles.aboutCard, neuRaised]}>
+      <DarkCard style={styles.aboutCard}>
         <Text style={styles.aboutAppName}>MONNY</Text>
         <Text style={styles.aboutDesc}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D7\u05DB\u05DD \u05D5\u05E4\u05E9\u05D5\u05D8'}</Text>
 
@@ -416,11 +436,11 @@ const Settings: React.FC<SettingsProps> = ({
             <Text style={styles.aboutInfoLabel}>{'\u05D2\u05E8\u05E1\u05D4'}</Text>
             <Text style={styles.aboutInfoValue}>1.0.0</Text>
           </View>
-          <View style={styles.aboutInfoRow}>
+          <View style={[styles.aboutInfoRow, styles.aboutInfoRowBorder]}>
             <Text style={styles.aboutInfoLabel}>{'\u05EA\u05D0\u05E8\u05D9\u05DA \u05E2\u05D3\u05DB\u05D5\u05DF'}</Text>
             <Text style={styles.aboutInfoValue}>{'\u05E4\u05D1\u05E8\u05D5\u05D0\u05E8'} 2024</Text>
           </View>
-          <View style={styles.aboutInfoRow}>
+          <View style={[styles.aboutInfoRow, styles.aboutInfoRowBorder]}>
             <Text style={styles.aboutInfoLabel}>{'\u05DE\u05E4\u05EA\u05D7'}</Text>
             <Text style={styles.aboutInfoValue}>MONNY Team</Text>
           </View>
@@ -436,13 +456,13 @@ const Settings: React.FC<SettingsProps> = ({
             { icon: 'analytics' as const, label: '\u05D3\u05D5\u05D7\u05D5\u05EA \u05DE\u05E4\u05D5\u05E8\u05D8\u05D9\u05DD' },
             { icon: 'share' as const, label: '\u05E9\u05D9\u05EA\u05D5\u05E3 \u05D1\u05D5\u05D5\u05D0\u05D8\u05E1\u05D0\u05E4' },
           ].map((feature, i) => (
-            <View key={i} style={[styles.featureItem, neuRaised]}>
-              <MaterialIcons name={feature.icon} size={18} color={colors.primary} />
+            <View key={i} style={styles.featureItem}>
+              <MaterialIcons name={feature.icon} size={16} color={colors.primary} />
               <Text style={styles.featureLabel}>{feature.label}</Text>
             </View>
           ))}
         </View>
-      </View>
+      </DarkCard>
 
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>{'\u05DB\u05DC \u05D4\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA'} 2024</Text>
@@ -453,64 +473,9 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Currency Modal */}
-      <Modal visible={showCurrencyModal} transparent animationType="fade">
-        <Pressable
-          style={styles.currencyOverlay}
-          onPress={() => setShowCurrencyModal(false)}
-        >
-          <View style={[styles.currencyCard, neuRaisedLg]}>
-            <Text style={styles.currencyTitle}>{'\u05D1\u05D7\u05E8 \u05DE\u05D8\u05D1\u05E2'}</Text>
-            {(['ILS', 'USD', 'EUR'] as Currency[]).map((cur) => (
-              <TouchableOpacity
-                key={cur}
-                style={[
-                  styles.currencyItem,
-                  globalCurrency === cur && styles.currencyItemActive,
-                ]}
-                onPress={() => {
-                  setGlobalCurrency?.(cur);
-                  setShowCurrencyModal(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.currencyItemLabel,
-                    globalCurrency === cur && { color: colors.white },
-                  ]}
-                >
-                  {currencyNames[cur]}
-                </Text>
-                <Text
-                  style={[
-                    styles.currencyItemSymbol,
-                    globalCurrency === cur && { color: colors.white },
-                  ]}
-                >
-                  {currencySymbols[cur]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.currencyCancel}
-              onPress={() => setShowCurrencyModal(false)}
-            >
-              <Text style={styles.currencyCancelText}>{'\u05D1\u05D9\u05D8\u05D5\u05DC'}</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
-
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.headerBtn, neuRaised]}
-          onPress={handleBack}
-        >
-          <MaterialIcons name="arrow-forward" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{getTitle()}</Text>
-        <View style={{ width: 44 }} />
+      <View style={styles.topBar}>
+        <ScreenTopBar title={getTitle()} onBack={handleBack} />
       </View>
 
       <ScrollView
@@ -530,72 +495,69 @@ const Settings: React.FC<SettingsProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.neuBg,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.neuBg,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
+  topBar: {
+    backgroundColor: colors.bgPrimary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.subtleBorder,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
     paddingBottom: 120,
   },
   sections: {
-    gap: 20,
+    gap: 16,
   },
 
   // Settings Card
   settingsCard: {
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    backgroundColor: colors.neuBg,
   },
   cardHeader: {
     paddingHorizontal: spacing.xl,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderBottomColor: colors.subtleBorder,
   },
   cardHeaderText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 11,
+    fontFamily: fonts.bold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
+
+  // Currency toggle row
+  currencyToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  currencyToggleWrapper: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingVertical: 16,
+    paddingVertical: 15,
   },
   settingItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.04)',
+    borderBottomColor: colors.subtleBorder,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -604,38 +566,51 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
   settingValue: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textTertiary,
     writingDirection: 'rtl',
   },
   settingRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  currencyDisplay: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.primary,
+
+  // Coming soon badge
+  comingSoonBadge: {
+    backgroundColor: colors.bgTertiary,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  comingSoonText: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    fontFamily: fonts.semibold,
+    writingDirection: 'rtl',
   },
 
   // Toggle
   toggle: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
+    width: 46,
+    height: 26,
+    borderRadius: 13,
     padding: 2,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: colors.white,
   },
   toggleThumbOn: {
@@ -655,7 +630,7 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   versionSubtext: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     marginTop: 4,
   },
@@ -665,20 +640,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   backLinkText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.primary,
     writingDirection: 'rtl',
   },
 
   // Content Card
   contentCard: {
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
     padding: spacing.xl,
-    backgroundColor: colors.neuBg,
   },
   contentTitleRow: {
     flexDirection: 'row',
@@ -688,7 +662,7 @@ const styles = StyleSheet.create({
   },
   contentTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     flex: 1,
     writingDirection: 'rtl',
@@ -701,7 +675,7 @@ const styles = StyleSheet.create({
   },
   legalSectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     marginBottom: 8,
     writingDirection: 'rtl',
@@ -716,27 +690,26 @@ const styles = StyleSheet.create({
   },
   legalFooter: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
+    borderTopColor: colors.subtleBorder,
     paddingTop: 16,
     marginTop: 8,
     alignItems: 'center',
   },
   legalFooterText: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     writingDirection: 'rtl',
   },
 
   // About
   aboutCard: {
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
     padding: spacing['2xl'],
     alignItems: 'center',
-    backgroundColor: colors.neuBg,
   },
   aboutAppName: {
     fontSize: 28,
-    fontWeight: '800',
+    fontFamily: fonts.extrabold,
     color: colors.primary,
     marginBottom: 8,
   },
@@ -756,15 +729,19 @@ const styles = StyleSheet.create({
   },
   aboutInfoCard: {
     width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: colors.bgTertiary,
     borderRadius: radii.lg,
-    padding: 16,
-    gap: 8,
+    padding: 14,
     marginBottom: 20,
   },
   aboutInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  aboutInfoRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: colors.subtleBorder,
   },
   aboutInfoLabel: {
     fontSize: 13,
@@ -773,12 +750,12 @@ const styles = StyleSheet.create({
   },
   aboutInfoValue: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
   },
   featuresTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     marginBottom: 12,
     writingDirection: 'rtl',
@@ -786,82 +763,24 @@ const styles = StyleSheet.create({
   featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
     justifyContent: 'center',
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderRadius: radii.md,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   featureLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-
-  // Currency Modal
-  currencyOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  currencyCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['2xl'],
-    padding: spacing.xl,
-    width: '100%',
-  },
-  currencyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 16,
-    writingDirection: 'rtl',
-  },
-  currencyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: radii.md,
-    marginBottom: 8,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-  },
-  currencyItemActive: {
-    backgroundColor: colors.primary,
-  },
-  currencyItemLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  currencyItemSymbol: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  currencyCancel: {
-    paddingVertical: 14,
-    borderRadius: radii.md,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  currencyCancelText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textTertiary,
+    fontSize: 11,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
     writingDirection: 'rtl',
   },
 });
