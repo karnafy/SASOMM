@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@monn/shared';
-import { colors, neuRaised, neuPressed, radii, spacing } from '../theme';
+import { colors, fonts, glowButton, radii, spacing } from '../theme';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
@@ -24,22 +25,37 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const handleSubmit = async () => {
     setError('');
     setSuccessMessage('');
 
-    if (!email || !password) {
+    // On web, browser autofill may not trigger onChangeText.
+    // Read DOM values as fallback.
+    let currentEmail = email;
+    let currentPassword = password;
+    if (Platform.OS === 'web') {
+      const emailNode = emailRef.current as unknown as HTMLInputElement;
+      const passwordNode = passwordRef.current as unknown as HTMLInputElement;
+      if (emailNode?.value && !currentEmail) currentEmail = emailNode.value;
+      if (passwordNode?.value && !currentPassword) currentPassword = passwordNode.value;
+      if (currentEmail !== email) setEmail(currentEmail);
+      if (currentPassword !== password) setPassword(currentPassword);
+    }
+
+    if (!currentEmail || !currentPassword) {
       setError('\u05E0\u05D0 \u05DC\u05DE\u05DC\u05D0 \u05D0\u05EA \u05DB\u05DC \u05D4\u05E9\u05D3\u05D5\u05EA');
       return;
     }
 
-    if (!isLogin && password !== confirmPassword) {
+    if (!isLogin && currentPassword !== confirmPassword) {
       setError('\u05D4\u05E1\u05D9\u05E1\u05DE\u05D0\u05D5\u05EA \u05D0\u05D9\u05E0\u05DF \u05EA\u05D5\u05D0\u05DE\u05D5\u05EA');
       return;
     }
 
-    if (password.length < 6) {
+    if (currentPassword.length < 6) {
       setError('\u05D4\u05E1\u05D9\u05E1\u05DE\u05D0 \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05DB\u05D9\u05DC \u05DC\u05E4\u05D7\u05D5\u05EA 6 \u05EA\u05D5\u05D5\u05D9\u05DD');
       setLoading(false);
       return;
@@ -49,7 +65,7 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(currentEmail, currentPassword);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             setError('\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC \u05D0\u05D5 \u05E1\u05D9\u05E1\u05DE\u05D0 \u05E9\u05D2\u05D5\u05D9\u05D9\u05DD');
@@ -58,7 +74,7 @@ export default function Auth() {
           }
         }
       } else {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(currentEmail, currentPassword);
         if (error) {
           if (error.message.includes('already registered')) {
             setError('\u05DE\u05E9\u05EA\u05DE\u05E9 \u05E2\u05DD \u05D0\u05D9\u05DE\u05D9\u05D9\u05DC \u05D6\u05D4 \u05DB\u05D1\u05E8 \u05E7\u05D9\u05D9\u05DD');
@@ -85,36 +101,62 @@ export default function Auth() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={colors.gradientColors}
+      locations={colors.gradientLocations}
+      style={styles.gradientContainer}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Logo / Header */}
-        <View style={styles.logoSection}>
-          <View style={styles.logoRow}>
-            <View style={styles.logoIcon}>
-              <MaterialIcons name="account-balance-wallet" size={28} color={colors.white} />
-            </View>
-            <Text style={styles.logoText}>MONNY</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo / Header */}
+          <View style={styles.logoSection}>
+            <LinearGradient
+              colors={[colors.primary, colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.logoGradient, glowButton]}
+            >
+              <MaterialIcons name="account-balance" size={36} color={colors.white} />
+            </LinearGradient>
+            <Text style={styles.logoText}>Monny</Text>
+            <Text style={styles.subtitle}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D7\u05DB\u05DD'}</Text>
           </View>
-          <Text style={styles.subtitle}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D7\u05DB\u05DD'}</Text>
-        </View>
 
-        {/* Card */}
-        <View style={[styles.card, neuRaised]}>
-          <Text style={styles.cardTitle}>
-            {isLogin ? '\u05D4\u05EA\u05D7\u05D1\u05E8\u05D5\u05EA' : '\u05D4\u05E8\u05E9\u05DE\u05D4'}
-          </Text>
+          {/* Card */}
+          <View style={styles.card}>
+            {/* Auth Toggle - Segmented Control */}
+            <View style={styles.segmentedControl}>
+              <TouchableOpacity
+                style={[styles.segment, isLogin && styles.segmentActive]}
+                onPress={() => !isLogin && toggleMode()}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.segmentText, isLogin && styles.segmentTextActive]}>
+                  {'\u05D4\u05EA\u05D7\u05D1\u05E8\u05D5\u05EA'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.segment, !isLogin && styles.segmentActive]}
+                onPress={() => isLogin && toggleMode()}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.segmentText, !isLogin && styles.segmentTextActive]}>
+                  {'\u05D4\u05E8\u05E9\u05DE\u05D4'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}</Text>
-            <View style={[styles.inputWrapper, neuPressed]}>
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}</Text>
               <TextInput
+                ref={emailRef}
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
@@ -126,13 +168,12 @@ export default function Auth() {
                 textAlign="left"
               />
             </View>
-          </View>
 
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{'\u05E1\u05D9\u05E1\u05DE\u05D0'}</Text>
-            <View style={[styles.inputWrapper, neuPressed]}>
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{'\u05E1\u05D9\u05E1\u05DE\u05D0'}</Text>
               <TextInput
+                ref={passwordRef}
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
@@ -142,13 +183,11 @@ export default function Auth() {
                 textAlign="left"
               />
             </View>
-          </View>
 
-          {/* Confirm Password (signup only) */}
-          {!isLogin && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{'\u05D0\u05D9\u05DE\u05D5\u05EA \u05E1\u05D9\u05E1\u05DE\u05D0'}</Text>
-              <View style={[styles.inputWrapper, neuPressed]}>
+            {/* Confirm Password (signup only) */}
+            {!isLogin && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{'\u05D0\u05D9\u05DE\u05D5\u05EA \u05E1\u05D9\u05E1\u05DE\u05D0'}</Text>
                 <TextInput
                   style={styles.input}
                   value={confirmPassword}
@@ -159,72 +198,106 @@ export default function Auth() {
                   textAlign="left"
                 />
               </View>
-            </View>
-          )}
-
-          {/* Error Message */}
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
-
-          {/* Success Message */}
-          {successMessage ? (
-            <View style={styles.successBox}>
-              <Text style={styles.successText}>{successMessage}</Text>
-            </View>
-          ) : null}
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <View style={styles.buttonContent}>
-                <ActivityIndicator size="small" color={colors.white} />
-                <Text style={styles.submitButtonText}>{'\u05DE\u05E2\u05D1\u05D3...'}</Text>
-              </View>
-            ) : (
-              <View style={styles.buttonContent}>
-                <MaterialIcons
-                  name={isLogin ? 'login' : 'person-add'}
-                  size={22}
-                  color={colors.white}
-                />
-                <Text style={styles.submitButtonText}>
-                  {isLogin ? '\u05D4\u05EA\u05D7\u05D1\u05E8' : '\u05D4\u05D9\u05E8\u05E9\u05DD'}
-                </Text>
-              </View>
             )}
-          </TouchableOpacity>
 
-          {/* Toggle Login/Signup */}
-          <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
-            <Text style={styles.toggleText}>
-              {isLogin
-                ? '\u05D0\u05D9\u05DF \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05D9\u05E8\u05E9\u05DD'
-                : '\u05D9\u05E9 \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05EA\u05D7\u05D1\u05E8'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-        {/* Footer */}
-        <Text style={styles.footer}>
-          {'\u00A9 2026 MONNY. \u05DB\u05DC \u05D4\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA.'}
-        </Text>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {/* Success Message */}
+            {successMessage ? (
+              <View style={styles.successBox}>
+                <Text style={styles.successText}>{successMessage}</Text>
+              </View>
+            ) : null}
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={loading}
+              activeOpacity={0.8}
+              style={loading ? styles.submitButtonDisabledWrapper : undefined}
+            >
+              <LinearGradient
+                colors={[colors.primary, colors.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.submitButton, glowButton]}
+              >
+                {loading ? (
+                  <View style={styles.buttonContent}>
+                    <ActivityIndicator size="small" color={colors.bgPrimary} />
+                    <Text style={styles.submitButtonText}>{'\u05DE\u05E2\u05D1\u05D3...'}</Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <MaterialIcons
+                      name={isLogin ? 'login' : 'person-add'}
+                      size={22}
+                      color={colors.bgPrimary}
+                    />
+                    <Text style={styles.submitButtonText}>
+                      {isLogin ? '\u05D4\u05EA\u05D7\u05D1\u05E8' : '\u05D4\u05D9\u05E8\u05E9\u05DD'}
+                    </Text>
+                  </View>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Social Auth Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{'\u05D0\u05D5'}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Social Auth Buttons */}
+            <View style={styles.socialRow}>
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={() => Alert.alert('\u05D1\u05E7\u05E8\u05D5\u05D1')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.socialButtonTextG}>G</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={() => Alert.alert('\u05D1\u05E7\u05E8\u05D5\u05D1')}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="apple" size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Toggle Link */}
+            <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
+              <Text style={styles.toggleText}>
+                {isLogin
+                  ? '\u05D0\u05D9\u05DF \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05D9\u05E8\u05E9\u05DD'
+                  : '\u05D9\u05E9 \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05EA\u05D7\u05D1\u05E8'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer */}
+          <Text style={styles.footer}>
+            {'\u00A9 2026 MONNY. \u05DB\u05DC \u05D4\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA.'}
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradientContainer: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+  },
+  flex: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -238,45 +311,64 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  logoIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primary,
+  logoGradient: {
+    width: 76,
+    height: 76,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.md,
   },
   logoText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.primary,
+    fontSize: 30,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 14,
-    color: colors.textTertiary,
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
     writingDirection: 'rtl',
     textAlign: 'center',
   },
 
   /* Card */
   card: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: radii['3xl'],
     padding: spacing['3xl'],
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.textSecondary,
-    textAlign: 'center',
+
+  /* Segmented Control */
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 12,
+    padding: 3,
     marginBottom: spacing['2xl'],
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  segmentActive: {
+    backgroundColor: 'rgba(0,217,217,0.12)',
+  },
+  segmentText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.textTertiary,
     writingDirection: 'rtl',
+  },
+  segmentTextActive: {
+    color: colors.primary,
   },
 
   /* Inputs */
@@ -284,49 +376,52 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   label: {
-    fontSize: 13,
+    fontSize: 11,
+    fontFamily: fonts.medium,
     fontWeight: '500',
     color: colors.textSecondary,
     marginBottom: spacing.sm,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
-  inputWrapper: {
-    borderRadius: radii.lg,
-    padding: 4,
-    backgroundColor: colors.neuBg,
-  },
   input: {
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    borderRadius: 12,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    fontSize: 16,
-    color: colors.textPrimary,
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: colors.white,
   },
 
   /* Error / Success */
   errorBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(255,77,106,0.1)',
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: 'rgba(255,77,106,0.3)',
     borderRadius: radii.lg,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   errorText: {
+    fontFamily: fonts.regular,
     color: colors.error,
     fontSize: 13,
     textAlign: 'center',
     writingDirection: 'rtl',
   },
   successBox: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: 'rgba(0,232,143,0.1)',
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: 'rgba(0,232,143,0.3)',
     borderRadius: radii.lg,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   successText: {
+    fontFamily: fonts.regular,
     color: colors.success,
     fontSize: 13,
     textAlign: 'center',
@@ -334,16 +429,15 @@ const styles = StyleSheet.create({
   },
 
   /* Submit Button */
+  submitButtonDisabledWrapper: {
+    opacity: 0.5,
+  },
   submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.lg,
+    borderRadius: 14,
     paddingVertical: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.sm,
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -351,10 +445,52 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   submitButtonText: {
-    color: colors.white,
-    fontSize: 17,
+    color: colors.bgPrimary,
+    fontSize: 16,
+    fontFamily: fonts.bold,
     fontWeight: 'bold',
     writingDirection: 'rtl',
+  },
+
+  /* Divider */
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing['2xl'],
+    gap: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.subtleBorder,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: colors.textTertiary,
+  },
+
+  /* Social Auth */
+  socialRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  socialButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialButtonTextG: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    color: colors.textSecondary,
   },
 
   /* Toggle */
@@ -365,12 +501,13 @@ const styles = StyleSheet.create({
   toggleText: {
     color: colors.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     writingDirection: 'rtl',
   },
 
   /* Footer */
   footer: {
+    fontFamily: fonts.regular,
     textAlign: 'center',
     color: colors.textTertiary,
     fontSize: 12,
