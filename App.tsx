@@ -1,7 +1,14 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Text, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { useFonts } from '@expo-google-fonts/open-sans';
+import {
+  OpenSans_400Regular,
+  OpenSans_500Medium,
+  OpenSans_600SemiBold,
+  OpenSans_700Bold,
+  OpenSans_800ExtraBold,
+} from '@expo-google-fonts/open-sans';
 import {
   initSupabase,
   AuthProvider,
@@ -19,6 +26,7 @@ import {
 import { colors } from './theme';
 import LoadingScreen from './components/LoadingScreen';
 import BottomNav from './components/BottomNav';
+import TopHeader from './components/TopHeader';
 
 // Import pages
 import Auth from './pages/Auth';
@@ -47,6 +55,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 initSupabase(supabaseUrl, supabaseAnonKey);
 
+// Set default font for all Text components
+const TextAny = Text as any;
+const originalDefaultProps = TextAny.defaultProps;
+TextAny.defaultProps = {
+  ...originalDefaultProps,
+  style: { fontFamily: 'OpenSans_400Regular' },
+};
+
 const CONVERSION_RATES: Record<Currency, number> = {
   'ILS': 1,
   'USD': 1 / 3.75,
@@ -57,6 +73,7 @@ const CONVERSION_RATES: Record<Currency, number> = {
 function AppContent() {
   const { user, signOut } = useAuth();
   const userId = user?.id;
+  const userName = user?.email?.split('@')[0] || '';
   const scrollRef = useRef<ScrollView>(null);
 
   const { projects, loading: projectsLoading, refetch: refetchProjects } = useProjects(userId);
@@ -339,12 +356,14 @@ function AppContent() {
 
   // Computed totals
   const totals = useMemo(() => {
+    const totalBudget = projects.reduce((sum, p) => sum + p.budget, 0);
     const totalIncome = projects.reduce((sum, p) => sum + (p.income || 0), 0);
     const totalExpenses = projects.reduce((sum, p) => sum + p.spent, 0);
     return {
+      budget: convertAmount(totalBudget),
       income: convertAmount(totalIncome),
       expenses: convertAmount(totalExpenses),
-      net: convertAmount(totalIncome - totalExpenses),
+      net: convertAmount(totalBudget + totalIncome - totalExpenses),
     };
   }, [projects, convertAmount]);
 
@@ -366,7 +385,7 @@ function AppContent() {
 
     switch (currentScreen) {
       case AppScreen.DASHBOARD:
-        return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} />;
+        return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} userName={userName} />;
       case AppScreen.SUPPLIERS:
         return <Contacts {...commonProps} suppliers={suppliers} />;
       case AppScreen.ADD_EXPENSE:
@@ -380,12 +399,13 @@ function AppContent() {
             autoCapture={isScanIntent}
             initialType={initialTxType}
             preselectedSupplierId={selectedSupplierId}
+            preselectedProjectId={selectedProjectId}
           />
         );
       case AppScreen.EDIT_ACTIVITY:
         return <AddExpense {...commonProps} projects={projects} suppliers={suppliers} onSave={handleTransactionSave} editActivity={activeActivity as any} />;
       case AppScreen.ADD_PROJECT:
-        return <AddProject {...commonProps} onSave={handleCreateProject} />;
+        return <AddProject {...commonProps} onSave={handleCreateProject} preselectedMainCategory={selectedCategory || undefined} />;
       case AppScreen.EDIT_PROJECT:
         return (
           <AddProject
@@ -431,7 +451,7 @@ function AppContent() {
       case AppScreen.DEBTS:
         return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
       default:
-        return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} />;
+        return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} userName={userName} />;
     }
   };
 
@@ -449,6 +469,7 @@ function AppContent() {
           </View>
         </View>
       )}
+      <TopHeader onNavigate={navigate} onLogout={handleLogout} />
       <ScrollView
         ref={scrollRef}
         style={styles.scrollView}
@@ -472,9 +493,19 @@ function AppInner() {
 
 // Root App
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    OpenSans_400Regular,
+    OpenSans_500Medium,
+    OpenSans_600SemiBold,
+    OpenSans_700Bold,
+    OpenSans_800ExtraBold,
+  });
+
+  if (!fontsLoaded) return <LoadingScreen />;
+
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <AuthProvider>
         <AppInner />
       </AuthProvider>
@@ -485,7 +516,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
   },
   scrollView: {
     flex: 1,

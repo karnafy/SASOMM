@@ -1,8 +1,8 @@
 // Types
 export * from './types';
 
-// Database types
-export * from './lib/database.types';
+// Database types (only non-conflicting exports)
+export type { Json, Database, Tables, TablesInsert, TablesUpdate, Profile, Contact, AuditLog } from './lib/database.types';
 
 // Supabase client
 export { supabase, initSupabase, getSupabase, signUp, signIn, signOut, getCurrentUser, onAuthStateChange } from './lib/supabase';

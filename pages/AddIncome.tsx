@@ -31,7 +31,7 @@ const AddIncome: React.FC<AddIncomeProps> = ({ onNavigate }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },

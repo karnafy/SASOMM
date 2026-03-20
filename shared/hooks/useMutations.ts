@@ -203,10 +203,11 @@ export function useMutations(userId: string | undefined) {
     }
 
     // Calculate current signed balance
+    const supplierAmount = supplier.amount ?? 0;
     let signedBalance = supplier.status === 'credit'
-      ? supplier.amount
+      ? supplierAmount
       : supplier.status === 'debt'
-        ? -supplier.amount
+        ? -supplierAmount
         : 0;
 
     // Apply adjustment based on transaction type
@@ -387,7 +388,7 @@ export function useMutations(userId: string | undefined) {
       if (oldProject && oldProject.budget !== updates.budget) {
         await createActivityEntry(projectId, 'budget_change', {
           title: 'עדכון תקציב',
-          oldValue: `${oldProject.budget.toLocaleString()} ₪`,
+          oldValue: `${(oldProject.budget ?? 0).toLocaleString()} ₪`,
           newValue: `${updates.budget.toLocaleString()} ₪`,
         });
       }
