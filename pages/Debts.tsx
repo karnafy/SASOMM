@@ -11,12 +11,26 @@ import {
   Pressable,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
+
+const openExternalURL = (url: string) => {
+  if (Platform.OS === 'web') {
+    window.open(url, '_blank');
+  } else {
+    Linking.openURL(url);
+  }
+};
 import * as ImagePicker from 'expo-image-picker';
 import { AppScreen, Debt, Currency, ReminderInterval, Project } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { GradientHeader } from '../components/ui/GradientHeader';
+import { GlassCard } from '../components/ui/GlassCard';
+import { DarkCard } from '../components/ui/DarkCard';
+import { GradientButton } from '../components/ui/GradientButton';
+import { SectionHeader } from '../components/ui/SectionHeader';
 
 interface DebtsProps {
   onNavigate: (screen: AppScreen, id?: string) => void;
@@ -30,19 +44,19 @@ interface DebtsProps {
 }
 
 const REMINDER_LABELS: Record<ReminderInterval, string> = {
-  none: '\u05DC\u05DC\u05D0',
-  daily: '\u05D9\u05D5\u05DE\u05D9',
-  '2days': '\u05D9\u05D5\u05DE\u05D9\u05D9\u05DD',
-  '3days': '3 \u05D9\u05DE\u05D9\u05DD',
-  weekly: '\u05E9\u05D1\u05D5\u05E2\u05D9',
-  biweekly: '\u05E9\u05D1\u05D5\u05E2\u05D9\u05D9\u05DD',
-  monthly: '\u05D7\u05D5\u05D3\u05E9\u05D9',
+  none: 'ללא',
+  daily: 'יומי',
+  '2days': 'יומיים',
+  '3days': '3 ימים',
+  weekly: 'שבועי',
+  biweekly: 'שבועיים',
+  monthly: 'חודשי',
 };
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '€',
 };
 
 const Debts: React.FC<DebtsProps> = ({
@@ -108,7 +122,7 @@ const Debts: React.FC<DebtsProps> = ({
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05EA \u05D2\u05D9\u05E9\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4');
+        Alert.alert('שגיאה', 'נדרשת הרשאת גישה לגלריה');
         return;
       }
 
@@ -122,7 +136,7 @@ const Debts: React.FC<DebtsProps> = ({
         setImageUrl(result.assets[0].uri);
       }
     } catch (err) {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D1\u05D7\u05D9\u05E8\u05EA \u05EA\u05DE\u05D5\u05E0\u05D4');
+      Alert.alert('שגיאה', 'שגיאה בבחירת תמונה');
     }
   };
 
@@ -172,12 +186,12 @@ const Debts: React.FC<DebtsProps> = ({
 
   const handleDelete = (id: string) => {
     Alert.alert(
-      '\u05DE\u05D7\u05D9\u05E7\u05EA \u05D7\u05D5\u05D1',
-      '\u05D4\u05D0\u05DD \u05D0\u05EA\u05D4 \u05D1\u05D8\u05D5\u05D7 \u05E9\u05D1\u05E8\u05E6\u05D5\u05E0\u05DA \u05DC\u05DE\u05D7\u05D5\u05E7 \u05D7\u05D5\u05D1 \u05D6\u05D4?',
+      'מחיקת חוב',
+      'האם אתה בטוח שברצונך למחוק חוב זה?',
       [
-        { text: '\u05D1\u05D9\u05D8\u05D5\u05DC', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         {
-          text: '\u05DE\u05D7\u05E7',
+          text: 'מחק',
           style: 'destructive',
           onPress: () => onDeleteDebt(id),
         },
@@ -191,23 +205,23 @@ const Debts: React.FC<DebtsProps> = ({
 
   const handleSendWhatsApp = (debt: Debt) => {
     if (!debt.personPhone) {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05D0\u05D9\u05DF \u05DE\u05E1\u05E4\u05E8 \u05D8\u05DC\u05E4\u05D5\u05DF \u05DC\u05D0\u05D9\u05E9 \u05E7\u05E9\u05E8 \u05D6\u05D4');
+      Alert.alert('שגיאה', 'אין מספר טלפון לאיש קשר זה');
       return;
     }
 
-    const message = `\u05E9\u05DC\u05D5\u05DD ${debt.personName},
-\u05D6\u05D5\u05D4\u05D9 \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA \u05D9\u05D3\u05D9\u05D3\u05D5\u05EA\u05D9\u05EA \u05DC\u05D2\u05D1\u05D9 \u05D4\u05D7\u05D5\u05D1 \u05D1\u05E1\u05DA ${currencySymbols[debt.currency]}${debt.amount.toLocaleString()}.
-${debt.projectName ? `\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8: ${debt.projectName}` : ''}
-${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
-\u05D0\u05E9\u05DE\u05D7 \u05DC\u05E1\u05D2\u05D5\u05E8 \u05D0\u05EA \u05D4\u05E2\u05E0\u05D9\u05D9\u05DF \u05D1\u05D4\u05E7\u05D3\u05DD.
-\u05EA\u05D5\u05D3\u05D4!`;
+    const message = `שלום ${debt.personName},
+זוהי תזכורת ידידותית לגבי החוב בסך ${currencySymbols[debt.currency]}${debt.amount.toLocaleString()}.
+${debt.projectName ? `פרויקט: ${debt.projectName}` : ''}
+${debt.notes ? `הערות: ${debt.notes}` : ''}
+אשמח לסגור את העניין בהקדם.
+תודה!`;
 
     const cleanPhone = debt.personPhone.replace(/\D/g, '');
     const formattedPhone = cleanPhone.startsWith('0')
       ? '972' + cleanPhone.substring(1)
       : cleanPhone;
 
-    Linking.openURL(
+    openExternalURL(
       `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
     );
 
@@ -232,8 +246,8 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
           style={styles.pickerOverlay}
           onPress={() => setShowProjectPicker(false)}
         >
-          <View style={[styles.pickerCard, neuRaisedLg]}>
-            <Text style={styles.pickerTitle}>{'\u05D1\u05D7\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
+          <View style={styles.pickerCard}>
+            <Text style={styles.pickerTitle}>{'בחר פרויקט'}</Text>
             <TouchableOpacity
               style={[
                 styles.pickerItem,
@@ -244,7 +258,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                 setShowProjectPicker(false);
               }}
             >
-              <Text style={styles.pickerItemText}>{'\u05DC\u05DC\u05D0 \u05E9\u05D9\u05D5\u05DA'}</Text>
+              <Text style={styles.pickerItemText}>{'ללא שיוך'}</Text>
             </TouchableOpacity>
             <ScrollView style={{ maxHeight: 300 }}>
               {projects.map((p) => (
@@ -277,25 +291,25 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
               resetForm();
             }}
           />
-          <View style={[styles.modalCard, neuRaisedLg]}>
+          <View style={styles.modalCard}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.modalTitle}>
-                {editingDebt ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05D7\u05D5\u05D1' : '\u05D7\u05D5\u05D1 \u05D7\u05D3\u05E9'}
+                {editingDebt ? 'עריכת חוב' : 'חוב חדש'}
               </Text>
 
               {/* Person Name */}
-              <Text style={styles.fieldLabel}>{'\u05E9\u05DD \u05D4\u05D7\u05D9\u05D9\u05D1 *'}</Text>
+              <Text style={styles.fieldLabel}>{'שם החייב *'}</Text>
               <TextInput
                 style={styles.input}
                 value={personName}
                 onChangeText={setPersonName}
-                placeholder={'\u05E9\u05DD \u05DE\u05DC\u05D0'}
+                placeholder={'שם מלא'}
                 placeholderTextColor={colors.textTertiary}
                 textAlign="right"
               />
 
               {/* Phone */}
-              <Text style={styles.fieldLabel}>{'\u05D8\u05DC\u05E4\u05D5\u05DF (\u05DC\u05E9\u05DC\u05D9\u05D7\u05EA \u05EA\u05D6\u05DB\u05D5\u05E8\u05D5\u05EA)'}</Text>
+              <Text style={styles.fieldLabel}>{'טלפון (לשליחת תזכורות)'}</Text>
               <TextInput
                 style={[styles.input, { textAlign: 'left' }]}
                 value={personPhone}
@@ -306,7 +320,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
               />
 
               {/* Amount & Currency */}
-              <Text style={styles.fieldLabel}>{'\u05E1\u05DB\u05D5\u05DD *'}</Text>
+              <Text style={styles.fieldLabel}>{'סכום *'}</Text>
               <View style={styles.amountRow}>
                 <TextInput
                   style={[styles.input, styles.amountInput]}
@@ -343,7 +357,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
               </View>
 
               {/* Project */}
-              <Text style={styles.fieldLabel}>{'\u05E9\u05D9\u05D5\u05DA \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 (\u05D0\u05D5\u05E4\u05E6\u05D9\u05D5\u05E0\u05DC\u05D9)'}</Text>
+              <Text style={styles.fieldLabel}>{'שיוך לפרויקט (אופציונלי)'}</Text>
               <TouchableOpacity
                 style={styles.input}
                 onPress={() => setShowProjectPicker(true)}
@@ -354,17 +368,17 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                     !selectedProjectId && { color: colors.textTertiary },
                   ]}
                 >
-                  {selectedProjectName || '\u05DC\u05DC\u05D0 \u05E9\u05D9\u05D5\u05DA'}
+                  {selectedProjectName || 'ללא שיוך'}
                 </Text>
               </TouchableOpacity>
 
               {/* Notes */}
-              <Text style={styles.fieldLabel}>{'\u05D4\u05E2\u05E8\u05D5\u05EA'}</Text>
+              <Text style={styles.fieldLabel}>{'הערות'}</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder={'\u05D4\u05E2\u05E8\u05D5\u05EA \u05E0\u05D5\u05E1\u05E4\u05D5\u05EA...'}
+                placeholder={'הערות נוספות...'}
                 placeholderTextColor={colors.textTertiary}
                 multiline
                 numberOfLines={3}
@@ -373,7 +387,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
               />
 
               {/* Image Upload */}
-              <Text style={styles.fieldLabel}>{'\u05EA\u05DE\u05D5\u05E0\u05D4 / \u05E7\u05D1\u05DC\u05D4'}</Text>
+              <Text style={styles.fieldLabel}>{'תמונה / קבלה'}</Text>
               {imageUrl ? (
                 <View style={styles.imagePreview}>
                   <Image
@@ -390,7 +404,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                     style={styles.replaceImageBtn}
                     onPress={handleImageUpload}
                   >
-                    <Text style={styles.replaceImageText}>{'\u05D4\u05D7\u05DC\u05E3 \u05EA\u05DE\u05D5\u05E0\u05D4'}</Text>
+                    <Text style={styles.replaceImageText}>{'החלף תמונה'}</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -402,7 +416,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                   {isUploadingImage ? (
                     <>
                       <ActivityIndicator color={colors.textTertiary} />
-                      <Text style={styles.uploadBtnText}>{'\u05DE\u05E2\u05DC\u05D4 \u05EA\u05DE\u05D5\u05E0\u05D4...'}</Text>
+                      <Text style={styles.uploadBtnText}>{'מעלה תמונה...'}</Text>
                     </>
                   ) : (
                     <>
@@ -411,14 +425,14 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                         size={28}
                         color={colors.textTertiary}
                       />
-                      <Text style={styles.uploadBtnText}>{'\u05D4\u05D5\u05E1\u05E3 \u05EA\u05DE\u05D5\u05E0\u05D4'}</Text>
+                      <Text style={styles.uploadBtnText}>{'הוסף תמונה'}</Text>
                     </>
                   )}
                 </TouchableOpacity>
               )}
 
               {/* Reminder Interval */}
-              <Text style={styles.fieldLabel}>{'\u05EA\u05D6\u05DB\u05D5\u05E8\u05EA'}</Text>
+              <Text style={styles.fieldLabel}>{'תזכורת'}</Text>
               <View style={styles.reminderGrid}>
                 {(
                   Object.entries(REMINDER_LABELS) as [ReminderInterval, string][]
@@ -429,7 +443,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                       styles.reminderPill,
                       reminderInterval === key
                         ? styles.reminderPillActive
-                        : [neuRaised, styles.reminderPillInactive],
+                        : styles.reminderPillInactive,
                     ]}
                     onPress={() => setReminderInterval(key)}
                   >
@@ -447,66 +461,61 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
 
               {/* Action Buttons */}
               <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalBtn, neuRaised]}
+                <GradientButton
+                  label="ביטול"
                   onPress={() => {
                     setShowAddModal(false);
                     resetForm();
                   }}
-                >
-                  <Text style={styles.cancelBtnText}>{'\u05D1\u05D9\u05D8\u05D5\u05DC'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.modalBtn,
-                    styles.saveBtnBg,
-                    (!personName.trim() || !amount) && styles.disabledBtn,
-                  ]}
+                  variant="outline"
+                  style={styles.modalActionBtn}
+                />
+                <GradientButton
+                  label={editingDebt ? 'עדכן' : 'הוסף'}
                   onPress={handleSave}
                   disabled={!personName.trim() || !amount}
-                >
-                  <Text style={styles.saveBtnText}>
-                    {editingDebt ? '\u05E2\u05D3\u05DB\u05DF' : '\u05D4\u05D5\u05E1\u05E3'}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.modalActionBtn}
+                />
               </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={{ width: 44 }} />
-        <Text style={styles.headerTitle}>{'\u05D7\u05D9\u05D9\u05D1\u05D9\u05DD \u05DC\u05D9'}</Text>
-        <TouchableOpacity style={styles.addBtnHeader} onPress={openAddModal}>
-          <MaterialIcons name="add" size={22} color={colors.white} />
-        </TouchableOpacity>
-      </View>
+      {/* Gradient Header */}
+      <GradientHeader>
+        <View style={styles.headerInner}>
+          <TouchableOpacity style={styles.addFab} onPress={openAddModal}>
+            <MaterialIcons name="add" size={22} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{'חובות'}</Text>
+          <View style={{ width: 44 }} />
+        </View>
+
+        {/* Summary Glass Card */}
+        <GlassCard style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>{'סה"כ חיובים לי'}</Text>
+          <Text style={styles.summaryAmount}>
+            {currencySymbols[globalCurrency]}
+            {totalDebt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </Text>
+          <Text style={styles.summaryCount}>
+            {activeDebts.length} {'חובות פעילים'}
+          </Text>
+        </GlassCard>
+      </GradientHeader>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Total Summary */}
-        <View style={[styles.totalCard, neuRaised]}>
-          <Text style={styles.totalLabel}>{'\u05E1\u05D4"\u05DB \u05D7\u05D9\u05D9\u05D1\u05D9\u05DD \u05DC\u05D9'}</Text>
-          <Text style={styles.totalAmount}>
-            {currencySymbols[globalCurrency]}
-            {totalDebt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-          </Text>
-          <Text style={styles.totalCount}>
-            {activeDebts.length} {'\u05D7\u05D5\u05D1\u05D5\u05EA \u05E4\u05E2\u05D9\u05DC\u05D9\u05DD'}
-          </Text>
-        </View>
-
         {/* Active Debts */}
         {activeDebts.length > 0 ? (
           <View style={styles.debtSection}>
-            <Text style={styles.sectionTitle}>{'\u05D7\u05D5\u05D1\u05D5\u05EA \u05E4\u05E2\u05D9\u05DC\u05D9\u05DD'}</Text>
+            <SectionHeader title="חובות פעילים" />
             {activeDebts.map((debt) => (
-              <View key={debt.id} style={[styles.debtCard, neuRaised]}>
+              <DarkCard key={debt.id} style={styles.debtCard}>
                 <View style={styles.debtHeader}>
                   <View style={styles.debtPersonRow}>
                     <View style={styles.debtAvatar}>
@@ -515,7 +524,10 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                     <View style={styles.debtPersonInfo}>
                       <Text style={styles.debtName}>{debt.personName}</Text>
                       {debt.personPhone && (
-                        <Text style={styles.debtPhone}>{debt.personPhone}</Text>
+                        <View style={styles.phoneRow}>
+                          <MaterialIcons name="phone" size={12} color={colors.textTertiary} />
+                          <Text style={styles.debtPhone}>{debt.personPhone}</Text>
+                        </View>
                       )}
                     </View>
                   </View>
@@ -529,6 +541,16 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                   <View style={styles.debtMeta}>
                     <MaterialIcons name="folder" size={14} color={colors.primary} />
                     <Text style={styles.debtMetaText}>{debt.projectName}</Text>
+                  </View>
+                )}
+
+                {debt.reminderInterval !== 'none' && (
+                  <View style={styles.reminderBadge}>
+                    <MaterialIcons name="schedule" size={12} color={colors.warning} />
+                    <Text style={styles.reminderBadgeText}>
+                      {'תזכורת: '}{REMINDER_LABELS[debt.reminderInterval]}
+                      {debt.nextReminderDate && ` (${debt.nextReminderDate})`}
+                    </Text>
                   </View>
                 )}
 
@@ -546,72 +568,62 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                   />
                 )}
 
-                {debt.reminderInterval !== 'none' && (
-                  <View style={styles.debtMeta}>
-                    <MaterialIcons name="schedule" size={14} color={colors.warning} />
-                    <Text style={styles.debtMetaText}>
-                      {'\u05EA\u05D6\u05DB\u05D5\u05E8\u05EA: '}{REMINDER_LABELS[debt.reminderInterval]}
-                      {debt.nextReminderDate && ` (${debt.nextReminderDate})`}
-                    </Text>
-                  </View>
-                )}
-
                 {/* Actions */}
                 <View style={styles.debtActions}>
                   {debt.personPhone && (
                     <TouchableOpacity
-                      style={[styles.debtActionBtn, neuRaised, { flex: 1 }]}
+                      style={[styles.debtActionBtn, { flex: 1 }]}
                       onPress={() => handleSendWhatsApp(debt)}
                     >
                       <MaterialIcons name="chat" size={16} color={colors.success} />
                       <Text style={[styles.debtActionText, { color: colors.success }]}>
-                        {'\u05E9\u05DC\u05D7 \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA'}
+                        {'שלח תזכורת'}
                       </Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity
-                    style={[styles.debtActionBtn, neuRaised, { flex: 1 }]}
+                    style={[styles.debtActionBtn, { flex: 1 }]}
                     onPress={() => handleMarkPaid(debt)}
                   >
                     <MaterialIcons name="check-circle" size={16} color={colors.primary} />
                     <Text style={[styles.debtActionText, { color: colors.primary }]}>
-                      {'\u05E9\u05D5\u05DC\u05DD'}
+                      {'שולם'}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.debtActionSmall, neuRaised]}
+                    style={styles.debtActionSmall}
                     onPress={() => openEditModal(debt)}
                   >
                     <MaterialIcons name="edit" size={16} color={colors.textTertiary} />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.debtActionSmall, neuRaised]}
+                    style={styles.debtActionSmall}
                     onPress={() => handleDelete(debt.id)}
                   >
                     <MaterialIcons name="delete" size={16} color={colors.error} />
                   </TouchableOpacity>
                 </View>
-              </View>
+              </DarkCard>
             ))}
           </View>
         ) : (
-          <View style={styles.emptyCard}>
+          <DarkCard style={styles.emptyCard}>
             <MaterialIcons name="savings" size={40} color={colors.textTertiary} />
-            <Text style={styles.emptyText}>{'\u05D0\u05D9\u05DF \u05D7\u05D5\u05D1\u05D5\u05EA \u05E4\u05E2\u05D9\u05DC\u05D9\u05DD'}</Text>
-            <TouchableOpacity style={styles.emptyBtn} onPress={openAddModal}>
-              <Text style={styles.emptyBtnText}>{'\u05D4\u05D5\u05E1\u05E3 \u05D7\u05D5\u05D1 \u05D7\u05D3\u05E9'}</Text>
-            </TouchableOpacity>
-          </View>
+            <Text style={styles.emptyText}>{'אין חובות פעילים'}</Text>
+            <GradientButton
+              label="הוסף חוב חדש"
+              onPress={openAddModal}
+              style={styles.emptyAddBtn}
+            />
+          </DarkCard>
         )}
 
         {/* Paid Debts */}
         {paidDebts.length > 0 && (
           <View style={styles.debtSection}>
-            <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>
-              {'\u05D7\u05D5\u05D1\u05D5\u05EA \u05E9\u05E9\u05D5\u05DC\u05DE\u05D5'}
-            </Text>
+            <SectionHeader title="חובות ששולמו" />
             {paidDebts.map((debt) => (
-              <View key={debt.id} style={[styles.paidDebtCard]}>
+              <DarkCard key={debt.id} style={styles.paidDebtCard}>
                 <View style={styles.paidDebtRow}>
                   <View style={styles.paidDebtLeft}>
                     <View style={styles.paidDebtIcon}>
@@ -629,7 +641,7 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
                     {debt.amount.toLocaleString()}
                   </Text>
                 </View>
-              </View>
+              </DarkCard>
             ))}
           </View>
         )}
@@ -641,82 +653,79 @@ ${debt.notes ? `\u05D4\u05E2\u05E8\u05D5\u05EA: ${debt.notes}` : ''}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
   },
-  header: {
+
+  // Header
+  headerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
-    backgroundColor: colors.neuBg,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontSize: 22,
+    fontFamily: fonts.bold,
+    color: colors.white,
     writingDirection: 'rtl',
   },
-  addBtnHeader: {
+  addFab: {
     width: 44,
     height: 44,
     borderRadius: radii.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 120,
-    gap: 20,
-  },
 
-  // Total
-  totalCard: {
-    borderRadius: radii['2xl'],
+  // Summary Glass Card
+  summaryCard: {
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.xl,
     padding: spacing['2xl'],
     alignItems: 'center',
-    backgroundColor: colors.neuBg,
   },
-  totalLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
+  summaryLabel: {
+    fontSize: 11,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginBottom: 8,
     writingDirection: 'rtl',
   },
-  totalAmount: {
+  summaryAmount: {
     fontSize: 36,
-    fontWeight: '700',
-    color: colors.success,
+    fontFamily: fonts.bold,
+    color: colors.error,
   },
-  totalCount: {
+  summaryCount: {
     fontSize: 12,
     color: colors.textTertiary,
     marginTop: 8,
     writingDirection: 'rtl',
   },
 
+  // Scroll
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: 120,
+    gap: 20,
+  },
+
   // Section
   debtSection: {
     gap: 12,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    writingDirection: 'rtl',
-  },
 
   // Debt Card
   debtCard: {
-    borderRadius: radii.lg,
     padding: spacing.lg,
-    backgroundColor: colors.neuBg,
   },
   debtHeader: {
     flexDirection: 'row',
@@ -734,7 +743,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: 'rgba(0,217,217,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -743,9 +752,15 @@ const styles = StyleSheet.create({
   },
   debtName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
   },
   debtPhone: {
     fontSize: 12,
@@ -753,8 +768,8 @@ const styles = StyleSheet.create({
   },
   debtAmount: {
     fontSize: 20,
-    fontWeight: '700',
-    color: colors.success,
+    fontFamily: fonts.bold,
+    color: colors.error,
   },
   debtMeta: {
     flexDirection: 'row',
@@ -767,11 +782,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     writingDirection: 'rtl',
   },
+  reminderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255,176,32,0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radii.sm,
+    alignSelf: 'flex-start',
+  },
+  reminderBadgeText: {
+    fontSize: 11,
+    color: colors.warning,
+    fontFamily: fonts.semibold,
+    writingDirection: 'rtl',
+  },
   debtNotes: {
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: colors.bgTertiary,
     padding: 10,
     borderRadius: radii.md,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   debtNotesText: {
     fontSize: 12,
@@ -790,7 +824,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    borderTopColor: colors.subtleBorder,
   },
   debtActionBtn: {
     flexDirection: 'row',
@@ -799,11 +833,13 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     borderRadius: radii.md,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   debtActionText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
   debtActionSmall: {
@@ -812,15 +848,15 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
 
   // Empty
   emptyCard: {
-    borderRadius: radii['2xl'],
     padding: 32,
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.02)',
     gap: 12,
   },
   emptyText: {
@@ -828,25 +864,14 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     writingDirection: 'rtl',
   },
-  emptyBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: radii.md,
+  emptyAddBtn: {
     marginTop: 8,
-  },
-  emptyBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.white,
-    writingDirection: 'rtl',
+    alignSelf: 'center',
   },
 
-  // Paid
+  // Paid Debts
   paidDebtCard: {
-    borderRadius: radii.lg,
     padding: spacing.lg,
-    backgroundColor: 'rgba(0,0,0,0.02)',
     opacity: 0.6,
   },
   paidDebtRow: {
@@ -863,13 +888,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(16,185,129,0.1)',
+    backgroundColor: 'rgba(0,232,143,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   paidDebtName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
     textDecorationLine: 'line-through',
     writingDirection: 'rtl',
@@ -881,7 +906,7 @@ const styles = StyleSheet.create({
   },
   paidDebtAmount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textTertiary,
     textDecorationLine: 'line-through',
   },
@@ -889,48 +914,51 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['2xl'],
+    backgroundColor: colors.bgSecondary,
+    borderTopLeftRadius: radii['2xl'],
+    borderTopRightRadius: radii['2xl'],
     padding: spacing.xl,
-    width: '100%',
-    maxHeight: '90%',
+    maxHeight: '92%',
+    borderTopWidth: 1,
+    borderColor: colors.glassBorder,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: 20,
     writingDirection: 'rtl',
   },
   fieldLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
+    fontSize: 11,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     marginBottom: 8,
     marginTop: 16,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
   input: {
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.bgTertiary,
     borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
   },
   inputText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     textAlign: 'right',
     writingDirection: 'rtl',
@@ -945,7 +973,7 @@ const styles = StyleSheet.create({
   amountInput: {
     flex: 1,
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   currencyRow: {
     flexDirection: 'row',
@@ -957,20 +985,23 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   currencyBtnActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   currencyBtnInactive: {
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.bgTertiary,
+    borderColor: colors.subtleBorder,
   },
   currencyBtnText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textTertiary,
   },
   currencyBtnTextActive: {
-    color: colors.white,
+    color: colors.bgPrimary,
   },
 
   // Image
@@ -998,7 +1029,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1011,7 +1042,10 @@ const styles = StyleSheet.create({
   uploadBtn: {
     paddingVertical: 20,
     borderRadius: radii.md,
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
@@ -1032,21 +1066,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: radii.md,
+    borderWidth: 1,
   },
   reminderPillActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   reminderPillInactive: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderColor: colors.subtleBorder,
   },
   reminderPillText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
     writingDirection: 'rtl',
   },
   reminderPillTextActive: {
-    color: colors.white,
+    color: colors.bgPrimary,
   },
 
   // Modal Actions
@@ -1055,49 +1092,29 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 24,
   },
-  modalBtn: {
+  modalActionBtn: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    backgroundColor: colors.neuBg,
-  },
-  cancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textTertiary,
-    writingDirection: 'rtl',
-  },
-  saveBtnBg: {
-    backgroundColor: colors.primary,
-  },
-  saveBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.white,
-    writingDirection: 'rtl',
-  },
-  disabledBtn: {
-    opacity: 0.5,
   },
 
   // Picker
   pickerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
   },
   pickerCard: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
     borderRadius: radii['2xl'],
     padding: spacing.xl,
     width: '100%',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   pickerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
@@ -1114,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   pickerItemText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     textAlign: 'right',
     writingDirection: 'rtl',
