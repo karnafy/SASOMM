@@ -1,17 +1,67 @@
-import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { colors } from '../theme';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
+import { colors, fonts, glowButton } from '../theme';
 
 export default function LoadingScreen() {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0.85)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(scaleAnim, {
+            toValue: 1.05,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(scaleAnim, {
+            toValue: 1.0,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0.85,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+    ).start();
+  }, [scaleAnim, opacityAnim]);
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoIcon}>{'💰'}</Text>
-        </View>
-        <Text style={styles.title}>MONNY</Text>
+        <Animated.View
+          style={[
+            styles.logoBoxWrapper,
+            { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
+          ]}
+        >
+          <LinearGradient
+            colors={[colors.primary, colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.logoBox, glowButton]}
+          >
+            <MaterialIcons name="account-balance" size={36} color={colors.white} />
+          </LinearGradient>
+        </Animated.View>
+
+        <Text style={styles.title}>Monny</Text>
+
         <ActivityIndicator size="large" color={colors.primary} style={styles.spinner} />
-        <Text style={styles.loadingText}>טוען נתונים...</Text>
+        <Text style={styles.loadingText}>{'טוען נתונים...'}</Text>
       </View>
     </View>
   );
@@ -20,29 +70,27 @@ export default function LoadingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
     alignItems: 'center',
   },
+  logoBoxWrapper: {
+    marginBottom: 20,
+  },
   logoBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
+    width: 76,
+    height: 76,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  logoIcon: {
-    fontSize: 30,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.primary,
+    fontSize: 30,
+    fontFamily: fonts.bold,
+    color: colors.white,
     marginBottom: 24,
   },
   spinner: {
