@@ -18,7 +18,14 @@ import { Paths, File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { GradientHeader } from '../components/ui/GradientHeader';
+import { GlassCard } from '../components/ui/GlassCard';
+import { DarkCard } from '../components/ui/DarkCard';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { SectionHeader } from '../components/ui/SectionHeader';
+import { TransactionRow } from '../components/ui/TransactionRow';
 
 interface ProjectDetailProps {
   onNavigate: (screen: AppScreen, id?: string, scan?: boolean, txType?: 'expense' | 'income') => void;
@@ -98,24 +105,32 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
     return unique.sort((a, b) => {
       const parseDate = (item: typeof a) => {
+        // Prefer created_at for accurate sorting (includes time component)
+        const item_any = item as any;
+        if (item_any.created_at) {
+          const caDate = new Date(item_any.created_at);
+          if (!isNaN(caDate.getTime())) return caDate.getTime();
+        }
+
         const dStr = item.date;
         if (!dStr) return 0;
 
+        // ISO timestamp (e.g. "2026-03-15T15:09:13.293+00:00")
+        if (dStr.includes('T')) {
+          const isoDate = new Date(dStr);
+          if (!isNaN(isoDate.getTime())) return isoDate.getTime();
+        }
+
+        // DD.MM.YYYY format
         const dotParts = dStr.split('.');
         if (dotParts.length === 3) {
           const [day, month, year] = dotParts.map(Number);
           return new Date(year, month - 1, day).getTime();
         }
 
+        // YYYY-MM-DD format
         const isoDate = new Date(dStr);
-        if (!isNaN(isoDate.getTime())) {
-          return isoDate.getTime();
-        }
-
-        const item_any = item as any;
-        if (item_any.created_at) {
-          return new Date(item_any.created_at).getTime();
-        }
+        if (!isNaN(isoDate.getTime())) return isoDate.getTime();
 
         return 0;
       };
@@ -589,29 +604,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     });
   };
 
-  const getStatusBadge = () => {
-    switch (project.status) {
-      case 'over':
-        return { label: 'חריגה', bg: colors.error + '1A', text: colors.error };
-      case 'warning':
-        return { label: 'אזהרה', bg: colors.warning + '1A', text: colors.warning };
-      default:
-        return { label: 'תקין', bg: colors.success + '1A', text: colors.success };
-    }
+  const getProjectStatus = (): 'ok' | 'warning' | 'over' => {
+    if (project.status === 'over') return 'over';
+    if (project.status === 'warning') return 'warning';
+    return 'ok';
   };
 
-  const getProgressBarColor = () => {
-    switch (project.status) {
-      case 'over':
-        return colors.error;
-      case 'warning':
-        return colors.warning;
-      default:
-        return colors.primary;
-    }
+  const getProgressStatus = (): 'ok' | 'warning' | 'over' => {
+    return getProjectStatus();
   };
-
-  const statusBadge = getStatusBadge();
 
   // --- Menu items ---
 
@@ -651,54 +652,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     },
   ];
 
+  const projectIconName: IconName =
+    (CATEGORY_ICONS[project.mainCategory || ''] as IconName) || 'folder';
+
   // --- Render ---
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../assets/logo-monny.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={[styles.headerButton, neuRaised]}
-            onPress={() => goBack()}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="arrow-forward" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerSubtitle}>פרויקט</Text>
-            <Text style={styles.headerTitle} numberOfLines={1}>
-              {project.name}
-            </Text>
-          </View>
-
-          <View>
-            <TouchableOpacity
-              style={[styles.headerButton, neuRaised]}
-              onPress={() => setShowMenu(!showMenu)}
-              activeOpacity={0.7}
-            >
-              <MaterialIcons name="more-horiz" size={22} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
       {/* Menu Modal */}
       <Modal visible={showMenu} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setShowMenu(false)}>
           <View style={styles.menuPositioner}>
-            <View style={[styles.menuCard, neuRaisedLg]}>
+            <View style={styles.menuCard}>
               {menuItems.map((item, i) => (
                 <TouchableOpacity
                   key={i}
@@ -745,7 +710,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         styles.categoryItem,
                         isSelected
                           ? styles.categoryItemSelected
-                          : [styles.categoryItemDefault, neuRaised],
+                          : styles.categoryItemDefault,
                       ]}
                       onPress={() => handleChangeCategory(key)}
                       activeOpacity={0.7}
@@ -807,7 +772,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             <View style={styles.reportOptions}>
               {/* CSV Option */}
               <TouchableOpacity
-                style={[styles.reportOptionButton, neuRaised]}
+                style={styles.reportOptionButton}
                 onPress={exportToCSV}
                 activeOpacity={0.8}
               >
@@ -823,7 +788,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
               {/* PDF Option */}
               <TouchableOpacity
-                style={[styles.reportOptionButton, neuRaised]}
+                style={styles.reportOptionButton}
                 onPress={exportToPDF}
                 activeOpacity={0.8}
               >
@@ -866,69 +831,100 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
         </Pressable>
       </Modal>
 
-      {/* Main Content */}
-      <View style={styles.mainContent}>
-        {/* Summary Card */}
-        <View style={[styles.summaryCard, neuRaised]}>
-          {/* Category & Status */}
-          <View style={styles.summaryHeader}>
-            <Text style={styles.categoryLabel}>{project.category}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: statusBadge.bg }]}>
-              <Text style={[styles.statusBadgeText, { color: statusBadge.text }]}>
-                {statusBadge.label}
-              </Text>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* ── Gradient Zone ── */}
+        <GradientHeader>
+          {/* Top bar */}
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => goBack()}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="arrow-forward" size={22} color={colors.white} />
+            </TouchableOpacity>
+
+            <Text style={styles.headerLabel}>פרויקט</Text>
+
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => setShowMenu(true)}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="more-horiz" size={22} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Project identity */}
+          <View style={styles.projectIdentity}>
+            <View style={styles.projectIconWrap}>
+              <MaterialIcons name={projectIconName} size={28} color={colors.primary} />
+            </View>
+            <Text style={styles.projectName} numberOfLines={2}>
+              {project.name}
+            </Text>
+            <View style={styles.projectMeta}>
+              <Text style={styles.projectCategory}>{project.category}</Text>
+              <StatusBadge status={getProjectStatus()} size="sm" />
             </View>
           </View>
 
-          {/* Budget - Large Center */}
-          <View style={styles.budgetSection}>
-            <View style={styles.budgetLabelRow}>
-              <Text style={styles.budgetLabel}>תקציב</Text>
-              <TouchableOpacity
-                onPress={() => setIsEditingBudget(true)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <MaterialIcons name="edit" size={14} color={colors.textTertiary} />
-              </TouchableOpacity>
-            </View>
-            {isEditingBudget ? (
-              <View style={styles.budgetEditRow}>
-                <TextInput
-                  value={tempBudget}
-                  onChangeText={setTempBudget}
-                  onBlur={handleSaveBudget}
-                  onSubmitEditing={handleSaveBudget}
-                  keyboardType="numeric"
-                  style={styles.budgetInput}
-                  autoFocus
-                  selectTextOnFocus
-                />
+          {/* GlassCard: Budget summary */}
+          <GlassCard style={styles.summaryGlassCard}>
+            {/* Budget row */}
+            <View style={styles.budgetSection}>
+              <View style={styles.budgetLabelRow}>
+                <Text style={styles.budgetLabel}>תקציב</Text>
+                <TouchableOpacity
+                  onPress={() => setIsEditingBudget(true)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <MaterialIcons name="edit" size={14} color={colors.textTertiary} />
+                </TouchableOpacity>
               </View>
-            ) : (
-              <Text style={styles.budgetAmount}>
-                {currencySymbols[globalCurrency]}
-                {formatAmount(project.budget)}
-              </Text>
-            )}
-          </View>
+              {isEditingBudget ? (
+                <View style={styles.budgetEditRow}>
+                  <TextInput
+                    value={tempBudget}
+                    onChangeText={setTempBudget}
+                    onBlur={handleSaveBudget}
+                    onSubmitEditing={handleSaveBudget}
+                    keyboardType="numeric"
+                    style={styles.budgetInput}
+                    autoFocus
+                    selectTextOnFocus
+                  />
+                </View>
+              ) : (
+                <Text style={styles.budgetAmount}>
+                  {currencySymbols[globalCurrency]}
+                  {formatAmount(project.budget)}
+                </Text>
+              )}
+            </View>
 
-          {/* Expenses / Income / Balance Row */}
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
+            {/* Stats */}
+            <View style={styles.statRow}>
               <Text style={styles.statLabel}>הוצאות</Text>
               <Text style={[styles.statValue, { color: colors.error }]}>
                 -{currencySymbols[globalCurrency]}
                 {formatAmount(totalExpenses)}
               </Text>
             </View>
-            <View style={styles.statItem}>
+            <View style={styles.statDivider} />
+            <View style={styles.statRow}>
               <Text style={styles.statLabel}>הכנסות</Text>
               <Text style={[styles.statValue, { color: colors.success }]}>
                 +{currencySymbols[globalCurrency]}
                 {formatAmount(totalIncome)}
               </Text>
             </View>
-            <View style={styles.statItem}>
+            <View style={styles.statDivider} />
+            <View style={styles.statRow}>
               <Text style={styles.statLabel}>יתרה</Text>
               <Text
                 style={[
@@ -941,341 +937,313 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 {formatAmount(Math.abs(remaining))}
               </Text>
             </View>
-          </View>
 
-          {/* Progress Bar */}
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${Math.min(100, percentUsed)}%`,
-                  backgroundColor: getProgressBarColor(),
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.progressText}>{percentUsed}% נוצל</Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, neuRaised]}
-            onPress={() =>
-              onNavigate(AppScreen.ADD_EXPENSE, undefined, false, 'expense')
-            }
-            activeOpacity={0.85}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: colors.error + '1A' }]}>
-              <MaterialIcons name="remove-circle" size={22} color={colors.error} />
-            </View>
-            <Text style={styles.actionButtonText}>הוסף הוצאה</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, neuRaised]}
-            onPress={() =>
-              onNavigate(AppScreen.ADD_INCOME, undefined, false, 'income')
-            }
-            activeOpacity={0.85}
-          >
-            <View
-              style={[styles.actionIcon, { backgroundColor: colors.success + '1A' }]}
-            >
-              <MaterialIcons name="add-circle" size={22} color={colors.success} />
-            </View>
-            <Text style={styles.actionButtonText}>הוסף הכנסה</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Linked Suppliers */}
-        {linkedSuppliers.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ספקים משויכים</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.suppliersScroll}
-            >
-              {linkedSuppliers.map((supplier) => (
-                <TouchableOpacity
-                  key={supplier.id}
-                  style={[styles.supplierChip, neuRaised]}
-                  onPress={() =>
-                    onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)
-                  }
-                  activeOpacity={0.85}
-                >
-                  <View style={styles.supplierAvatar}>
-                    {supplier.avatar ? (
-                      <Image
-                        source={{ uri: supplier.avatar }}
-                        style={styles.supplierAvatarImage}
-                      />
-                    ) : (
-                      <MaterialIcons
-                        name="person"
-                        size={20}
-                        color={colors.textTertiary}
-                      />
-                    )}
-                  </View>
-                  <View>
-                    <Text style={styles.supplierName}>{supplier.name}</Text>
-                    <Text
-                      style={[
-                        styles.supplierAmount,
-                        {
-                          color:
-                            supplier.status === 'credit'
-                              ? colors.success
-                              : supplier.status === 'debt'
-                              ? colors.error
-                              : colors.textTertiary,
-                        },
-                      ]}
-                    >
-                      {currencySymbols[globalCurrency]}
-                      {convertAmount(supplier.amount).toLocaleString()}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Activities Section */}
-        <View style={styles.section}>
-          <View style={styles.activityHeader}>
-            <Text style={styles.sectionTitle}>היסטוריית פעילות</Text>
-            <View style={styles.activityHeaderActions}>
-              {/* Add Photo Button */}
-              <TouchableOpacity
-                style={[styles.photoButton, neuRaised]}
-                onPress={() => {
-                  setIsAddingNote(true);
-                  setTimeout(() => handleAddNoteImage(), 100);
-                }}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons name="add-a-photo" size={18} color={colors.primary} />
-                <Text style={styles.noteButtonText}>תמונה</Text>
-              </TouchableOpacity>
-              {/* Add Note Button */}
-              <TouchableOpacity
-                style={[styles.noteButton, neuRaised]}
-                onPress={() => setIsAddingNote(true)}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons name="edit-note" size={18} color={colors.primary} />
-                <Text style={styles.noteButtonText}>הערה</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Add Note Form */}
-          {isAddingNote && (
-            <View style={[styles.noteForm, neuRaised]}>
-              <TextInput
-                value={noteText}
-                onChangeText={setNoteText}
-                placeholder="כתוב הערה..."
-                placeholderTextColor={colors.textTertiary}
-                style={styles.noteInput}
-                multiline
-                autoFocus
-                textAlignVertical="top"
+            {/* Progress Bar */}
+            <View style={styles.progressWrap}>
+              <ProgressBar
+                percentage={percentUsed}
+                status={getProgressStatus()}
+                style={styles.progressBar}
               />
-              {/* Note Images Grid */}
-              <View style={styles.noteImagesRow}>
-                {noteImages.map((img, idx) => (
-                  <View key={idx} style={styles.noteImageThumbnail}>
-                    <Image source={{ uri: img }} style={styles.noteImageThumb} />
-                    <TouchableOpacity
-                      style={styles.noteImageRemove}
-                      onPress={() => setNoteImages((prev) => prev.filter((_, i) => i !== idx))}
-                    >
-                      <MaterialIcons name="close" size={12} color={colors.white} />
-                    </TouchableOpacity>
-                  </View>
+              <Text style={styles.progressText}>{percentUsed}% נוצל</Text>
+            </View>
+          </GlassCard>
+        </GradientHeader>
+
+        {/* ── Dark Zone ── */}
+        <View style={styles.darkZone}>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtonsRow}>
+            <DarkCard
+              style={styles.actionButton}
+              onPress={() => onNavigate(AppScreen.ADD_EXPENSE, undefined, false, 'expense')}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: colors.error + '1A' }]}>
+                <MaterialIcons name="remove-circle" size={22} color={colors.error} />
+              </View>
+              <Text style={styles.actionButtonText}>הוסף הוצאה</Text>
+            </DarkCard>
+            <DarkCard
+              style={styles.actionButton}
+              onPress={() => onNavigate(AppScreen.ADD_INCOME, undefined, false, 'income')}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: colors.success + '1A' }]}>
+                <MaterialIcons name="add-circle" size={22} color={colors.success} />
+              </View>
+              <Text style={styles.actionButtonText}>הוסף הכנסה</Text>
+            </DarkCard>
+          </View>
+
+          {/* Linked Suppliers */}
+          {linkedSuppliers.length > 0 && (
+            <View style={styles.section}>
+              <SectionHeader title="ספקים משויכים" />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suppliersScroll}
+              >
+                {linkedSuppliers.map((supplier) => (
+                  <DarkCard
+                    key={supplier.id}
+                    style={styles.supplierChip}
+                    onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
+                  >
+                    <View style={styles.supplierAvatar}>
+                      {supplier.avatar ? (
+                        <Image
+                          source={{ uri: supplier.avatar }}
+                          style={styles.supplierAvatarImage}
+                        />
+                      ) : (
+                        <MaterialIcons
+                          name="person"
+                          size={20}
+                          color={colors.textTertiary}
+                        />
+                      )}
+                    </View>
+                    <View>
+                      <Text style={styles.supplierName}>{supplier.name}</Text>
+                      <Text
+                        style={[
+                          styles.supplierAmount,
+                          {
+                            color:
+                              supplier.status === 'credit'
+                                ? colors.success
+                                : supplier.status === 'debt'
+                                ? colors.error
+                                : colors.textTertiary,
+                          },
+                        ]}
+                      >
+                        {currencySymbols[globalCurrency]}
+                        {convertAmount(supplier.amount).toLocaleString()}
+                      </Text>
+                    </View>
+                  </DarkCard>
                 ))}
-                <TouchableOpacity
-                  style={styles.noteImageAddButton}
-                  onPress={handleAddNoteImage}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons name="add-a-photo" size={24} color={colors.textTertiary} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.noteFormActions}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setIsAddingNote(false);
-                    setNoteText('');
-                    setNoteImages([]);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.noteCancelText}>ביטול</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleAddNote}
-                  disabled={!noteText.trim() && noteImages.length === 0}
-                  style={[
-                    styles.noteSaveButton,
-                    !noteText.trim() && noteImages.length === 0 && styles.noteSaveButtonDisabled,
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.noteSaveText}>שמור</Text>
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
             </View>
           )}
 
-          {/* Activity List */}
-          <View style={styles.activityList}>
-            {displayedActivities.length > 0 ? (
-              displayedActivities.map((item) => {
-                const isIncome = item.type === 'income';
-                const isExpense = item.type === 'expense';
-                const isNote = item.type === 'note';
-                const isBudget = item.type === 'budget_change';
-                const supplierName =
-                  isIncome || isExpense
-                    ? getSupplierName((item as any).supplierId)
-                    : null;
-                const itemImages: string[] = (item as any).receiptImages || [];
-                const itemTitle = (item as any).title || '';
-                const isImageOnly =
-                  isNote && itemImages.length > 0 && !itemTitle.trim();
+          {/* Activities Section */}
+          <View style={styles.section}>
+            <View style={styles.activityHeader}>
+              <SectionHeader title="היסטוריית פעילות" />
+              <View style={styles.activityHeaderActions}>
+                {/* Add Photo Button */}
+                <TouchableOpacity
+                  style={styles.noteActionButton}
+                  onPress={() => {
+                    setIsAddingNote(true);
+                    setTimeout(() => handleAddNoteImage(), 100);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="add-a-photo" size={18} color={colors.primary} />
+                  <Text style={styles.noteButtonText}>תמונה</Text>
+                </TouchableOpacity>
+                {/* Add Note Button */}
+                <TouchableOpacity
+                  style={styles.noteActionButton}
+                  onPress={() => setIsAddingNote(true)}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="edit-note" size={18} color={colors.primary} />
+                  <Text style={styles.noteButtonText}>הערה</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-                const getActivityIcon = (): {
-                  name: IconName;
-                  bg: string;
-                  color: string;
-                } => {
-                  if (isIncome)
-                    return {
-                      name: 'arrow-downward',
-                      bg: colors.success + '1A',
-                      color: colors.success,
-                    };
-                  if (isExpense)
-                    return {
-                      name: 'arrow-upward',
-                      bg: colors.error + '1A',
-                      color: colors.error,
-                    };
-                  if (isBudget)
-                    return {
-                      name: 'account-balance-wallet',
-                      bg: colors.warning + '1A',
-                      color: colors.warning,
-                    };
-                  return {
-                    name: 'description',
-                    bg: colors.primary + '1A',
-                    color: colors.primary,
-                  };
-                };
-
-                const actIcon = getActivityIcon();
-
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[styles.activityItem, neuRaised]}
-                    onPress={() =>
-                      (isIncome || isExpense) &&
-                      onNavigate(AppScreen.ACTIVITY_DETAIL, item.id)
-                    }
-                    activeOpacity={isIncome || isExpense ? 0.85 : 1}
-                    disabled={!(isIncome || isExpense)}
-                  >
-                    {/* Icon / Thumbnail */}
-                    {isImageOnly && itemImages.length > 0 ? (
-                      <View style={styles.activityThumbnail}>
-                        <Image
-                          source={{ uri: itemImages[0] }}
-                          style={styles.activityThumbnailImage}
-                        />
-                      </View>
-                    ) : (
-                      <View style={[styles.activityIcon, { backgroundColor: actIcon.bg }]}>
-                        <MaterialIcons
-                          name={actIcon.name}
-                          size={20}
-                          color={actIcon.color}
-                        />
-                      </View>
-                    )}
-
-                    {/* Text */}
-                    <View style={styles.activityTextContainer}>
-                      <Text style={styles.activityTitle} numberOfLines={1}>
-                        {isImageOnly ? 'תמונה' : item.title}
-                      </Text>
-                      <Text style={styles.activityMeta}>
-                        {item.date}
-                        {supplierName ? ` \u2022 ${supplierName}` : ''}
-                      </Text>
-                      {isImageOnly && itemImages.length > 1 && (
-                        <Text style={styles.activityMoreImages}>
-                          +{itemImages.length - 1} תמונות נוספות
-                        </Text>
-                      )}
-                    </View>
-
-                    {/* Amount */}
-                    {(isIncome || isExpense) && (
-                      <Text
-                        style={[
-                          styles.activityAmount,
-                          { color: isIncome ? colors.success : colors.error },
-                        ]}
+            {/* Add Note Form */}
+            {isAddingNote && (
+              <DarkCard style={styles.noteForm}>
+                <TextInput
+                  value={noteText}
+                  onChangeText={setNoteText}
+                  placeholder="כתוב הערה..."
+                  placeholderTextColor={colors.textTertiary}
+                  style={styles.noteInput}
+                  multiline
+                  autoFocus
+                  textAlignVertical="top"
+                />
+                {/* Note Images Grid */}
+                <View style={styles.noteImagesRow}>
+                  {noteImages.map((img, idx) => (
+                    <View key={idx} style={styles.noteImageThumbnail}>
+                      <Image source={{ uri: img }} style={styles.noteImageThumb} />
+                      <TouchableOpacity
+                        style={styles.noteImageRemove}
+                        onPress={() => setNoteImages((prev) => prev.filter((_, i) => i !== idx))}
                       >
-                        {isIncome ? '+' : '-'}
-                        {currencySymbols[globalCurrency]}
-                        {formatAmount((item as any).amount)}
-                      </Text>
-                    )}
+                        <MaterialIcons name="close" size={12} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.noteImageAddButton}
+                    onPress={handleAddNoteImage}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="add-a-photo" size={24} color={colors.textTertiary} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.noteFormActions}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsAddingNote(false);
+                      setNoteText('');
+                      setNoteImages([]);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.noteCancelText}>ביטול</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleAddNote}
+                    disabled={!noteText.trim() && noteImages.length === 0}
+                    style={[
+                      styles.noteSaveButton,
+                      !noteText.trim() && noteImages.length === 0 && styles.noteSaveButtonDisabled,
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.noteSaveText}>שמור</Text>
+                  </TouchableOpacity>
+                </View>
+              </DarkCard>
+            )}
 
-                    {/* Image gallery indicator for notes with text + images */}
-                    {isNote && itemImages.length > 0 && !isImageOnly && (
-                      <View style={styles.imageGalleryIndicator}>
-                        {itemImages.slice(0, 2).map((img: string, idx: number) => (
-                          <View key={idx} style={styles.miniImageWrap}>
-                            <Image
-                              source={{ uri: img }}
-                              style={styles.miniImage}
-                            />
-                          </View>
-                        ))}
-                        {itemImages.length > 2 && (
-                          <View style={styles.miniImageMore}>
-                            <Text style={styles.miniImageMoreText}>
-                              +{itemImages.length - 2}
-                            </Text>
-                          </View>
+            {/* Activity List */}
+            <DarkCard style={styles.activityListCard}>
+              {displayedActivities.length > 0 ? (
+                displayedActivities.map((item) => {
+                  const isIncome = item.type === 'income';
+                  const isExpense = item.type === 'expense';
+                  const isNote = item.type === 'note';
+                  const isBudget = item.type === 'budget_change';
+                  const supplierName =
+                    isIncome || isExpense
+                      ? getSupplierName((item as any).supplierId)
+                      : null;
+                  const itemImages: string[] = (item as any).receiptImages || [];
+                  const itemTitle = (item as any).title || '';
+                  const isImageOnly =
+                    isNote && itemImages.length > 0 && !itemTitle.trim();
+
+                  const getActivityIcon = (): {
+                    name: IconName;
+                    color: string;
+                  } => {
+                    if (isIncome)
+                      return { name: 'arrow-downward', color: colors.success };
+                    if (isExpense)
+                      return { name: 'arrow-upward', color: colors.error };
+                    if (isBudget)
+                      return { name: 'account-balance-wallet', color: colors.warning };
+                    return { name: 'description', color: colors.primary };
+                  };
+
+                  const actIcon = getActivityIcon();
+
+                  if (isIncome || isExpense) {
+                    const amountStr = `${isIncome ? '+' : '-'}${currencySymbols[globalCurrency]}${formatAmount((item as any).amount)}`;
+                    const metaStr = `${item.date}${supplierName ? ` \u2022 ${supplierName}` : ''}`;
+                    return (
+                      <TransactionRow
+                        key={item.id}
+                        icon={actIcon.name}
+                        iconColor={actIcon.color}
+                        title={item.title || ''}
+                        meta={metaStr}
+                        amount={amountStr}
+                        isIncome={isIncome}
+                        onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, item.id)}
+                      />
+                    );
+                  }
+
+                  // Notes / budget history rows
+                  return (
+                    <View key={item.id} style={styles.historyRow}>
+                      {/* Icon / Thumbnail */}
+                      {isImageOnly && itemImages.length > 0 ? (
+                        <View style={styles.activityThumbnail}>
+                          <Image
+                            source={{ uri: itemImages[0] }}
+                            style={styles.activityThumbnailImage}
+                          />
+                        </View>
+                      ) : (
+                        <View
+                          style={[
+                            styles.activityIcon,
+                            { backgroundColor: actIcon.color + '1A' },
+                          ]}
+                        >
+                          <MaterialIcons
+                            name={actIcon.name}
+                            size={18}
+                            color={actIcon.color}
+                          />
+                        </View>
+                      )}
+
+                      {/* Text */}
+                      <View style={styles.activityTextContainer}>
+                        <Text style={styles.activityTitle} numberOfLines={1}>
+                          {isImageOnly ? 'תמונה' : item.title}
+                        </Text>
+                        <Text style={styles.activityMeta}>
+                          {item.date}
+                          {supplierName ? ` \u2022 ${supplierName}` : ''}
+                        </Text>
+                        {isImageOnly && itemImages.length > 1 && (
+                          <Text style={styles.activityMoreImages}>
+                            +{itemImages.length - 1} תמונות נוספות
+                          </Text>
                         )}
                       </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })
-            ) : (
-              <View style={styles.emptyActivities}>
-                <MaterialIcons name="history" size={32} color={colors.textTertiary} />
-                <Text style={styles.emptyActivitiesText}>אין פעילות עדיין</Text>
-              </View>
-            )}
+
+                      {/* Image gallery indicator for notes with text + images */}
+                      {isNote && itemImages.length > 0 && !isImageOnly && (
+                        <View style={styles.imageGalleryIndicator}>
+                          {itemImages.slice(0, 2).map((img: string, idx: number) => (
+                            <View key={idx} style={styles.miniImageWrap}>
+                              <Image
+                                source={{ uri: img }}
+                                style={styles.miniImage}
+                              />
+                            </View>
+                          ))}
+                          {itemImages.length > 2 && (
+                            <View style={styles.miniImageMore}>
+                              <Text style={styles.miniImageMoreText}>
+                                +{itemImages.length - 2}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.emptyActivities}>
+                  <MaterialIcons name="history" size={32} color={colors.textTertiary} />
+                  <Text style={styles.emptyActivitiesText}>אין פעילות עדיין</Text>
+                </View>
+              )}
+            </DarkCard>
 
             {/* Show More / Less */}
             {allActivities.length > 5 && (
               <TouchableOpacity
-                style={[styles.showMoreButton, neuRaised]}
+                style={styles.showMoreButton}
                 onPress={() => setShowAllActivities(!showAllActivities)}
                 activeOpacity={0.7}
               >
@@ -1293,7 +1261,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             )}
           </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -1301,74 +1269,178 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgPrimary,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
 
-  // Header
-  header: {
-    backgroundColor: colors.neuBg,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  logo: {
-    height: 80,
-    width: 200,
-  },
-  headerRow: {
+  // Top bar inside gradient
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    backgroundColor: colors.neuBg,
+    width: 40,
+    height: 40,
+    borderRadius: radii.md,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerCenter: {
-    flex: 1,
+  headerLabel: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.5,
+  },
+
+  // Project identity block
+  projectIdentity: {
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+    gap: spacing.sm,
   },
-  headerSubtitle: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    writingDirection: 'rtl',
+  projectIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgTertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
+  projectName: {
+    fontSize: 22,
+    fontFamily: fonts.bold,
+    color: colors.white,
     textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  projectMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  projectCategory: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.regular,
+    writingDirection: 'rtl',
+  },
+
+  // GlassCard summary
+  summaryGlassCard: {
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.xl,
+    padding: spacing.xl,
+  },
+  budgetSection: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  budgetLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  budgetLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.5)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontFamily: fonts.medium,
+  },
+  budgetEditRow: {
+    alignItems: 'center',
+  },
+  budgetInput: {
+    width: 140,
+    textAlign: 'center',
+    fontFamily: fonts.bold,
+    fontSize: 24,
+    color: colors.textPrimary,
+    backgroundColor: colors.bgTertiary,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  budgetAmount: {
+    fontSize: 28,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    textAlign: 'center',
+  },
+
+  // Stats Rows
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  statDivider: {
+    height: 1,
+    backgroundColor: colors.subtleBorder,
+  },
+  statLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+    fontFamily: fonts.regular,
+    writingDirection: 'rtl',
+  },
+  statValue: {
+    fontFamily: fonts.bold,
+    fontSize: 16,
+  },
+
+  // Progress Bar
+  progressWrap: {
+    marginTop: spacing.lg,
+    gap: spacing.xs,
+  },
+  progressBar: {
+    height: 6,
+  },
+  progressText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.4)',
+    textAlign: 'left',
+    fontFamily: fonts.regular,
   },
 
   // Overlay / Menu
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
   menuPositioner: {
     position: 'absolute',
-    top: 140,
+    top: 120,
     left: spacing.xl,
     right: spacing.xl,
     alignItems: 'flex-start',
   },
   menuCard: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
     borderRadius: radii['2xl'],
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     padding: spacing.sm,
     minWidth: 200,
   },
@@ -1382,7 +1454,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
@@ -1390,21 +1462,23 @@ const styles = StyleSheet.create({
   // Category Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
   },
   modalCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii['2xl'],
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     width: '100%',
     maxWidth: 360,
     padding: spacing.xl,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -1420,15 +1494,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   categoryItemSelected: {
     backgroundColor: colors.primary + '15',
+    borderColor: colors.primary + '40',
   },
   categoryItemDefault: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
   },
   categoryItemText: {
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     fontSize: 14,
     color: colors.textSecondary,
     writingDirection: 'rtl',
@@ -1444,125 +1521,16 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     color: colors.textTertiary,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     fontSize: 14,
     writingDirection: 'rtl',
   },
 
-  // Main content
-  mainContent: {
+  // Dark Zone
+  darkZone: {
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
     gap: spacing.xl,
-    paddingBottom: spacing['3xl'],
-  },
-
-  // Summary Card
-  summaryCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  categoryLabel: {
-    fontSize: 12,
-    color: colors.textTertiary,
-    writingDirection: 'rtl',
-  },
-  statusBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  budgetSection: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  budgetLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  budgetLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    writingDirection: 'rtl',
-  },
-  budgetEditRow: {
-    alignItems: 'center',
-  },
-  budgetInput: {
-    width: 140,
-    textAlign: 'center',
-    fontWeight: '700',
-    fontSize: 24,
-    color: colors.textPrimary,
-    backgroundColor: colors.neuLight,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  budgetAmount: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.neuShadow + '33',
-    marginBottom: spacing.xl,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-    writingDirection: 'rtl',
-  },
-  statValue: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-
-  // Progress Bar
-  progressBarBg: {
-    height: 12,
-    backgroundColor: colors.neuLight,
-    borderRadius: 6,
-    overflow: 'hidden',
-    padding: 2,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
-  progressText: {
-    fontSize: 12,
-    color: colors.textTertiary,
-    textAlign: 'left',
-    marginTop: spacing.sm,
-    writingDirection: 'rtl',
   },
 
   // Action Buttons
@@ -1572,46 +1540,37 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: colors.neuBg,
-    borderRadius: radii.lg,
     padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
   actionIcon: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionButtonText: {
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     fontSize: 13,
     color: colors.textPrimary,
     writingDirection: 'rtl',
     flexShrink: 1,
   },
 
-  // Linked Suppliers
+  // Section
   section: {
     gap: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
+
+  // Linked Suppliers
   suppliersScroll: {
     gap: spacing.md,
     paddingBottom: spacing.sm,
   },
   supplierChip: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii.lg,
     padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1621,7 +1580,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.neuLight,
+    backgroundColor: colors.bgTertiary,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -1633,7 +1592,7 @@ const styles = StyleSheet.create({
   },
   supplierName: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
@@ -1642,7 +1601,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Activity Section
+  // Activity Section Header
   activityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1651,42 +1610,36 @@ const styles = StyleSheet.create({
   activityHeaderActions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginBottom: 14,
   },
-  photoButton: {
+  noteActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
-    backgroundColor: colors.neuBg,
-  },
-  noteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   noteButtonText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.primary,
     writingDirection: 'rtl',
   },
 
   // Note Form
   noteForm: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii.lg,
     padding: spacing.lg,
   },
   noteInput: {
     height: 96,
-    backgroundColor: colors.neuLight,
+    backgroundColor: colors.bgTertiary,
     borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     padding: spacing.md,
     fontSize: 14,
     color: colors.textPrimary,
@@ -1727,7 +1680,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: colors.textTertiary + '50',
+    borderColor: colors.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1740,7 +1693,7 @@ const styles = StyleSheet.create({
   noteCancelText: {
     color: colors.textTertiary,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     writingDirection: 'rtl',
@@ -1757,35 +1710,38 @@ const styles = StyleSheet.create({
   noteSaveText: {
     color: colors.white,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     writingDirection: 'rtl',
   },
 
-  // Activity List
-  activityList: {
-    gap: spacing.md,
+  // Activity List Card
+  activityListCard: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
-  activityItem: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    flexDirection: 'row',
+
+  // History rows (notes, budget changes)
+  historyRow: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
-    gap: spacing.lg,
+    paddingVertical: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
   },
   activityIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.md,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   activityThumbnail: {
-    width: 56,
-    height: 56,
+    width: 44,
+    height: 44,
     borderRadius: radii.md,
     overflow: 'hidden',
-    backgroundColor: colors.neuLight,
+    backgroundColor: colors.bgTertiary,
   },
   activityThumbnailImage: {
     width: '100%',
@@ -1794,10 +1750,11 @@ const styles = StyleSheet.create({
   activityTextContainer: {
     flex: 1,
     minWidth: 0,
+    alignItems: 'flex-end',
   },
   activityTitle: {
-    fontWeight: '600',
-    fontSize: 14,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
     color: colors.textPrimary,
     writingDirection: 'rtl',
     textAlign: 'right',
@@ -1810,16 +1767,12 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   activityMoreImages: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.primary,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     marginTop: 2,
     writingDirection: 'rtl',
     textAlign: 'right',
-  },
-  activityAmount: {
-    fontWeight: '700',
-    fontSize: 14,
   },
 
   // Image gallery indicator
@@ -1832,7 +1785,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: colors.neuBg,
+    borderColor: colors.bgSecondary,
     marginLeft: -8,
   },
   miniImage: {
@@ -1845,22 +1798,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     backgroundColor: colors.primary + '33',
     borderWidth: 2,
-    borderColor: colors.neuBg,
+    borderColor: colors.bgSecondary,
     marginLeft: -8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   miniImageMoreText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: fonts.bold,
     color: colors.primary,
   },
 
   // Empty activities
   emptyActivities: {
-    backgroundColor: colors.neuLight,
-    borderRadius: radii.lg,
-    padding: spacing['3xl'],
+    paddingVertical: spacing['3xl'],
     alignItems: 'center',
     gap: spacing.sm,
   },
@@ -1872,8 +1823,10 @@ const styles = StyleSheet.create({
 
   // Show more button
   showMoreButton: {
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgSecondary,
     borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1882,15 +1835,17 @@ const styles = StyleSheet.create({
   },
   showMoreText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
     writingDirection: 'rtl',
   },
 
   // Report Modal
   reportModalCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii['2xl'],
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     width: '100%',
     maxWidth: 360,
     padding: spacing.xl,
@@ -1910,7 +1865,7 @@ const styles = StyleSheet.create({
   },
   reportModalTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.xs,
@@ -1933,7 +1888,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     borderRadius: radii['2xl'],
-    backgroundColor: colors.neuBg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   reportOptionIcon: {
     width: 48,
@@ -1947,7 +1904,7 @@ const styles = StyleSheet.create({
   },
   reportOptionTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
     textAlign: 'right',
@@ -1960,13 +1917,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   reportInfoBox: {
-    backgroundColor: colors.neuLight,
+    backgroundColor: colors.bgTertiary,
     borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
   reportInfoTitle: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
