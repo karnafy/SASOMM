@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,17 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Image,
-  Modal,
-  Pressable,
+  Platform,
 } from 'react-native';
 import * as Linking from 'expo-linking';
+
+const openExternalURL = (url: string) => {
+  if (Platform.OS === 'web') {
+    window.open(url, '_blank');
+  } else {
+    Linking.openURL(url);
+  }
+};
 import { MaterialIcons } from '@expo/vector-icons';
 import {
   AppScreen,
@@ -20,7 +26,17 @@ import {
   MAIN_CATEGORIES,
   Supplier,
 } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, neuPressed, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { GradientHeader } from '../components/ui/GradientHeader';
+import { GlassCard } from '../components/ui/GlassCard';
+import { DarkCard } from '../components/ui/DarkCard';
+import { CurrencyToggle } from '../components/ui/CurrencyToggle';
+import { SectionHeader } from '../components/ui/SectionHeader';
+import { TransactionRow } from '../components/ui/TransactionRow';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { AvatarCircle } from '../components/ui/AvatarCircle';
+import { EmptyState } from '../components/ui/EmptyState';
 
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
@@ -29,11 +45,12 @@ interface DashboardProps {
   goBack: () => void;
   projects: Project[];
   suppliers: Supplier[];
-  totals: { income: number; expenses: number; net: number };
+  totals: { budget: number; income: number; expenses: number; net: number };
   globalCurrency: Currency;
   setGlobalCurrency: (c: Currency) => void;
   convertAmount: (amount: number, from?: Currency, to?: Currency) => number;
   onLogout: () => void;
+  userName?: string;
 }
 
 const currencySymbols: Record<Currency, string> = {
@@ -61,8 +78,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   setGlobalCurrency,
   convertAmount,
   onLogout,
+  userName,
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const sym = currencySymbols[globalCurrency];
 
   // ---------------------------------------------------------------------------
@@ -158,14 +175,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Menu items
   // ---------------------------------------------------------------------------
 
-  const menuItems: { label: string; icon: IconName; onPress: () => void }[] = [
-    { label: '\u05D0\u05D9\u05D6\u05D5\u05E8 \u05D0\u05D9\u05E9\u05D9', icon: 'person', onPress: () => onNavigate(AppScreen.PERSONAL_AREA) },
-    { label: '\u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD', icon: 'folder-special', onPress: () => onNavigate(AppScreen.PROJECTS) },
-    { label: '\u05E1\u05E4\u05E7\u05D9\u05DD \u05D5\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8', icon: 'people', onPress: () => onNavigate(AppScreen.SUPPLIERS) },
-    { label: '\u05DE\u05E8\u05DB\u05D6 \u05D4\u05D3\u05D5"\u05D7\u05D5\u05EA', icon: 'analytics', onPress: () => onNavigate(AppScreen.REPORTS_CENTER) },
-    { label: '\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA', icon: 'settings', onPress: () => onNavigate(AppScreen.SETTINGS) },
-  ];
-
   const quickAccessItems: { id: string; label: string; icon: IconName; screen: AppScreen }[] = [
     { id: 'proj', label: '\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9', icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
     { id: 'supp', label: '\u05E1\u05E4\u05E7 \u05D7\u05D3\u05E9', icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
@@ -189,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const firstSupplier = debtSuppliers[0];
     const cleanPhone = firstSupplier.phone.replace(/\D/g, '');
     const phone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
-    Linking.openURL(`https://wa.me/972${phone}?text=${message}`);
+    openExternalURL(`https://wa.me/972${phone}?text=${message}`);
   };
 
   // ---------------------------------------------------------------------------
@@ -198,478 +207,300 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <View style={styles.root}>
-      {/* ===== Menu Modal ===== */}
-      <Modal visible={isMenuOpen} transparent animationType="fade">
-        <Pressable style={styles.overlay} onPress={() => setIsMenuOpen(false)}>
-          <View style={styles.menuCardWrapper}>
-            <View style={[styles.menuCard, neuRaisedLg]}>
-              <Text style={styles.menuTitle}>{'\u05EA\u05E4\u05E8\u05D9\u05D8 \u05E0\u05D9\u05D4\u05D5\u05DC'}</Text>
-              {menuItems.map((item, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.menuRow}
-                  onPress={() => {
-                    setIsMenuOpen(false);
-                    item.onPress();
-                  }}
-                >
-                  <MaterialIcons name={item.icon} size={20} color={colors.primary} />
-                  <Text style={styles.menuRowLabel}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-
-              <View style={styles.menuDivider} />
-
-              <TouchableOpacity
-                style={styles.menuRow}
-                onPress={() => {
-                  setIsMenuOpen(false);
-                  onLogout();
-                }}
-              >
-                <MaterialIcons name="logout" size={20} color={colors.error} />
-                <Text style={[styles.menuRowLabel, { color: colors.error }]}>
-                  {'\u05D4\u05EA\u05E0\u05EA\u05E7\u05D5\u05EA'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
-
-      {/* ===== Header ===== */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.hamburger, neuRaised]}
-          onPress={() => setIsMenuOpen(true)}
-        >
-          <View style={styles.hamburgerLine} />
-          <View style={styles.hamburgerLine} />
-          <View style={styles.hamburgerLine} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerLogo}>MONNY</Text>
-      </View>
-
-      {/* ===== Welcome ===== */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeGreeting}>{'\u05E9\u05DC\u05D5\u05DD,'}</Text>
-        <Text style={styles.welcomeTitle}>{'\u05D1\u05E8\u05D5\u05DB\u05D9\u05DD \u05D4\u05D1\u05D0\u05D9\u05DD \u05DC-MONNY'}</Text>
-      </View>
-
-      {/* ===== Summary Card ===== */}
-      <View style={[styles.summaryCard, neuRaised]}>
-        <View style={styles.summaryHeader}>
-          <Text style={styles.sectionLabel}>{'\u05E1\u05D9\u05DB\u05D5\u05DD \u05DB\u05DC\u05DC\u05D9'}</Text>
-          <View style={styles.currencyRow}>
-            {(['ILS', 'USD', 'EUR'] as Currency[]).map((cur) => (
-              <TouchableOpacity
-                key={cur}
-                style={[
-                  styles.currencyBtn,
-                  globalCurrency === cur ? styles.currencyBtnActive : [styles.currencyBtnInactive, neuPressed],
-                ]}
-                onPress={() => setGlobalCurrency(cur)}
-              >
-                <Text
-                  style={[
-                    styles.currencyBtnText,
-                    globalCurrency === cur && styles.currencyBtnTextActive,
-                  ]}
-                >
-                  {currencySymbols[cur]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Balance */}
-        <View style={styles.balanceCenter}>
-          <Text style={styles.balanceLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
-          <Text
-            style={[
-              styles.balanceAmount,
-              { color: totals.net >= 0 ? colors.success : colors.error },
-            ]}
-          >
-            {sym}
-            {formatNumber(totals.net)}
+      {/* ===== GRADIENT ZONE ===== */}
+      <GradientHeader style={styles.gradientZone}>
+        {/* Header row: greeting + currency toggle */}
+        <View style={styles.headerRow}>
+          <CurrencyToggle selected={globalCurrency} onSelect={setGlobalCurrency} />
+          <Text style={styles.greeting}>
+            {userName ? `\u05E9\u05DC\u05D5\u05DD, ${userName}` : '\u05E9\u05DC\u05D5\u05DD,'}
           </Text>
         </View>
 
-        {/* Income / Expenses row */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryItemLabel}>{'\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA'}</Text>
-            <Text style={[styles.summaryItemValue, { color: colors.success }]}>
-              {sym}
-              {formatNumber(totals.income)}
-            </Text>
+        {/* Summary GlassCard */}
+        <GlassCard style={styles.summaryCard}>
+          {/* Expenses label + big amount */}
+          <Text style={styles.summaryLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
+          <Text style={styles.summaryAmount}>
+            {sym}{formatNumber(convertAmount(totals.expenses))}
+          </Text>
+
+          {/* Sub-cards row: income + net */}
+          <View style={styles.subCardsRow}>
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.success }]}>
+                {sym}{formatNumber(convertAmount(totals.income))}
+              </Text>
+            </GlassCard>
+
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'\u05D9\u05EA\u05E8\u05D4 \u05E0\u05D8\u05D5'}</Text>
+              <Text style={[styles.subCardAmount, { color: totals.net >= 0 ? colors.success : colors.error }]}>
+                {totals.net < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(totals.net)))}
+              </Text>
+            </GlassCard>
           </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryItemLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
-            <Text style={[styles.summaryItemValue, { color: colors.error }]}>
-              {sym}
-              {formatNumber(totals.expenses)}
-            </Text>
+        </GlassCard>
+
+        {/* Quick Action Buttons */}
+        <View style={styles.quickActionRow}>
+          <TouchableOpacity
+            style={styles.quickActionBtn}
+            onPress={() => onNavigate(AppScreen.ADD_EXPENSE)}
+            activeOpacity={0.85}
+          >
+            <GlassCard style={styles.quickActionCard}>
+              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(255,77,106,0.18)' }]}>
+                <MaterialIcons name="remove-circle" size={26} color={colors.error} />
+              </View>
+              <View style={styles.quickActionTextWrap}>
+                <Text style={styles.quickActionSmall}>{'\u05D4\u05D5\u05E1\u05E4\u05EA'}</Text>
+                <Text style={[styles.quickActionBig, { color: colors.error }]}>{'\u05D4\u05D5\u05E6\u05D0\u05D4'}</Text>
+              </View>
+            </GlassCard>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionBtn}
+            onPress={() => onNavigate(AppScreen.ADD_INCOME)}
+            activeOpacity={0.85}
+          >
+            <GlassCard style={styles.quickActionCard}>
+              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0,232,143,0.18)' }]}>
+                <MaterialIcons name="add-circle" size={26} color={colors.success} />
+              </View>
+              <View style={styles.quickActionTextWrap}>
+                <Text style={styles.quickActionSmall}>{'\u05D4\u05D5\u05E1\u05E4\u05EA'}</Text>
+                <Text style={[styles.quickActionBig, { color: colors.success }]}>{'\u05D4\u05DB\u05E0\u05E1\u05D4'}</Text>
+              </View>
+            </GlassCard>
+          </TouchableOpacity>
+        </View>
+      </GradientHeader>
+
+      {/* ===== DARK ZONE ===== */}
+      <View style={styles.darkZone}>
+
+        {/* ===== Categories – 3 cards in a row ===== */}
+        <View style={styles.section}>
+          <SectionHeader title={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D5\u05EA'} />
+          <View style={styles.categoryRow}>
+            {categoryTotals.map((cat) => {
+              const percentSpent =
+                cat.budget > 0 ? Math.round((cat.spent / cat.budget) * 100) : 0;
+              const status: 'ok' | 'warning' | 'over' =
+                percentSpent > 100 ? 'over' : percentSpent > 80 ? 'warning' : 'ok';
+
+              return (
+                <DarkCard
+                  key={cat.category}
+                  style={styles.categoryCard}
+                  onPress={() => onNavigate(AppScreen.CATEGORY_PROJECTS, cat.category)}
+                >
+                  <Text style={styles.categoryCardName} numberOfLines={1}>{cat.name}</Text>
+                  <Text style={styles.categoryCardAmount}>
+                    {cat.remaining < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(cat.remaining)))}
+                  </Text>
+                  <StatusBadge status={status} size="sm" />
+                  <ProgressBar
+                    percentage={percentSpent}
+                    status={status}
+                    style={styles.categoryProgressBar}
+                  />
+                  <View style={styles.categoryCardFooter}>
+                    <Text style={styles.categoryCardFooterPct}>{percentSpent}%</Text>
+                    <Text style={styles.categoryCardFooterTotal}>
+                      {sym}{formatNumber(convertAmount(cat.budget))}
+                    </Text>
+                  </View>
+                </DarkCard>
+              );
+            })}
           </View>
         </View>
-      </View>
 
-      {/* ===== Quick Action Buttons ===== */}
-      <View style={styles.quickActionRow}>
-        <TouchableOpacity
-          style={[styles.quickActionCard, neuRaised]}
-          onPress={() => onNavigate(AppScreen.ADD_EXPENSE)}
-          activeOpacity={0.85}
-        >
-          <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(239,68,68,0.1)' }]}>
-            <MaterialIcons name="remove-circle" size={26} color={colors.error} />
-          </View>
-          <View style={styles.quickActionTextWrap}>
-            <Text style={styles.quickActionSmall}>{'\u05D4\u05D5\u05E1\u05E4\u05EA'}</Text>
-            <Text style={[styles.quickActionBig, { color: colors.error }]}>{'\u05D4\u05D5\u05E6\u05D0\u05D4'}</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.quickActionCard, neuRaised]}
-          onPress={() => onNavigate(AppScreen.ADD_INCOME)}
-          activeOpacity={0.85}
-        >
-          <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(16,185,129,0.1)' }]}>
-            <MaterialIcons name="add-circle" size={26} color={colors.success} />
-          </View>
-          <View style={styles.quickActionTextWrap}>
-            <Text style={styles.quickActionSmall}>{'\u05D4\u05D5\u05E1\u05E4\u05EA'}</Text>
-            <Text style={[styles.quickActionBig, { color: colors.success }]}>{'\u05D4\u05DB\u05E0\u05E1\u05D4'}</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* ===== Categories ===== */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionLabel}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D5\u05EA'}</Text>
-      </View>
-
-      {categoryTotals.map((cat) => {
-        const hasData = cat.budget > 0 || cat.spent > 0 || cat.income > 0;
-        const percentExpenses =
-          cat.budget > 0 ? Math.round((cat.spent / cat.budget) * 100) : 0;
-        const percentIncome =
-          cat.budget > 0 ? Math.round((cat.income / cat.budget) * 100) : 0;
-        const netPercent = percentIncome - percentExpenses;
-
-        return (
-          <TouchableOpacity
-            key={cat.category}
-            style={[styles.categoryCard, neuRaised]}
-            onPress={() => onNavigate(AppScreen.CATEGORY_PROJECTS, cat.category)}
-            activeOpacity={0.9}
-          >
-            {/* Category header */}
-            <View style={styles.categoryHeader}>
-              <View style={styles.categoryLeft}>
-                <View style={[styles.categoryIconWrap, neuPressed]}>
-                  <MaterialIcons
-                    name={categoryIcons[cat.category]}
-                    size={20}
-                    color={colors.primary}
-                  />
-                </View>
-                <View>
-                  <Text style={styles.categoryName}>{cat.name}</Text>
-                  <Text style={styles.categoryCount}>
-                    {cat.projectCount} {'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD'}
-                  </Text>
-                </View>
-              </View>
-              <MaterialIcons name="chevron-left" size={22} color={colors.textTertiary} />
-            </View>
-
-            {hasData ? (
-              <>
-                {/* Budget centered */}
-                <View style={styles.categoryBudgetWrap}>
-                  <Text style={styles.tinyLabel}>{'\u05EA\u05E7\u05E6\u05D9\u05D1'}</Text>
-                  <Text style={styles.categoryBudgetValue}>
-                    {sym}
-                    {formatNumber(convertAmount(cat.budget))}
-                  </Text>
-                </View>
-
-                {/* 3 column: expenses / income / balance */}
-                <View style={styles.categoryStatsRow}>
-                  <View style={styles.categoryStatItem}>
-                    <Text style={styles.tinyLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
-                    <Text style={[styles.categoryStatValue, { color: colors.error }]}>
-                      {sym}
-                      {formatNumber(convertAmount(cat.spent))}
-                    </Text>
-                  </View>
-                  <View style={styles.categoryStatItem}>
-                    <Text style={styles.tinyLabel}>{'\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA'}</Text>
-                    <Text style={[styles.categoryStatValue, { color: colors.success }]}>
-                      {sym}
-                      {formatNumber(convertAmount(cat.income))}
-                    </Text>
-                  </View>
-                  <View style={styles.categoryStatItem}>
-                    <Text style={styles.tinyLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
-                    <Text
-                      style={[
-                        styles.categoryStatValue,
-                        { color: cat.remaining >= 0 ? colors.success : colors.error },
-                      ]}
-                    >
-                      {cat.remaining < 0 ? '-' : ''}
-                      {sym}
-                      {formatNumber(convertAmount(Math.abs(cat.remaining)))}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Progress bars */}
-                <View style={styles.progressSection}>
-                  {/* Expenses bar */}
-                  <View style={styles.progressRow}>
-                    <Text style={[styles.progressLabel, { color: colors.error }]}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
-                    <View style={styles.progressTrack}>
-                      <View
-                        style={[
-                          styles.progressFillExpense,
-                          { width: `${Math.min(100, percentExpenses)}%` as any },
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.progressPercent, { color: colors.error }]}>
-                      {percentExpenses}%
-                    </Text>
-                  </View>
-                  {/* Income bar */}
-                  <View style={styles.progressRow}>
-                    <Text style={[styles.progressLabel, { color: colors.success }]}>{'\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA'}</Text>
-                    <View style={styles.progressTrack}>
-                      <View
-                        style={[
-                          styles.progressFillIncome,
-                          { width: `${Math.min(100, percentIncome)}%` as any },
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.progressPercent, { color: colors.success }]}>
-                      {percentIncome}%
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Net percentage */}
-                <Text
-                  style={[
-                    styles.netPercentText,
-                    { color: netPercent >= 0 ? colors.success : colors.error },
-                  ]}
-                >
-                  {netPercent >= 0 ? '+' : ''}
-                  {netPercent}% {'\u05E0\u05D8\u05D5'}
-                </Text>
-              </>
-            ) : (
-              <View style={styles.noDataWrap}>
-                <Text style={styles.noDataText}>{'\u05D0\u05D9\u05DF \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E2\u05D3\u05D9\u05D9\u05DF'}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        );
-      })}
-
-      {/* ===== Quick Access ===== */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionLabel}>{'\u05D2\u05D9\u05E9\u05D4 \u05DE\u05D4\u05D9\u05E8\u05D4'}</Text>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickAccessScroll}
-      >
-        {quickAccessItems.map((action) => (
-          <TouchableOpacity
-            key={action.id}
-            style={styles.quickAccessItem}
-            onPress={() => onNavigate(action.screen)}
-          >
-            <View style={[styles.quickAccessIcon, neuRaised]}>
-              <MaterialIcons name={action.icon} size={24} color={colors.primary} />
-            </View>
-            <Text style={styles.quickAccessLabel}>{action.label}</Text>
-          </TouchableOpacity>
-        ))}
-
-        {/* Send reminder */}
-        <TouchableOpacity style={styles.quickAccessItem} onPress={sendReminder}>
-          <View style={[styles.quickAccessIcon, neuRaised]}>
-            <MaterialIcons name="notifications-active" size={24} color={colors.warning} />
-          </View>
-          <Text style={styles.quickAccessLabel}>{'\u05E9\u05DC\u05D7 \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA'}</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* ===== Recent Projects ===== */}
-      {recentProjects.length > 0 && (
-        <>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>{'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05D0\u05D7\u05E8\u05D5\u05E0\u05D9\u05DD'}</Text>
-            <TouchableOpacity onPress={() => onNavigate(AppScreen.PROJECTS)}>
-              <Text style={styles.showAllLink}>{'\u05D4\u05E6\u05D2 \u05D4\u05DB\u05DC'}</Text>
-            </TouchableOpacity>
-          </View>
-
+        {/* ===== Quick Access ===== */}
+        <View style={styles.section}>
+          <SectionHeader title={'\u05D2\u05D9\u05E9\u05D4 \u05DE\u05D4\u05D9\u05E8\u05D4'} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.recentProjectsScroll}
+            contentContainerStyle={styles.quickAccessScroll}
           >
-            {recentProjects.map((project) => {
-              const projectIncome = (project.incomes || []).reduce(
-                (sum, i) => sum + i.amount,
-                0,
-              );
-              const remaining = project.budget + projectIncome - project.spent;
-              const percentUsed =
-                project.budget > 0
-                  ? Math.round((project.spent / project.budget) * 100)
-                  : 0;
+            {quickAccessItems.map((action) => (
+              <TouchableOpacity
+                key={action.id}
+                style={styles.quickAccessItem}
+                onPress={() => onNavigate(action.screen)}
+              >
+                <DarkCard style={styles.quickAccessIconCard}>
+                  <MaterialIcons name={action.icon} size={24} color={colors.primary} />
+                </DarkCard>
+                <Text style={styles.quickAccessLabel}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
 
-              const badgeColor =
-                percentUsed > 100
-                  ? colors.error
-                  : percentUsed > 90
-                    ? colors.warning
-                    : colors.success;
-              const badgeBg =
-                percentUsed > 100
-                  ? 'rgba(239,68,68,0.1)'
-                  : percentUsed > 90
-                    ? 'rgba(245,158,11,0.1)'
-                    : 'rgba(16,185,129,0.1)';
+            {/* Send reminder */}
+            <TouchableOpacity style={styles.quickAccessItem} onPress={sendReminder}>
+              <DarkCard style={styles.quickAccessIconCard}>
+                <MaterialIcons name="notifications-active" size={24} color={colors.warning} />
+              </DarkCard>
+              <Text style={styles.quickAccessLabel}>{'\u05E9\u05DC\u05D7 \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA'}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
 
-              return (
-                <TouchableOpacity
-                  key={project.id}
-                  style={[styles.projectCard, neuRaised]}
-                  onPress={() =>
-                    onNavigate(AppScreen.PROJECT_DETAIL, project.id)
-                  }
-                  activeOpacity={0.9}
-                >
-                  <View style={styles.projectCardTop}>
-                    <View style={[styles.projectIconWrap, neuPressed]}>
-                      <MaterialIcons
-                        name={(project.icon as IconName) || 'folder'}
-                        size={18}
-                        color={colors.primary}
-                      />
+        {/* ===== Recent Activity ===== */}
+        <View style={styles.section}>
+          <SectionHeader title={'\u05E4\u05E2\u05D9\u05DC\u05D5\u05EA \u05D0\u05D7\u05E8\u05D5\u05E0\u05D4'} />
+
+          {allActivities.length === 0 ? (
+            <DarkCard style={styles.emptyCard}>
+              <EmptyState
+                icon="history"
+                message={'\u05D0\u05D9\u05DF \u05E4\u05E2\u05D9\u05DC\u05D5\u05EA \u05E2\u05D3\u05D9\u05D9\u05DF'}
+              />
+            </DarkCard>
+          ) : (
+            <DarkCard style={styles.activityCard}>
+              {allActivities.slice(0, 5).map((act: any) => {
+                const supplierName = getSupplierName(act.supplierId);
+                const isIncome = act.type === 'income';
+                const metaParts = [act.projectName];
+                if (supplierName) metaParts.push(supplierName);
+                return (
+                  <TransactionRow
+                    key={act.id}
+                    icon={isIncome ? 'arrow-downward' : 'arrow-upward'}
+                    iconColor={isIncome ? colors.success : colors.error}
+                    title={act.title}
+                    meta={metaParts.join(' \u2022 ')}
+                    amount={`${isIncome ? '+' : '-'}${sym}${formatNumber(convertAmount(act.amount))}`}
+                    isIncome={isIncome}
+                    onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, act.id)}
+                  />
+                );
+              })}
+            </DarkCard>
+          )}
+        </View>
+
+        {/* ===== Recent Projects ===== */}
+        {recentProjects.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader
+              title={'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05D0\u05D7\u05E8\u05D5\u05E0\u05D9\u05DD'}
+              linkText={'\u05D4\u05E6\u05D2 \u05D4\u05DB\u05DC'}
+              onLinkPress={() => onNavigate(AppScreen.PROJECTS)}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.projectsScroll}
+            >
+              {recentProjects.map((project) => {
+                const projectIncome = (project.incomes || []).reduce(
+                  (sum, i) => sum + i.amount,
+                  0,
+                );
+                const remaining = project.budget + projectIncome - project.spent;
+                const percentUsed =
+                  project.budget > 0
+                    ? Math.round((project.spent / project.budget) * 100)
+                    : 0;
+
+                const badgeColor =
+                  percentUsed > 100
+                    ? colors.error
+                    : percentUsed > 90
+                      ? colors.warning
+                      : colors.success;
+                const badgeBg =
+                  percentUsed > 100
+                    ? 'rgba(255,77,106,0.15)'
+                    : percentUsed > 90
+                      ? 'rgba(255,176,32,0.15)'
+                      : 'rgba(0,232,143,0.15)';
+
+                return (
+                  <DarkCard
+                    key={project.id}
+                    style={styles.projectCard}
+                    onPress={() => onNavigate(AppScreen.PROJECT_DETAIL, project.id)}
+                  >
+                    <View style={styles.projectCardTop}>
+                      <View style={styles.projectIconWrap}>
+                        <MaterialIcons
+                          name={(project.icon as IconName) || 'folder'}
+                          size={18}
+                          color={colors.primary}
+                        />
+                      </View>
+                      <View style={[styles.projectBadge, { backgroundColor: badgeBg }]}>
+                        <Text style={[styles.projectBadgeText, { color: badgeColor }]}>
+                          {percentUsed}%
+                        </Text>
+                      </View>
                     </View>
-                    <View style={[styles.projectBadge, { backgroundColor: badgeBg }]}>
-                      <Text style={[styles.projectBadgeText, { color: badgeColor }]}>
-                        {percentUsed}%
+
+                    <Text style={styles.projectName} numberOfLines={1}>
+                      {project.name}
+                    </Text>
+                    <Text style={styles.projectCategory}>{project.category}</Text>
+
+                    <View style={styles.projectBottom}>
+                      <Text style={styles.tinyLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
+                      <Text
+                        style={[
+                          styles.projectRemainingValue,
+                          { color: remaining >= 0 ? colors.success : colors.error },
+                        ]}
+                      >
+                        {remaining < 0 ? '-' : ''}
+                        {sym}
+                        {formatNumber(convertAmount(Math.abs(remaining)))}
                       </Text>
                     </View>
-                  </View>
+                  </DarkCard>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
-                  <Text style={styles.projectName} numberOfLines={1}>
-                    {project.name}
-                  </Text>
-                  <Text style={styles.projectCategory}>{project.category}</Text>
-
-                  <View style={styles.projectBottomDivider}>
-                    <Text style={styles.tinyLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
-                    <Text
-                      style={[
-                        styles.projectRemainingValue,
-                        { color: remaining >= 0 ? colors.success : colors.error },
-                      ]}
-                    >
-                      {remaining < 0 ? '-' : ''}
-                      {sym}
-                      {formatNumber(convertAmount(Math.abs(remaining)))}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </>
-      )}
-
-      {/* ===== Recent Activity ===== */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionLabel}>{'\u05E4\u05E2\u05D9\u05DC\u05D5\u05EA \u05D0\u05D7\u05E8\u05D5\u05E0\u05D4'}</Text>
-      </View>
-
-      {allActivities.length === 0 ? (
-        <View style={[styles.emptyActivity, neuPressed]}>
-          <MaterialIcons name="history" size={36} color={colors.textTertiary} />
-          <Text style={styles.emptyActivityText}>{'\u05D0\u05D9\u05DF \u05E4\u05E2\u05D9\u05DC\u05D5\u05EA \u05E2\u05D3\u05D9\u05D9\u05DF'}</Text>
-        </View>
-      ) : (
-        <View style={styles.activityList}>
-          {allActivities.slice(0, 5).map((act: any) => {
-            const supplierName = getSupplierName(act.supplierId);
-            const isIncome = act.type === 'income';
-            return (
-              <TouchableOpacity
-                key={act.id}
-                style={[styles.activityRow, neuRaised]}
-                onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, act.id)}
-                activeOpacity={0.9}
-              >
-                <View
-                  style={[
-                    styles.activityIcon,
-                    { backgroundColor: isIncome ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' },
-                  ]}
+        {/* ===== Suppliers Quick View ===== */}
+        {suppliers.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader
+              title={'\u05E1\u05E4\u05E7\u05D9\u05DD'}
+              linkText={'\u05D4\u05E6\u05D2 \u05D4\u05DB\u05DC'}
+              onLinkPress={() => onNavigate(AppScreen.SUPPLIERS)}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.suppliersScroll}
+            >
+              {suppliers.slice(0, 8).map((supplier) => (
+                <TouchableOpacity
+                  key={supplier.id}
+                  style={styles.supplierItem}
+                  onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
                 >
-                  <MaterialIcons
-                    name={isIncome ? 'arrow-downward' : 'arrow-upward'}
-                    size={20}
-                    color={isIncome ? colors.success : colors.error}
-                  />
-                </View>
-
-                <View style={styles.activityMid}>
-                  <Text style={styles.activityTitle} numberOfLines={1}>
-                    {act.title}
+                  <AvatarCircle name={supplier.name} size={44} />
+                  <Text style={styles.supplierName} numberOfLines={1}>
+                    {supplier.name}
                   </Text>
-                  <Text style={styles.activitySub} numberOfLines={1}>
-                    {act.projectName}
-                    {supplierName ? ` \u2022 ${supplierName}` : ''}
-                  </Text>
-                </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-                <View style={styles.activityRight}>
-                  <Text
-                    style={[
-                      styles.activityAmount,
-                      { color: isIncome ? colors.success : colors.error },
-                    ]}
-                  >
-                    {isIncome ? '+' : '-'}
-                    {sym}
-                    {formatNumber(convertAmount(act.amount))}
-                  </Text>
-                  <Text style={styles.activityDate}>{act.date}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      )}
-
-      {/* Bottom spacing for BottomNav */}
-      <View style={{ height: 32 }} />
+        {/* Bottom spacing for BottomNav */}
+        <View style={{ height: 32 }} />
+      </View>
     </View>
   );
 };
@@ -682,199 +513,92 @@ export default Dashboard;
 
 const styles = StyleSheet.create({
   root: {
-    paddingHorizontal: spacing.xl,
-  },
-
-  /* ---- Menu Modal ---- */
-  overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.4)',
-    justifyContent: 'center',
+    backgroundColor: colors.bgPrimary,
+  },
+
+  /* ---- Gradient Zone ---- */
+  gradientZone: {
     paddingHorizontal: spacing.xl,
+    paddingBottom: spacing['2xl'],
   },
-  menuCardWrapper: {
-    marginTop: 100,
-  },
-  menuCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-  },
-  menuTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: colors.textTertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  menuRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: radii.xl,
-  },
-  menuRowLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  menuDivider: {
-    height: 1,
-    backgroundColor: 'rgba(200,208,224,0.3)',
-    marginVertical: spacing.md,
-  },
-
-  /* ---- Header ---- */
-  header: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.lg,
-  },
-  headerLogo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  hamburger: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.xl,
-    backgroundColor: colors.neuBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-  },
-  hamburgerLine: {
-    width: 20,
-    height: 2,
-    backgroundColor: colors.textSecondary,
-    borderRadius: 1,
-  },
-
-  /* ---- Welcome ---- */
-  welcomeSection: {
-    marginBottom: spacing.xl,
-  },
-  welcomeGreeting: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.textTertiary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-
-  /* ---- Summary Card ---- */
-  summaryCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing['2xl'],
-    marginBottom: spacing.xl,
-  },
-  summaryHeader: {
+  headerRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.xl,
+    paddingTop: spacing.md,
   },
-  currencyRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  currencyBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radii.lg,
-  },
-  currencyBtnActive: {
-    backgroundColor: colors.primary,
-  },
-  currencyBtnInactive: {
-    backgroundColor: colors.neuBg,
-  },
-  currencyBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: colors.textTertiary,
-  },
-  currencyBtnTextActive: {
+  greeting: {
+    fontSize: 20,
+    fontFamily: fonts.bold,
     color: colors.white,
-  },
-  balanceCenter: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  balanceLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
     writingDirection: 'rtl',
+    textAlign: 'right',
   },
-  balanceAmount: {
-    fontSize: 36,
-    fontWeight: 'bold',
+
+  /* ---- Summary GlassCard ---- */
+  summaryCard: {
+    padding: spacing['2xl'],
+    marginBottom: spacing.lg,
+    alignItems: 'flex-end',
   },
-  summaryRow: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'center',
-    gap: spacing['3xl'],
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(200,208,224,0.3)',
-  },
-  summaryItem: {
-    alignItems: 'center',
-  },
-  summaryItemLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  summaryLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.medium,
     marginBottom: spacing.xs,
     writingDirection: 'rtl',
   },
-  summaryItemValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  summaryAmount: {
+    fontSize: 34,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    marginBottom: spacing.lg,
+    writingDirection: 'rtl',
+  },
+  subCardsRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.md,
+    alignSelf: 'stretch',
+  },
+  subCard: {
+    flex: 1,
+    padding: spacing.md,
+    alignItems: 'flex-end',
+  },
+  subCardLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    fontFamily: fonts.medium,
+    marginBottom: 4,
+    writingDirection: 'rtl',
+  },
+  subCardAmount: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    writingDirection: 'rtl',
   },
 
-  /* ---- Quick Action Buttons ---- */
+  /* ---- Quick Action Buttons (in gradient) ---- */
   quickActionRow: {
     flexDirection: 'row-reverse',
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  quickActionBtn: {
+    flex: 1,
   },
   quickActionCard: {
-    flex: 1,
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
+    padding: spacing.lg,
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   quickActionIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.xl,
+    width: 48,
+    height: 48,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -883,234 +607,144 @@ const styles = StyleSheet.create({
   },
   quickActionSmall: {
     fontSize: 11,
-    color: colors.textTertiary,
+    color: 'rgba(255,255,255,0.55)',
     writingDirection: 'rtl',
   },
   quickActionBig: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     writingDirection: 'rtl',
   },
 
-  /* ---- Section Headers ---- */
-  sectionHeader: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+  /* ---- Dark Zone ---- */
+  darkZone: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: colors.textSecondary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  showAllLink: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
-    writingDirection: 'rtl',
+  section: {
+    marginBottom: spacing.xl,
   },
 
-  /* ---- Categories ---- */
-  categoryCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-  categoryHeader: {
+  /* ---- Category Cards (3 in a row) ---- */
+  categoryRow: {
     flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-  },
-  categoryLeft: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
     gap: spacing.md,
   },
-  categoryIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.xl,
-    backgroundColor: colors.neuBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryName: {
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    fontSize: 14,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  categoryCount: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-
-  categoryBudgetWrap: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  categoryBudgetValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-  },
-
-  categoryStatsRow: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-around',
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(200,208,224,0.2)',
-    marginBottom: spacing.lg,
-  },
-  categoryStatItem: {
-    alignItems: 'center',
-  },
-  categoryStatValue: {
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-
-  tinyLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 2,
-    writingDirection: 'rtl',
-    textAlign: 'center',
-  },
-
-  /* Progress bars */
-  progressSection: {
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  progressRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  progressLabel: {
-    fontSize: 9,
-    width: 42,
-    writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  progressTrack: {
+  categoryCard: {
     flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(200,208,224,0.3)',
-    overflow: 'hidden',
+    padding: spacing.md,
+    alignItems: 'flex-end',
   },
-  progressFillExpense: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.error,
-  },
-  progressFillIncome: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.success,
-  },
-  progressPercent: {
+  categoryCardName: {
     fontSize: 10,
-    fontWeight: 'bold',
-    width: 36,
-    textAlign: 'left',
-  },
-  netPercentText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: spacing.sm,
+    color: colors.textSecondary,
+    fontFamily: fonts.medium,
+    marginBottom: spacing.xs,
     writingDirection: 'rtl',
+    textAlign: 'right',
   },
-
-  noDataWrap: {
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
+  categoryCardAmount: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+    writingDirection: 'rtl',
+    textAlign: 'right',
   },
-  noDataText: {
-    fontSize: 12,
+  categoryProgressBar: {
+    alignSelf: 'stretch',
+    marginVertical: spacing.xs,
+  },
+  categoryCardFooter: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    marginTop: 2,
+  },
+  categoryCardFooterPct: {
+    fontSize: 9,
     color: colors.textTertiary,
-    writingDirection: 'rtl',
+    fontFamily: fonts.semibold,
+  },
+  categoryCardFooterTotal: {
+    fontSize: 9,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
   },
 
   /* ---- Quick Access ---- */
   quickAccessScroll: {
-    paddingBottom: spacing.sm,
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
+    gap: spacing.xl,
+    paddingHorizontal: 2,
   },
   quickAccessItem: {
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
-  quickAccessIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: radii.xl,
-    backgroundColor: colors.neuBg,
+  quickAccessIconCard: {
+    width: 58,
+    height: 58,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: radii.xl,
   },
   quickAccessLabel: {
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
     writingDirection: 'rtl',
     textAlign: 'center',
+    maxWidth: 58,
+  },
+
+  /* ---- Activity ---- */
+  emptyCard: {
+    padding: spacing['2xl'],
+    minHeight: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityCard: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
   },
 
   /* ---- Recent Projects ---- */
-  recentProjectsScroll: {
-    paddingBottom: spacing.sm,
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
+  projectsScroll: {
+    gap: spacing.md,
+    paddingHorizontal: 2,
   },
   projectCard: {
-    width: 180,
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing.lg,
+    width: 130,
+    padding: spacing.md,
   },
   projectCardTop: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   projectIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.lg,
-    backgroundColor: colors.neuBg,
+    width: 36,
+    height: 36,
+    borderRadius: radii.md,
+    backgroundColor: colors.bgTertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   projectBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
     borderRadius: radii.sm,
   },
   projectBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: 9,
+    fontFamily: fonts.bold,
   },
   projectName: {
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 2,
     writingDirection: 'rtl',
     textAlign: 'right',
@@ -1118,79 +752,43 @@ const styles = StyleSheet.create({
   projectCategory: {
     fontSize: 10,
     color: colors.textTertiary,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     writingDirection: 'rtl',
     textAlign: 'right',
   },
-  projectBottomDivider: {
-    paddingTop: spacing.md,
+  projectBottom: {
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(200,208,224,0.3)',
-  },
-  projectRemainingValue: {
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-
-  /* ---- Recent Activity ---- */
-  emptyActivity: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['3xl'],
-    padding: spacing['3xl'],
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  emptyActivityText: {
-    fontSize: 13,
-    color: colors.textTertiary,
-    marginTop: spacing.sm,
-    writingDirection: 'rtl',
-  },
-  activityList: {
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  activityRow: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  activityIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityMid: {
-    flex: 1,
+    borderTopColor: colors.subtleBorder,
     alignItems: 'flex-end',
   },
-  activityTitle: {
-    fontWeight: '600',
+  tinyLabel: {
+    fontSize: 9,
+    color: colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  projectRemainingValue: {
     fontSize: 13,
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-    textAlign: 'right',
+    fontFamily: fonts.bold,
   },
-  activitySub: {
+
+  /* ---- Suppliers ---- */
+  suppliersScroll: {
+    gap: spacing.xl,
+    paddingHorizontal: 2,
+  },
+  supplierItem: {
+    alignItems: 'center',
+    gap: spacing.xs,
+    width: 56,
+  },
+  supplierName: {
     fontSize: 10,
-    color: colors.textTertiary,
+    color: colors.textSecondary,
+    fontFamily: fonts.medium,
+    textAlign: 'center',
     writingDirection: 'rtl',
-    textAlign: 'right',
-  },
-  activityRight: {
-    alignItems: 'flex-start',
-  },
-  activityAmount: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  activityDate: {
-    fontSize: 10,
-    color: colors.textTertiary,
   },
 });
