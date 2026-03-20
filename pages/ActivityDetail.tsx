@@ -11,11 +11,23 @@ import {
   Pressable,
   Share,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
+
+const openExternalURL = (url: string) => {
+  if (Platform.OS === 'web') {
+    window.open(url, '_blank');
+  } else {
+    Linking.openURL(url);
+  }
+};
 import { AppScreen, Expense, Currency, Supplier, Project } from '@monn/shared';
-import { colors, neuRaised, neuRaisedLg, radii, spacing } from '../theme';
+import { colors, fonts, radii, spacing } from '../theme';
+import { ScreenTopBar } from '../components/ui/ScreenTopBar';
+import { DarkCard } from '../components/ui/DarkCard';
+import { GradientButton } from '../components/ui/GradientButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -53,7 +65,7 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({
   const supplier = suppliers.find((s) => s.id === expense.supplierId);
 
   const getShareText = () => {
-    const symbol = currencySymbols[expense.currency || 'ILS'];
+    const symbol = currencySymbols[(expense.currency || 'ILS') as Currency];
     return `*\u05E4\u05E8\u05D8\u05D9 \u05EA\u05E9\u05DC\u05D5\u05DD \u05DE-MONNY*
 \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
 *\u05E2\u05D1\u05D5\u05E8:* ${expense.title}
@@ -67,16 +79,16 @@ _\u05E0\u05E9\u05DC\u05D7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
 
   const handleWhatsAppShare = () => {
     const text = encodeURIComponent(getShareText());
-    Linking.openURL(`https://wa.me/?text=${text}`);
+    openExternalURL(`https://wa.me/?text=${text}`);
   };
 
   const handleContactWhatsApp = (phone: string) => {
     const cleanPhone = phone.replace(/[^0-9]/g, '');
-    Linking.openURL(`https://wa.me/${cleanPhone}`);
+    openExternalURL(`https://wa.me/${cleanPhone}`);
   };
 
   const handleContactCall = (phone: string) => {
-    Linking.openURL(`tel:${phone}`);
+    openExternalURL(`tel:${phone}`);
   };
 
   const handleShare = async () => {
@@ -120,7 +132,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
       });
     } catch (err) {
       const text = encodeURIComponent(getSummaryText());
-      Linking.openURL(`https://wa.me/?text=${text}`);
+      openExternalURL(`https://wa.me/?text=${text}`);
     }
     setShowMenu(false);
   };
@@ -128,7 +140,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
   const handleExportReport = () => {
     if (!project) return;
     const text = encodeURIComponent(getSummaryText());
-    Linking.openURL(`https://wa.me/?text=${text}`);
+    openExternalURL(`https://wa.me/?text=${text}`);
     setShowMenu(false);
   };
 
@@ -151,19 +163,19 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
     );
   };
 
-  const typeBadgeColor =
+  const amountColor =
     expense.type === 'income'
       ? colors.success
       : expense.type === 'note'
       ? colors.accent
       : colors.error;
 
-  const typeBadgeBg =
+  const typeBadgeColor =
     expense.type === 'income'
-      ? '#ECFDF5'
+      ? colors.success
       : expense.type === 'note'
-      ? '#EEF2FF'
-      : '#FEF2F2';
+      ? colors.accent
+      : colors.error;
 
   const typeLabel =
     expense.type === 'income'
@@ -236,7 +248,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
       {/* Menu Modal */}
       <Modal visible={showMenu} transparent animationType="fade">
         <Pressable style={styles.menuOverlay} onPress={() => setShowMenu(false)}>
-          <View style={[styles.menuCard, neuRaisedLg]}>
+          <View style={styles.menuCard}>
             {project && (
               <>
                 <TouchableOpacity
@@ -286,42 +298,25 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
         </Pressable>
       </Modal>
 
-      {/* Header */}
-      <View style={[styles.header, neuRaised]}>
-        <TouchableOpacity
-          style={[styles.headerBtn, neuRaised]}
-          onPress={() => goBack()}
-        >
-          <MaterialIcons name="chevron-right" size={28} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerSubtitle}>{'\u05E4\u05E8\u05D8\u05D9 \u05E4\u05E2\u05D5\u05DC\u05D4'}</Text>
-          <Text style={styles.headerTitle}>{'\u05EA\u05D9\u05E2\u05D5\u05D3 \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={[styles.headerBtn, neuRaised]}
-            onPress={handleWhatsAppShare}
-          >
+      {/* Top Bar */}
+      <ScreenTopBar
+        title="\u05E4\u05E8\u05D8\u05D9 \u05E4\u05E2\u05D5\u05DC\u05D4"
+        onBack={goBack}
+        rightAction={
+          <TouchableOpacity onPress={handleWhatsAppShare} hitSlop={8}>
             <MaterialIcons name="chat" size={22} color={colors.success} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerBtn, neuRaised]}
-            onPress={() => setShowMenu(true)}
-          >
-            <MaterialIcons name="more-horiz" size={28} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      </View>
+        }
+      />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Card */}
-        <View style={[styles.mainCard, neuRaisedLg]}>
-          <View style={[styles.typeBadge, { backgroundColor: typeBadgeBg }]}>
+        {/* Amount Hero */}
+        <View style={styles.heroSection}>
+          <View style={[styles.typeBadge, { borderColor: typeBadgeColor }]}>
             <MaterialIcons name={typeIcon} size={14} color={typeBadgeColor} />
             <Text style={[styles.typeBadgeText, { color: typeBadgeColor }]}>
               {typeLabel}
@@ -335,30 +330,13 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           {expense.amount !== undefined ? (
             <View style={styles.amountContainer}>
               <View style={styles.amountRow}>
-                <Text
-                  style={[
-                    styles.currencySymbol,
-                    { color: expense.type === 'income' ? colors.success : colors.textTertiary },
-                  ]}
-                >
-                  {currencySymbols[expense.currency || 'ILS']}
+                <Text style={[styles.currencySymbol, { color: amountColor }]}>
+                  {currencySymbols[(expense.currency || 'ILS') as Currency]}
                 </Text>
-                <Text
-                  style={[
-                    styles.amountValue,
-                    { color: expense.type === 'income' ? colors.success : colors.textPrimary },
-                  ]}
-                >
+                <Text style={[styles.amountValue, { color: amountColor }]}>
                   {expense.amount.toLocaleString()}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.editAmountBtn, neuRaised]}
-                onPress={() => onNavigate(AppScreen.EDIT_ACTIVITY, expense.id)}
-              >
-                <MaterialIcons name="edit" size={14} color={colors.accent} />
-                <Text style={styles.editAmountText}>{'\u05E2\u05E8\u05D5\u05DA \u05E1\u05DB\u05D5\u05DD'}</Text>
-              </TouchableOpacity>
             </View>
           ) : (
             <Text style={styles.titleOnly}>{expense.title}</Text>
@@ -367,15 +345,15 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           <Text style={styles.dateText}>
             {expense.date}  {'\u2022'}  {expense.title}
           </Text>
+        </View>
 
-          <View style={styles.divider} />
-
-          {/* Detail Rows */}
-          <View style={styles.detailRows}>
+        {/* Detail Card */}
+        <View style={styles.cardWrapper}>
+          <DarkCard style={styles.detailCard}>
             {/* Payment Method */}
             <View style={styles.detailRow}>
-              <View style={[styles.detailIcon, neuRaised]}>
-                <MaterialIcons name="account-balance" size={24} color={colors.primaryDark} />
+              <View style={styles.detailIcon}>
+                <MaterialIcons name="account-balance" size={20} color={colors.primary} />
               </View>
               <View style={styles.detailInfo}>
                 <Text style={styles.detailLabel}>{'\u05D0\u05DE\u05E6\u05E2\u05D9 \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
@@ -385,6 +363,8 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
               </View>
             </View>
 
+            <View style={styles.rowDivider} />
+
             {/* Project */}
             <TouchableOpacity
               style={styles.detailRow}
@@ -393,31 +373,34 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 onNavigate(AppScreen.PROJECT_DETAIL, expense.projectId)
               }
             >
-              <View style={[styles.detailIcon, neuRaised]}>
-                <MaterialIcons name="folder-special" size={24} color={colors.accentDark} />
+              <View style={styles.detailIcon}>
+                <MaterialIcons name="folder-special" size={20} color={colors.accent} />
               </View>
               <View style={[styles.detailInfo, { flex: 1 }]}>
                 <Text style={styles.detailLabel}>{'\u05E9\u05D9\u05D5\u05DA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
-                <Text style={[styles.detailValue, { color: colors.accentDark }]}>
+                <Text style={[styles.detailValue, { color: colors.accent }]}>
                   {expense.projectName || '\u05DB\u05DC\u05DC\u05D9'}
                 </Text>
               </View>
-              <MaterialIcons name="chevron-left" size={24} color={colors.textTertiary} />
+              <MaterialIcons name="chevron-left" size={20} color={colors.textTertiary} />
             </TouchableOpacity>
 
             {/* Category */}
             {expense.tag && (
-              <View style={styles.detailRow}>
-                <View style={[styles.detailIcon, neuRaised]}>
-                  <MaterialIcons name="category" size={24} color={colors.accent} />
+              <>
+                <View style={styles.rowDivider} />
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIcon}>
+                    <MaterialIcons name="category" size={20} color={colors.accent} />
+                  </View>
+                  <View style={styles.detailInfo}>
+                    <Text style={styles.detailLabel}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
+                    <Text style={styles.detailValue}>{expense.tag}</Text>
+                  </View>
                 </View>
-                <View style={styles.detailInfo}>
-                  <Text style={styles.detailLabel}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
-                  <Text style={styles.detailValue}>{expense.tag}</Text>
-                </View>
-              </View>
+              </>
             )}
-          </View>
+          </DarkCard>
         </View>
 
         {/* Supplier Card */}
@@ -428,7 +411,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
               <Text style={styles.sectionSubtitle}>{'\u05E1\u05E4\u05E7 \u05E8\u05E9\u05D5\u05DD'}</Text>
             </View>
 
-            <View style={[styles.supplierCard, neuRaisedLg]}>
+            <DarkCard style={styles.supplierCard}>
               <TouchableOpacity
                 style={styles.supplierAvatar}
                 onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
@@ -453,19 +436,19 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
 
               <View style={styles.supplierActions}>
                 <TouchableOpacity
-                  style={[styles.supplierActionBtn, neuRaised]}
+                  style={styles.supplierActionBtn}
                   onPress={() => handleContactWhatsApp(supplier.phone)}
                 >
-                  <MaterialIcons name="chat" size={24} color={colors.success} />
+                  <MaterialIcons name="chat" size={22} color={colors.success} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.supplierActionBtn, neuRaised]}
+                  style={styles.supplierActionBtn}
                   onPress={() => handleContactCall(supplier.phone)}
                 >
-                  <MaterialIcons name="call" size={24} color={colors.primaryDark} />
+                  <MaterialIcons name="call" size={22} color={colors.primary} />
                 </TouchableOpacity>
               </View>
-            </View>
+            </DarkCard>
           </View>
         )}
 
@@ -479,11 +462,15 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           </View>
 
           {expense.receiptImages && expense.receiptImages.length > 0 ? (
-            <View style={styles.imagesGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.imagesScroll}
+            >
               {expense.receiptImages.map((img: string, idx: number) => (
                 <TouchableOpacity
                   key={idx}
-                  style={[styles.imageThumb, neuRaised]}
+                  style={styles.imageThumb}
                   onPress={() => {
                     setCurrentImageIndex(idx);
                     setShowFullImage(true);
@@ -506,7 +493,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 />
                 <Text style={styles.addImageText}>{'\u05D4\u05D5\u05E1\u05E3 \u05E0\u05E1\u05E4\u05D7'}</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           ) : (
             <View style={styles.noImages}>
               <View style={styles.noImagesIcon}>
@@ -538,7 +525,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
 
           {/* Creation entry */}
           <View style={styles.auditEntry}>
-            <View style={[styles.auditDot, neuRaised]}>
+            <View style={styles.auditDot}>
               <MaterialIcons name="person" size={18} color={colors.primary} />
             </View>
             <View style={styles.auditContent}>
@@ -557,7 +544,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           {expense.history &&
             expense.history.map((entry: any) => (
               <View key={entry.id} style={styles.auditEntry}>
-                <View style={[styles.auditDot, neuRaised]}>
+                <View style={styles.auditDot}>
                   <MaterialIcons name="person" size={18} color={colors.primary} />
                 </View>
                 <View style={styles.auditContent}>
@@ -590,8 +577,8 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           {/* Receipt entry */}
           {expense.receiptImages && expense.receiptImages.length > 0 && (
             <View style={styles.auditEntry}>
-              <View style={[styles.auditDot, neuRaised]}>
-                <MaterialIcons name="receipt-long" size={18} color={colors.primaryDark} />
+              <View style={styles.auditDot}>
+                <MaterialIcons name="receipt-long" size={18} color={colors.primary} />
               </View>
               <View style={styles.auditContent}>
                 <Text style={styles.auditTitle}>{'\u05EA\u05D9\u05E2\u05D5\u05D3 \u05D4\u05D5\u05DB\u05D7\u05EA \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
@@ -603,6 +590,22 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
             </View>
           )}
         </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionRow}>
+          <GradientButton
+            label="\u05E2\u05E8\u05D5\u05DA"
+            variant="outline"
+            onPress={() => onNavigate(AppScreen.EDIT_ACTIVITY, expense.id)}
+            style={styles.actionBtn}
+          />
+          <GradientButton
+            label="\u05DE\u05D7\u05E7"
+            variant="danger"
+            onPress={handleDeleteProject}
+            style={styles.actionBtn}
+          />
+        </View>
       </ScrollView>
     </View>
   );
@@ -611,46 +614,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neuBg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.neuBg,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.neuBg,
-  },
-  headerCenter: {
-    alignItems: 'center',
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    writingDirection: 'rtl',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    writingDirection: 'rtl',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 12,
+    backgroundColor: colors.bgPrimary,
   },
   scrollView: {
     flex: 1,
@@ -659,33 +623,33 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
 
-  // Main Card
-  mainCard: {
-    margin: spacing.xl,
-    padding: spacing['2xl'],
-    borderRadius: radii['3xl'],
-    backgroundColor: 'rgba(255,255,255,0.4)',
+  // Hero
+  heroSection: {
     alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing['2xl'],
   },
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: radii.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radii.full,
+    borderWidth: 1,
     marginBottom: spacing.lg,
   },
   typeBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     writingDirection: 'rtl',
   },
   amountLabel: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 12,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -701,126 +665,110 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   currencySymbol: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontFamily: fonts.bold,
   },
   amountValue: {
-    fontSize: 48,
-    fontWeight: '800',
+    fontSize: 52,
+    fontFamily: fonts.extrabold,
     letterSpacing: -2,
-  },
-  editAmountBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: radii.full,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-  },
-  editAmountText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.accentDark,
-    letterSpacing: 1,
-    writingDirection: 'rtl',
   },
   titleOnly: {
     fontSize: 24,
-    fontWeight: '800',
+    fontFamily: fonts.extrabold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
   dateText: {
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
-    marginTop: 8,
+    marginTop: 12,
     writingDirection: 'rtl',
   },
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    marginVertical: spacing.xl,
+
+  // Detail Card
+  cardWrapper: {
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.lg,
   },
-  detailRows: {
-    width: '100%',
-    gap: 16,
+  detailCard: {
+    padding: 0,
+    overflow: 'hidden',
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: radii['2xl'],
-    padding: 16,
+    gap: 14,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+  },
+  rowDivider: {
+    height: 1,
+    backgroundColor: colors.subtleBorder,
+    marginHorizontal: spacing.xl,
   },
   detailIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.lg,
+    width: 36,
+    height: 36,
+    borderRadius: radii.md,
+    backgroundColor: colors.bgTertiary,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neuBg,
   },
   detailInfo: {
     alignItems: 'flex-end',
   },
   detailLabel: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     writingDirection: 'rtl',
   },
   detailValue: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
+    marginTop: 2,
   },
 
   // Supplier
   section: {
     paddingHorizontal: spacing.xl,
-    marginTop: spacing.lg,
     marginBottom: spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
   sectionSubtitle: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 12,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
     writingDirection: 'rtl',
   },
   supplierCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
     padding: spacing.xl,
-    borderRadius: radii['3xl'],
-    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   supplierAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     overflow: 'hidden',
   },
   supplierAvatarImage: {
@@ -832,36 +780,37 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   supplierName: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 16,
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
   supplierPhone: {
     fontSize: 13,
-    fontWeight: '800',
-    color: colors.textTertiary,
-    letterSpacing: 1,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
   whatsappBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(0,232,143,0.12)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radii.full,
-    marginTop: 8,
+    marginTop: 6,
   },
   activeDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     backgroundColor: colors.success,
   },
   whatsappBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.success,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -870,27 +819,28 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   supplierActionBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.lg,
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
 
   // Images
-  imagesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+  imagesScroll: {
+    gap: 12,
+    paddingRight: spacing.xl,
   },
   imageThumb: {
-    width: (SCREEN_WIDTH - 60 - 16) / 2,
-    height: (SCREEN_WIDTH - 60 - 16) / 2 * 1.2,
-    borderRadius: radii['3xl'],
+    width: 140,
+    height: 170,
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   imageThumbImg: {
     width: '100%',
@@ -904,52 +854,52 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   addImageBtn: {
-    width: (SCREEN_WIDTH - 60 - 16) / 2,
-    height: (SCREEN_WIDTH - 60 - 16) / 2 * 1.2,
-    borderRadius: radii['3xl'],
-    borderWidth: 3,
+    width: 140,
+    height: 170,
+    borderRadius: radii.xl,
+    borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: colors.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   addImageText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     writingDirection: 'rtl',
   },
   noImages: {
     padding: spacing['3xl'],
-    borderRadius: radii['3xl'],
+    borderRadius: radii.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.bgSecondary,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0,0,0,0.1)',
-    gap: 16,
+    borderColor: colors.subtleBorder,
+    gap: 14,
   },
   noImagesIcon: {
     width: 64,
     height: 64,
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    opacity: 0.3,
+    opacity: 0.4,
   },
   noImagesText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     writingDirection: 'rtl',
   },
   addReceiptBtn: {
@@ -960,13 +910,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: 'rgba(0,217,217,0.2)',
+    borderColor: 'rgba(0,217,217,0.25)',
   },
   addReceiptText: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 12,
+    fontFamily: fonts.semibold,
     color: colors.primary,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     writingDirection: 'rtl',
   },
 
@@ -975,67 +925,73 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.bgSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   auditBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
   },
   auditEntry: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 14,
     marginBottom: spacing.xl,
   },
   auditDot: {
     width: 36,
     height: 36,
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   auditContent: {
     flex: 1,
   },
   auditTitle: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 14,
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
   auditDate: {
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     marginTop: 2,
   },
   auditNote: {
-    marginTop: 12,
-    padding: 16,
-    borderRadius: radii['2xl'],
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginTop: 10,
+    padding: 14,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
   },
   auditNoteText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     lineHeight: 20,
     writingDirection: 'rtl',
   },
   changeLabel: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.error,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     marginBottom: 6,
     writingDirection: 'rtl',
   },
@@ -1046,31 +1002,43 @@ const styles = StyleSheet.create({
   },
   oldValue: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.textTertiary,
     textDecorationLine: 'line-through',
   },
   newValue: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.semibold,
     color: colors.success,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(0,232,143,0.1)',
     paddingHorizontal: 10,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: radii.sm,
   },
   verifiedText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.semibold,
     color: colors.success,
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     marginTop: 6,
+  },
+
+  // Action Buttons
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+  },
+  actionBtn: {
+    flex: 1,
   },
 
   // Image viewer
   imageViewerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.98)',
+    backgroundColor: 'rgba(13,11,26,0.98)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1079,10 +1047,12 @@ const styles = StyleSheet.create({
     top: 50,
     left: 20,
     zIndex: 20,
-    width: 48,
-    height: 48,
-    borderRadius: radii.lg,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1096,15 +1066,17 @@ const styles = StyleSheet.create({
   fullImage: {
     width: SCREEN_WIDTH - 40,
     height: '75%',
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
   },
   imageNavBtn: {
     position: 'absolute',
     top: '50%',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1118,31 +1090,35 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 20,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    paddingHorizontal: 18,
     paddingVertical: 8,
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
   },
   imageCounterText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 3,
+    fontSize: 12,
+    fontFamily: fonts.semibold,
+    color: colors.textPrimary,
+    letterSpacing: 2,
     textTransform: 'uppercase',
   },
 
   // Menu
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
   },
   menuCard: {
-    backgroundColor: colors.neuBg,
-    borderRadius: radii['2xl'],
-    padding: spacing.lg,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    borderRadius: radii.xl,
+    padding: spacing.sm,
     width: '100%',
     maxWidth: 280,
   },
@@ -1150,21 +1126,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingVertical: 14,
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
   },
   menuItemText: {
     fontSize: 14,
-    fontWeight: '800',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
   },
   menuDivider: {
     height: 1,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.subtleBorder,
     marginVertical: 4,
-    marginHorizontal: 8,
+    marginHorizontal: spacing.sm,
   },
 });
 
