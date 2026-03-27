@@ -38,6 +38,29 @@ import { ProgressBar } from '../components/ui/ProgressBar';
 import { AvatarCircle } from '../components/ui/AvatarCircle';
 import { EmptyState } from '../components/ui/EmptyState';
 
+// Dashboard analytics widgets
+import { KpiCards } from '../components/dashboard/KpiCards';
+import { MonthlyBarChart } from '../components/dashboard/MonthlyBarChart';
+import { CategoryDonut } from '../components/dashboard/CategoryDonut';
+import { PaymentPieChart } from '../components/dashboard/PaymentPieChart';
+import { TopSuppliersChart } from '../components/dashboard/TopSuppliersChart';
+import { BudgetHealthCard } from '../components/dashboard/BudgetHealthCard';
+import { InsightsCard } from '../components/dashboard/InsightsCard';
+import {
+  getMonthlyBreakdown,
+  getMonthlyAverages,
+  getMonthlyTrend,
+  getExpensesByCategory,
+  getIncomesByCategory,
+  getPaymentMethodBreakdown,
+  getTopSuppliers,
+  getOverBudgetProjects,
+  getOverallBudgetUsage,
+  getVatSummary,
+  getIncomeExpenseRatio,
+  getBusiestMonth,
+} from '../shared/lib/dashboardAnalytics';
+
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
 interface DashboardProps {
@@ -172,6 +195,35 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [projects]);
 
   // ---------------------------------------------------------------------------
+  // Analytics data
+  // ---------------------------------------------------------------------------
+
+  const monthlyBreakdown = useMemo(() => getMonthlyBreakdown(projects), [projects]);
+  const monthlyAverages = useMemo(() => getMonthlyAverages(projects), [projects]);
+  const monthlyTrend = useMemo(() => getMonthlyTrend(projects), [projects]);
+  const expenseCategories = useMemo(() => getExpensesByCategory(projects), [projects]);
+  const incomeCategories = useMemo(() => getIncomesByCategory(projects), [projects]);
+  const paymentMethods = useMemo(() => getPaymentMethodBreakdown(projects), [projects]);
+  const topSuppliersList = useMemo(() => getTopSuppliers(projects, suppliers, 5), [projects, suppliers]);
+  const overBudgetProjects = useMemo(() => getOverBudgetProjects(projects), [projects]);
+  const overallBudgetUsage = useMemo(() => getOverallBudgetUsage(projects), [projects]);
+  const vatSummary = useMemo(() => getVatSummary(projects), [projects]);
+  const incomeExpenseRatio = useMemo(() => getIncomeExpenseRatio(projects), [projects]);
+  const busiestMonth = useMemo(() => getBusiestMonth(projects), [projects]);
+
+  const totalTransactions = useMemo(() => {
+    return projects.reduce(
+      (sum, p) => sum + p.expenses.length + (p.incomes || []).length,
+      0,
+    );
+  }, [projects]);
+
+  const convertForWidget = useMemo(
+    () => (amount: number) => convertAmount(amount),
+    [convertAmount],
+  );
+
+  // ---------------------------------------------------------------------------
   // Menu items
   // ---------------------------------------------------------------------------
 
@@ -219,13 +271,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Summary GlassCard */}
         <GlassCard style={styles.summaryCard}>
-          {/* Expenses label + big amount */}
-          <Text style={styles.summaryLabel}>{'הוצאות'}</Text>
-          <Text style={styles.summaryAmount}>
-            {sym}{formatNumber(convertAmount(totals.expenses))}
+          {/* Balance label + big amount */}
+          <Text style={styles.summaryLabel}>{'יתרה נטו'}</Text>
+          <Text style={[styles.summaryAmount, { color: totals.net >= 0 ? colors.success : colors.error }]}>
+            {totals.net < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(totals.net)))}
           </Text>
 
-          {/* Sub-cards row: income + net */}
+          {/* Sub-cards row: income + expenses */}
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
               <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
@@ -235,9 +287,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'יתרה נטו'}</Text>
-              <Text style={[styles.subCardAmount, { color: totals.net >= 0 ? colors.success : colors.error }]}>
-                {totals.net < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(totals.net)))}
+              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.error }]}>
+                {sym}{formatNumber(convertAmount(totals.expenses))}
               </Text>
             </GlassCard>
           </View>
@@ -318,6 +370,98 @@ const Dashboard: React.FC<DashboardProps> = ({
               );
             })}
           </View>
+        </View>
+
+        {/* ===== Analytics: KPI Cards ===== */}
+        <View style={styles.section}>
+          <SectionHeader title={'תובנות'} />
+          <KpiCards
+            avgExpenses={monthlyAverages.avgExpenses}
+            avgIncome={monthlyAverages.avgIncome}
+            avgSavings={monthlyAverages.avgSavings}
+            ratio={incomeExpenseRatio}
+            expenseTrend={monthlyTrend.expenseTrend}
+            incomeTrend={monthlyTrend.incomeTrend}
+            sym={sym}
+            convertAmount={convertForWidget}
+          />
+        </View>
+
+        {/* ===== Analytics: Monthly Bar Chart ===== */}
+        <View style={styles.section}>
+          <MonthlyBarChart
+            data={monthlyBreakdown}
+            sym={sym}
+            convertAmount={convertForWidget}
+          />
+        </View>
+
+        {/* ===== Analytics: Expense Categories ===== */}
+        {expenseCategories.length > 0 && (
+          <View style={styles.section}>
+            <CategoryDonut
+              data={expenseCategories}
+              title={'פילוח הוצאות'}
+              sym={sym}
+              convertAmount={convertForWidget}
+            />
+          </View>
+        )}
+
+        {/* ===== Analytics: Income Categories ===== */}
+        {incomeCategories.length > 0 && (
+          <View style={styles.section}>
+            <CategoryDonut
+              data={incomeCategories}
+              title={'פילוח הכנסות'}
+              sym={sym}
+              convertAmount={convertForWidget}
+            />
+          </View>
+        )}
+
+        {/* ===== Analytics: Payment Methods ===== */}
+        {paymentMethods.length > 0 && (
+          <View style={styles.section}>
+            <PaymentPieChart
+              data={paymentMethods}
+              sym={sym}
+              convertAmount={convertForWidget}
+            />
+          </View>
+        )}
+
+        {/* ===== Analytics: Top Suppliers ===== */}
+        {topSuppliersList.length > 0 && (
+          <View style={styles.section}>
+            <TopSuppliersChart
+              suppliers={topSuppliersList}
+              sym={sym}
+              convertAmount={convertForWidget}
+            />
+          </View>
+        )}
+
+        {/* ===== Analytics: Budget Health ===== */}
+        <View style={styles.section}>
+          <BudgetHealthCard
+            overallUsage={overallBudgetUsage}
+            overBudgetProjects={overBudgetProjects}
+            sym={sym}
+            convertAmount={convertForWidget}
+            onNavigate={(screen, id) => onNavigate(AppScreen.PROJECT_DETAIL, id)}
+          />
+        </View>
+
+        {/* ===== Analytics: Smart Insights ===== */}
+        <View style={styles.section}>
+          <InsightsCard
+            vatSummary={vatSummary}
+            busiestMonth={busiestMonth}
+            totalTransactions={totalTransactions}
+            sym={sym}
+            convertAmount={convertForWidget}
+          />
         </View>
 
         {/* ===== Quick Access ===== */}
