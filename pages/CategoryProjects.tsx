@@ -26,9 +26,9 @@ interface CategoryProjectsProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const categoryIcons: Record<MainCategory, React.ComponentProps<typeof MaterialIcons>['name']> = {
@@ -45,16 +45,16 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
   convertAmount,
   selectedCategory,
 }) => {
-  const [filter, setFilter] = useState('\u05D4\u05DB\u05DC');
+  const [filter, setFilter] = useState('הכל');
 
   const categoryProjects = useMemo(() => {
     return projects.filter((p) => p.mainCategory === selectedCategory);
   }, [projects, selectedCategory]);
 
-  const subCategories = ['\u05D4\u05DB\u05DC', ...Array.from(new Set(categoryProjects.map((p) => p.category)))];
+  const subCategories = ['הכל', ...Array.from(new Set(categoryProjects.map((p) => p.category)))];
 
   const filteredProjects = categoryProjects.filter(
-    (p) => filter === '\u05D4\u05DB\u05DC' || p.category === filter
+    (p) => filter === 'הכל' || p.category === filter
   );
 
   const categoryTotals = useMemo(() => {
@@ -125,19 +125,19 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
         {/* Summary Glass Pills */}
         <View style={styles.summaryRow}>
           <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>{'\u05EA\u05E7\u05E6\u05D9\u05D1'}</Text>
+            <Text style={styles.pillLabel}>{'תקציב'}</Text>
             <Text style={[styles.pillValue, { color: colors.primary }]}>
               {symbol}{formatAmount(categoryTotals.budget)}
             </Text>
           </GlassCard>
           <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
+            <Text style={styles.pillLabel}>{'הוצאות'}</Text>
             <Text style={[styles.pillValue, { color: colors.error }]}>
               {symbol}{formatAmount(categoryTotals.spent)}
             </Text>
           </GlassCard>
           <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
+            <Text style={styles.pillLabel}>{'יתרה'}</Text>
             <Text style={[styles.pillValue, { color: categoryTotals.remaining >= 0 ? colors.success : colors.error }]}>
               {categoryTotals.remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(categoryTotals.remaining))}
             </Text>
@@ -167,13 +167,13 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
             <View style={styles.emptyIconContainer}>
               <MaterialIcons name="folder-off" size={40} color={colors.textTertiary} />
             </View>
-            <Text style={styles.emptyText}>{'\u05D0\u05D9\u05DF \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05D1\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05D6\u05D5'}</Text>
+            <Text style={styles.emptyText}>{'אין פרויקטים בקטגוריה זו'}</Text>
             <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => onNavigate(AppScreen.ADD_PROJECT)}
               activeOpacity={0.7}
             >
-              <Text style={styles.emptyButtonText}>{'\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9'}</Text>
+              <Text style={styles.emptyButtonText}>{'צור פרויקט חדש'}</Text>
             </TouchableOpacity>
           </DarkCard>
         ) : (
@@ -221,19 +221,19 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
                 {/* Amounts Row */}
                 <View style={styles.amountsRow}>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'\u05EA\u05E7\u05E6\u05D9\u05D1'}</Text>
+                    <Text style={styles.amountLabel}>{'תקציב'}</Text>
                     <Text style={[styles.amountValue, { color: colors.textSecondary }]}>
                       {symbol}{formatAmount(project.budget)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
+                    <Text style={styles.amountLabel}>{'הוצאות'}</Text>
                     <Text style={[styles.amountValue, { color: colors.error }]}>
                       {symbol}{formatAmount(project.spent)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
+                    <Text style={styles.amountLabel}>{'יתרה'}</Text>
                     <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.primary : colors.error }]}>
                       {remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(remaining))}
                     </Text>

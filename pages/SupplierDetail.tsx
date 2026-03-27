@@ -40,9 +40,9 @@ interface SupplierDetailProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const SupplierDetail: React.FC<SupplierDetailProps> = ({
@@ -83,8 +83,8 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(
-        '\u05E9\u05D2\u05D9\u05D0\u05D4',
-        '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4'
+        'שגיאה',
+        'נדרשת הרשאה לגלריה'
       );
       return;
     }
@@ -102,8 +102,8 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
   const handleWhatsApp = () => {
     if (!supplier.phone) {
       Alert.alert(
-        '\u05E9\u05D2\u05D9\u05D0\u05D4',
-        '\u05DC\u05D0 \u05D4\u05D5\u05D2\u05D3\u05E8 \u05DE\u05E1\u05E4\u05E8 \u05D8\u05DC\u05E4\u05D5\u05DF \u05DC\u05E1\u05E4\u05E7 \u05D6\u05D4.'
+        'שגיאה',
+        'לא הוגדר מספר טלפון לספק זה.'
       );
       return;
     }
@@ -117,7 +117,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
       formattedPhone = '972' + cleanPhone;
     }
     const message = encodeURIComponent(
-      `\u05E9\u05DC\u05D5\u05DD ${supplier.name}, \u05E8\u05E6\u05D9\u05EA\u05D9 \u05DC\u05D1\u05E8\u05E8 \u05DC\u05D2\u05D1\u05D9 \u05DE\u05E6\u05D1 \u05D4\u05D7\u05E9\u05D1\u05D5\u05DF \u05E9\u05DC\u05D9 \u05D1\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9\u05EA MONNY.`
+      `שלום ${supplier.name}, רציתי לברר לגבי מצב החשבון שלי באפליקציית MONNY.`
     );
     openExternalURL(`https://wa.me/${formattedPhone}?text=${message}`);
   };
@@ -125,8 +125,8 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
   const handleCall = () => {
     if (!supplier.phone) {
       Alert.alert(
-        '\u05E9\u05D2\u05D9\u05D0\u05D4',
-        '\u05DC\u05D0 \u05D4\u05D5\u05D2\u05D3\u05E8 \u05DE\u05E1\u05E4\u05E8 \u05D8\u05DC\u05E4\u05D5\u05DF \u05DC\u05E1\u05E4\u05E7 \u05D6\u05D4.'
+        'שגיאה',
+        'לא הוגדר מספר טלפון לספק זה.'
       );
       return;
     }
@@ -135,7 +135,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
   const handleEmail = () => {
     const email = `${supplier.name.replace(/\s+/g, '.')}@example.com`.toLowerCase();
-    openExternalURL(`mailto:${email}?subject=MONNY - \u05E4\u05E0\u05D9\u05D4 \u05DE\u05E1\u05E4\u05E7`);
+    openExternalURL(`mailto:${email}?subject=MONNY - פניה מספק`);
   };
 
   // Build transaction list from projects
@@ -176,10 +176,10 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
   const statusLabel =
     supplier.status === 'credit'
-      ? '\u05D6\u05DB\u05D5\u05EA'
+      ? 'זכות'
       : supplier.status === 'debt'
-      ? '\u05D7\u05D5\u05D1'
-      : '\u05DE\u05D0\u05D5\u05D6\u05DF';
+      ? 'חוב'
+      : 'מאוזן';
 
   const balanceSign =
     supplier.status === 'credit' ? '+' : supplier.status === 'debt' ? '-' : '';
@@ -209,12 +209,12 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
             <View style={styles.navCenter}>
               <Text style={styles.navSubtitle}>
-                {'\u05DB\u05E8\u05D8\u05D9\u05E1 \u05E1\u05E4\u05E7'}
+                {'כרטיס ספק'}
               </Text>
               <Text style={styles.navTitle}>
                 {isEditing
-                  ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D8\u05D9\u05DD'
-                  : '\u05E4\u05E8\u05D8\u05D9 \u05D4\u05EA\u05E7\u05E9\u05E8\u05D5\u05EA'}
+                  ? 'עריכת פרטים'
+                  : 'פרטי התקשרות'}
               </Text>
             </View>
 
@@ -260,12 +260,12 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
               <View style={styles.editFieldsContainer}>
                 {/* Name */}
                 <View style={styles.editField}>
-                  <Text style={styles.editLabel}>{'\u05E9\u05DD'}</Text>
+                  <Text style={styles.editLabel}>{'שם'}</Text>
                   <TextInput
                     style={styles.editInput}
                     value={editName}
                     onChangeText={setEditName}
-                    placeholder={'\u05E9\u05DD \u05D4\u05E1\u05E4\u05E7'}
+                    placeholder={'שם הספק'}
                     placeholderTextColor={colors.textTertiary}
                     textAlign="right"
                   />
@@ -273,12 +273,12 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
                 {/* Category */}
                 <View style={styles.editField}>
-                  <Text style={styles.editLabel}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
+                  <Text style={styles.editLabel}>{'קטגוריה'}</Text>
                   <TextInput
                     style={styles.editInput}
                     value={editCategory}
                     onChangeText={setEditCategory}
-                    placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}
+                    placeholder={'קטגוריה'}
                     placeholderTextColor={colors.textTertiary}
                     textAlign="right"
                   />
@@ -286,7 +286,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
                 {/* Phone */}
                 <View style={styles.editField}>
-                  <Text style={styles.editLabel}>{'\u05D8\u05DC\u05E4\u05D5\u05DF'}</Text>
+                  <Text style={styles.editLabel}>{'טלפון'}</Text>
                   <TextInput
                     style={[styles.editInput, styles.editInputLtr]}
                     value={editPhone}
@@ -304,7 +304,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                 <View style={styles.summaryRow}>
                   <View style={styles.summaryCol}>
                     <Text style={styles.summaryLabel}>
-                      {'\u05DE\u05E6\u05D1 \u05D9\u05EA\u05E8\u05D4'}
+                      {'מצב יתרה'}
                     </Text>
                     <Text style={[styles.summaryAmount, { color: statusColor }]}>
                       {currencySymbols['ILS']}
@@ -315,7 +315,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                   <View style={styles.summaryDivider} />
                   <View style={styles.summaryCol}>
                     <Text style={styles.summaryLabel}>
-                      {'\u05E1\u05D8\u05D8\u05D5\u05E1'}
+                      {'סטטוס'}
                     </Text>
                     <Text style={[styles.summaryStatusText, { color: statusColor }]}>
                       {statusLabel}
@@ -344,7 +344,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                 <View style={styles.summaryRow}>
                   <View style={styles.summaryCol}>
                     <Text style={styles.summaryLabel}>
-                      {'\u05D9\u05EA\u05E8\u05D4'}
+                      {'יתרה'}
                     </Text>
                     <Text style={[styles.summaryAmount, { color: statusColor }]}>
                       {balanceSign}
@@ -355,7 +355,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                   <View style={styles.summaryDivider} />
                   <View style={styles.summaryCol}>
                     <Text style={styles.summaryLabel}>
-                      {'\u05E1\u05D8\u05D8\u05D5\u05E1'}
+                      {'סטטוס'}
                     </Text>
                     <View style={[styles.statusBadge, { borderColor: statusColor }]}>
                       <Text style={[styles.statusBadgeText, { color: statusColor }]}>
@@ -366,7 +366,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                   <View style={styles.summaryDivider} />
                   <View style={styles.summaryCol}>
                     <Text style={styles.summaryLabel}>
-                      {'\u05E4\u05E2\u05D5\u05DC\u05D5\u05EA'}
+                      {'פעולות'}
                     </Text>
                     <Text style={styles.summaryCount}>
                       {supplierTransactions.length}
@@ -391,21 +391,21 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                 icon="phone"
                 color={colors.primary}
                 size={52}
-                label={'\u05D4\u05EA\u05E7\u05E9\u05E8'}
+                label={'התקשר'}
                 onPress={handleCall}
               />
               <CircleIconButton
                 icon="payments"
                 color={colors.accent}
                 size={52}
-                label={'\u05EA\u05E9\u05DC\u05D5\u05DD'}
+                label={'תשלום'}
                 onPress={() => onNavigate(AppScreen.ADD_EXPENSE, supplier.id)}
               />
               <CircleIconButton
                 icon="mail"
                 color={colors.textSecondary}
                 size={52}
-                label={'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}
+                label={'אימייל'}
                 onPress={handleEmail}
               />
             </View>
@@ -421,8 +421,8 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
         {linkedProjects.length > 0 && (
           <View style={styles.section}>
             <SectionHeader
-              title={'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05DE\u05E9\u05D5\u05D9\u05DB\u05D9\u05DD'}
-              linkText={`${linkedProjects.length} \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD`}
+              title={'פרויקטים משויכים'}
+              linkText={`${linkedProjects.length} פרויקטים`}
             />
             <ScrollView
               horizontal
@@ -454,10 +454,10 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
         {/* Transaction History */}
         <View style={styles.section}>
           <SectionHeader
-            title={'\u05D4\u05D9\u05E1\u05D8\u05D5\u05E8\u05D9\u05D9\u05EA \u05E2\u05E1\u05E7\u05D0\u05D5\u05EA'}
+            title={'היסטוריית עסקאות'}
             linkText={
               supplierTransactions.length > 0
-                ? `${supplierTransactions.length} \u05E4\u05E2\u05D5\u05DC\u05D5\u05EA`
+                ? `${supplierTransactions.length} פעולות`
                 : undefined
             }
           />
@@ -485,7 +485,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
                 color={colors.textTertiary}
               />
               <Text style={styles.emptyText}>
-                {'\u05D0\u05D9\u05DF \u05E2\u05D3\u05D9\u05D9\u05DF \u05D4\u05D9\u05E1\u05D8\u05D5\u05E8\u05D9\u05D9\u05EA \u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD'}
+                {'אין עדיין היסטוריית תשלומים'}
               </Text>
             </DarkCard>
           )}
@@ -504,7 +504,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
               <MaterialIcons name="payments" size={22} color={colors.white} />
             </View>
             <Text style={styles.paymentBtnText}>
-              {'\u05D1\u05E6\u05E2 \u05EA\u05E9\u05DC\u05D5\u05DD \u05D7\u05D3\u05E9'}
+              {'בצע תשלום חדש'}
             </Text>
           </TouchableOpacity>
         </View>

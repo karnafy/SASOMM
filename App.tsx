@@ -102,6 +102,7 @@ function AppContent() {
   const [initialTxType, setInitialTxType] = useState<'expense' | 'income'>('expense');
   const [returnToScreen, setReturnToScreen] = useState<AppScreen | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const expenseFormDraftRef = useRef<any>(null);
 
   const convertAmount = useCallback(
     (amount: number, from: Currency = 'ILS', to: Currency = globalCurrency) => {
@@ -140,7 +141,7 @@ function AppContent() {
         if (screen === AppScreen.ADD_EXPENSE || screen === AppScreen.ADD_INCOME) setSelectedSupplierId(null);
       }
 
-      if (screen === AppScreen.ADD_SUPPLIER) {
+      if (screen === AppScreen.ADD_SUPPLIER || screen === AppScreen.ADD_PROJECT) {
         setReturnToScreen(currentScreen);
       }
 
@@ -232,9 +233,19 @@ function AppContent() {
         const newProject = await createProject({ name, budget: budgetInILS, category, mainCategory });
         await refetchProjects();
 
-        if (newProject) {
+        if (newProject && (returnToScreen === AppScreen.ADD_EXPENSE || returnToScreen === AppScreen.ADD_INCOME)) {
+          // Returning to expense form — update draft with new project and restore
+          if (expenseFormDraftRef.current) {
+            expenseFormDraftRef.current.selectedProjectId = newProject.id;
+          }
+          setSelectedProjectId(newProject.id);
+          setHistoryStack((prev) => prev.slice(0, -1));
+          setCurrentScreen(returnToScreen);
+          setReturnToScreen(null);
+        } else if (newProject) {
           setSelectedProjectId(newProject.id);
           setCurrentScreen(AppScreen.PROJECT_DETAIL);
+          setReturnToScreen(null);
         }
       } catch (error) {
         console.error('Error creating project:', error);
@@ -243,7 +254,7 @@ function AppContent() {
         setIsSaving(false);
       }
     },
-    [createProject, refetchProjects, globalCurrency]
+    [createProject, refetchProjects, globalCurrency, returnToScreen]
   );
 
   // Handler: Delete Project
@@ -270,7 +281,12 @@ function AppContent() {
         await refetchSuppliers();
 
         if (returnToScreen === AppScreen.ADD_EXPENSE || returnToScreen === AppScreen.ADD_INCOME) {
+          // Returning to expense form — update draft with new supplier and restore
+          if (expenseFormDraftRef.current) {
+            expenseFormDraftRef.current.selectedSupplierId = newSupplier.id;
+          }
           setSelectedSupplierId(newSupplier.id);
+          setHistoryStack((prev) => prev.slice(0, -1));
           setCurrentScreen(returnToScreen);
         } else {
           setCurrentScreen(AppScreen.SUPPLIERS);
@@ -400,6 +416,8 @@ function AppContent() {
             initialType={initialTxType}
             preselectedSupplierId={selectedSupplierId}
             preselectedProjectId={selectedProjectId}
+            formDraft={expenseFormDraftRef.current}
+            onSaveDraft={(draft: any) => { expenseFormDraftRef.current = draft; }}
           />
         );
       case AppScreen.EDIT_ACTIVITY:

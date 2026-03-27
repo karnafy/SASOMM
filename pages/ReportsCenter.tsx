@@ -35,9 +35,9 @@ interface ReportsCenterProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const ReportsCenter: React.FC<ReportsCenterProps> = ({
@@ -82,56 +82,56 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({
     let text = '';
 
     if (type === 'summary') {
-      text = `*\u05D3\u05D5"\u05D7 \u05E1\u05D9\u05DB\u05D5\u05DD - MONNY*
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-*\u05E1\u05D4"\u05DB \u05D4\u05DB\u05E0\u05E1\u05D5\u05EA:* ${symbol}${convertAmount(stats.totalIncome).toLocaleString()}
-*\u05E1\u05D4"\u05DB \u05D4\u05D5\u05E6\u05D0\u05D5\u05EA:* ${symbol}${convertAmount(stats.totalSpent).toLocaleString()}
-*\u05D9\u05EA\u05E8\u05D4 \u05E0\u05D8\u05D5:* ${symbol}${convertAmount(stats.netBalance).toLocaleString()}
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-*\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD:* ${stats.projectCount}
-*\u05E1\u05E4\u05E7\u05D9\u05DD:* ${stats.supplierCount}
-*\u05E2\u05E1\u05E7\u05D0\u05D5\u05EA:* ${stats.totalTransactions}
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-_\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
+      text = `*דו"ח סיכום - MONNY*
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+*סה"כ הכנסות:* ${symbol}${convertAmount(stats.totalIncome).toLocaleString()}
+*סה"כ הוצאות:* ${symbol}${convertAmount(stats.totalSpent).toLocaleString()}
+*יתרה נטו:* ${symbol}${convertAmount(stats.netBalance).toLocaleString()}
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+*פרויקטים:* ${stats.projectCount}
+*ספקים:* ${stats.supplierCount}
+*עסקאות:* ${stats.totalTransactions}
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+_הופק על ידי MONNY_`;
     } else if (type === 'projects') {
-      text = `*\u05D3\u05D5"\u05D7 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD - MONNY*
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+      text = `*דו"ח פרויקטים - MONNY*
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 ${projects
         .map(
           (p) => `*${p.name}*
-\u05EA\u05E7\u05E6\u05D9\u05D1: ${symbol}${convertAmount(p.budget).toLocaleString()}
-\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA: ${symbol}${convertAmount(p.spent).toLocaleString()}
-\u05D9\u05EA\u05E8\u05D4: ${symbol}${convertAmount(p.budget - p.spent).toLocaleString()}`
+תקציב: ${symbol}${convertAmount(p.budget).toLocaleString()}
+הוצאות: ${symbol}${convertAmount(p.spent).toLocaleString()}
+יתרה: ${symbol}${convertAmount(p.budget - p.spent).toLocaleString()}`
         )
-        .join('\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n')}
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-_\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
+        .join('\n\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\n')}
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+_הופק על ידי MONNY_`;
     } else {
       const debtSuppliers = suppliers.filter((s) => s.status === 'debt');
       const creditSuppliers = suppliers.filter((s) => s.status === 'credit');
-      text = `*\u05D3\u05D5"\u05D7 \u05E1\u05E4\u05E7\u05D9\u05DD - MONNY*
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-*\u05D7\u05D5\u05D1\u05D5\u05EA (${debtSuppliers.length}):*
+      text = `*דו"ח ספקים - MONNY*
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+*חובות (${debtSuppliers.length}):*
 ${
         debtSuppliers
           .map(
             (s) =>
-              `\u2022 ${s.name}: ${symbol}${convertAmount(s.amount).toLocaleString()}`
+              `\• ${s.name}: ${symbol}${convertAmount(s.amount).toLocaleString()}`
           )
-          .join('\n') || '\u05D0\u05D9\u05DF \u05D7\u05D5\u05D1\u05D5\u05EA'
+          .join('\n') || 'אין חובות'
       }
 
-*\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA (${creditSuppliers.length}):*
+*זכויות (${creditSuppliers.length}):*
 ${
         creditSuppliers
           .map(
             (s) =>
-              `\u2022 ${s.name}: ${symbol}${convertAmount(s.amount).toLocaleString()}`
+              `\• ${s.name}: ${symbol}${convertAmount(s.amount).toLocaleString()}`
           )
-          .join('\n') || '\u05D0\u05D9\u05DF \u05D6\u05DB\u05D5\u05D9\u05D5\u05EA'
+          .join('\n') || 'אין זכויות'
       }
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-_\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+_הופק על ידי MONNY_`;
     }
 
     const encoded = encodeURIComponent(text);
@@ -146,20 +146,20 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
   }[] = [
     {
       icon: 'summarize',
-      label: '\u05D3\u05D5"\u05D7 \u05E1\u05D9\u05DB\u05D5\u05DD',
-      desc: '\u05E1\u05E7\u05D9\u05E8\u05D4 \u05DB\u05DC\u05DC\u05D9\u05EA \u05E9\u05DC \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD',
+      label: 'דו"ח סיכום',
+      desc: 'סקירה כללית של הנתונים',
       type: 'summary',
     },
     {
       icon: 'folder-special',
-      label: '\u05D3\u05D5"\u05D7 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD',
-      desc: '\u05E4\u05D9\u05E8\u05D5\u05D8 \u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD',
+      label: 'דו"ח פרויקטים',
+      desc: 'פירוט כל הפרויקטים',
       type: 'projects',
     },
     {
       icon: 'groups',
-      label: '\u05D3\u05D5"\u05D7 \u05E1\u05E4\u05E7\u05D9\u05DD',
-      desc: '\u05D7\u05D5\u05D1\u05D5\u05EA \u05D5\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA',
+      label: 'דו"ח ספקים',
+      desc: 'חובות וזכויות',
       type: 'suppliers',
     },
   ];
@@ -168,7 +168,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
     <View style={styles.container}>
       {/* Header */}
       <GradientHeader>
-        <ScreenTopBar title={'\u05DE\u05E8\u05DB\u05D6 \u05D4\u05D3\u05D5"\u05D7\u05D5\u05EA'} onBack={goBack} />
+        <ScreenTopBar title={'מרכז הדו"חות'} onBack={goBack} />
       </GradientHeader>
 
       <ScrollView
@@ -179,7 +179,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
         {/* Overview Stats - 2x2 GlassCard grid */}
         <View style={styles.overviewGrid}>
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA'}</Text>
+            <Text style={styles.overviewLabel}>{'הכנסות'}</Text>
             <Text style={[styles.overviewValue, { color: colors.success }]}>
               {symbol}
               {convertAmount(stats.totalIncome).toLocaleString(undefined, {
@@ -189,7 +189,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
           </GlassCard>
 
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
+            <Text style={styles.overviewLabel}>{'הוצאות'}</Text>
             <Text style={[styles.overviewValue, { color: colors.error }]}>
               {symbol}
               {convertAmount(stats.totalSpent).toLocaleString(undefined, {
@@ -199,7 +199,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
           </GlassCard>
 
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'\u05EA\u05E7\u05E6\u05D9\u05D1'}</Text>
+            <Text style={styles.overviewLabel}>{'תקציב'}</Text>
             <Text style={[styles.overviewValue, { color: colors.info }]}>
               {symbol}
               {convertAmount(stats.totalBudget).toLocaleString(undefined, {
@@ -209,7 +209,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
           </GlassCard>
 
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'\u05D9\u05EA\u05E8\u05D4 \u05E0\u05D8\u05D5'}</Text>
+            <Text style={styles.overviewLabel}>{'יתרה נטו'}</Text>
             <Text
               style={[
                 styles.overviewValue,
@@ -231,7 +231,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
               <MaterialIcons name="folder" size={20} color={colors.primary} />
             </View>
             <Text style={styles.statNumber}>{stats.projectCount}</Text>
-            <Text style={styles.statLabel}>{'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD'}</Text>
+            <Text style={styles.statLabel}>{'פרויקטים'}</Text>
           </DarkCard>
 
           <DarkCard style={styles.statCard}>
@@ -239,7 +239,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
               <MaterialIcons name="groups" size={20} color={colors.accent} />
             </View>
             <Text style={styles.statNumber}>{stats.supplierCount}</Text>
-            <Text style={styles.statLabel}>{'\u05E1\u05E4\u05E7\u05D9\u05DD'}</Text>
+            <Text style={styles.statLabel}>{'ספקים'}</Text>
           </DarkCard>
 
           <DarkCard style={styles.statCard}>
@@ -247,7 +247,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
               <MaterialIcons name="receipt-long" size={20} color={colors.info} />
             </View>
             <Text style={styles.statNumber}>{stats.totalTransactions}</Text>
-            <Text style={styles.statLabel}>{'\u05E2\u05E1\u05E7\u05D0\u05D5\u05EA'}</Text>
+            <Text style={styles.statLabel}>{'עסקאות'}</Text>
           </DarkCard>
         </View>
 
@@ -255,7 +255,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
         <DarkCard style={styles.exportCard}>
           <View style={styles.exportHeader}>
             <Text style={styles.exportHeaderText}>
-              {'\u05E9\u05DC\u05D7 \u05D3\u05D5"\u05D7 \u05D1\u05D5\u05D5\u05D0\u05D8\u05E1\u05D0\u05E4'}
+              {'שלח דו"ח בוואטסאפ'}
             </Text>
           </View>
           {reportTypes.map((item, i) => (
@@ -286,7 +286,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05E2\u05DC \u05D9\u05D3\u05D9 MONNY_`;
         {stats.debtCount > 0 && (
           <DarkCard style={styles.debtCard}>
             <View style={styles.debtHeader}>
-              <Text style={styles.debtTitle}>{'\u05E1\u05D9\u05DB\u05D5\u05DD \u05D7\u05D5\u05D1\u05D5\u05EA'}</Text>
+              <Text style={styles.debtTitle}>{'סיכום חובות'}</Text>
               <View style={styles.debtBadge}>
                 <Text style={styles.debtBadgeText}>
                   {symbol}

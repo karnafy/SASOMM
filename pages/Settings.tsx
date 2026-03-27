@@ -25,15 +25,15 @@ interface SettingsProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const currencyNames: Record<Currency, string> = {
-  ILS: '\u05E9\u05E7\u05DC \u05D9\u05E9\u05E8\u05D0\u05DC\u05D9',
-  USD: '\u05D3\u05D5\u05DC\u05E8 \u05D0\u05DE\u05E8\u05D9\u05E7\u05D0\u05D9',
-  EUR: '\u05D0\u05D9\u05E8\u05D5',
+  ILS: 'שקל ישראלי',
+  USD: 'דולר אמריקאי',
+  EUR: 'אירו',
 };
 
 const SETTINGS_STORAGE_KEY = 'app_settings';
@@ -82,12 +82,12 @@ const Settings: React.FC<SettingsProps> = ({
 
   const handleClearData = () => {
     Alert.alert(
-      '\u05DE\u05D7\u05D9\u05E7\u05EA \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD',
-      '\u05D4\u05D0\u05DD \u05D0\u05EA\u05D4 \u05D1\u05D8\u05D5\u05D7 \u05E9\u05D1\u05E8\u05E6\u05D5\u05E0\u05DA \u05DC\u05DE\u05D7\u05D5\u05E7 \u05D0\u05EA \u05DB\u05DC \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD? \u05E4\u05E2\u05D5\u05DC\u05D4 \u05D6\u05D5 \u05D1\u05DC\u05EA\u05D9 \u05D4\u05E4\u05D9\u05DB\u05D4!',
+      'מחיקת נתונים',
+      'האם אתה בטוח שברצונך למחוק את כל הנתונים? פעולה זו בלתי הפיכה!',
       [
-        { text: '\u05D1\u05D9\u05D8\u05D5\u05DC', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         {
-          text: '\u05DE\u05D7\u05E7',
+          text: 'מחק',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -95,9 +95,9 @@ const Settings: React.FC<SettingsProps> = ({
                 'user_profile',
                 SETTINGS_STORAGE_KEY,
               ]);
-              Alert.alert('\u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E0\u05DE\u05D7\u05E7\u05D5 \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4');
+              Alert.alert('הנתונים נמחקו בהצלחה');
             } catch (err) {
-              Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05DC\u05D0 \u05E0\u05D9\u05EA\u05DF \u05DC\u05DE\u05D7\u05D5\u05E7 \u05D0\u05EA \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD');
+              Alert.alert('שגיאה', 'לא ניתן למחוק את הנתונים');
             }
           },
         },
@@ -116,13 +116,13 @@ const Settings: React.FC<SettingsProps> = ({
   const getTitle = () => {
     switch (activeSection) {
       case 'settings':
-        return '\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA';
+        return 'הגדרות';
       case 'terms':
-        return '\u05EA\u05E7\u05E0\u05D5\u05DF';
+        return 'תקנון';
       case 'privacy':
-        return '\u05E4\u05E8\u05D8\u05D9\u05D5\u05EA';
+        return 'פרטיות';
       case 'about':
-        return '\u05D0\u05D5\u05D3\u05D5\u05EA';
+        return 'אודות';
     }
   };
 
@@ -147,11 +147,11 @@ const Settings: React.FC<SettingsProps> = ({
       {/* Default Currency — CurrencyToggle */}
       <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardHeaderText}>{'\u05DE\u05D8\u05D1\u05E2 \u05D1\u05E8\u05D9\u05E8\u05EA \u05DE\u05D7\u05D3\u05DC'}</Text>
+          <Text style={styles.cardHeaderText}>{'מטבע ברירת מחדל'}</Text>
         </View>
         <View style={styles.currencyToggleRow}>
           <MaterialIcons name="payment" size={20} color={colors.primary} />
-          <Text style={styles.settingLabel}>{'\u05D1\u05D7\u05E8 \u05DE\u05D8\u05D1\u05E2'}</Text>
+          <Text style={styles.settingLabel}>{'בחר מטבע'}</Text>
           <View style={styles.currencyToggleWrapper}>
             {setGlobalCurrency ? (
               <CurrencyToggle
@@ -170,16 +170,16 @@ const Settings: React.FC<SettingsProps> = ({
       {/* App Settings */}
       <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardHeaderText}>{'\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA \u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4'}</Text>
+          <Text style={styles.cardHeaderText}>{'הגדרות אפליקציה'}</Text>
         </View>
 
         {/* Language */}
         <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
             <MaterialIcons name="language" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05E9\u05E4\u05D4'}</Text>
+            <Text style={styles.settingLabel}>{'שפה'}</Text>
           </View>
-          <Text style={styles.settingValue}>{'\u05E2\u05D1\u05E8\u05D9\u05EA'}</Text>
+          <Text style={styles.settingValue}>{'עברית'}</Text>
         </View>
 
         {/* Notifications */}
@@ -193,7 +193,7 @@ const Settings: React.FC<SettingsProps> = ({
         >
           <View style={styles.settingLeft}>
             <MaterialIcons name="notifications" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05D4\u05EA\u05E8\u05D0\u05D5\u05EA'}</Text>
+            <Text style={styles.settingLabel}>{'התראות'}</Text>
           </View>
           {renderToggle(notifications)}
         </TouchableOpacity>
@@ -202,12 +202,12 @@ const Settings: React.FC<SettingsProps> = ({
         <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
             <MaterialIcons name="dark-mode" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05E2\u05D9\u05E6\u05D5\u05D1'}</Text>
+            <Text style={styles.settingLabel}>{'עיצוב'}</Text>
           </View>
           <View style={styles.settingRight}>
-            <Text style={styles.settingValue}>{'\u05DB\u05D4\u05D4'}</Text>
+            <Text style={styles.settingValue}>{'כהה'}</Text>
             <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+              <Text style={styles.comingSoonText}>{'בקרוב'}</Text>
             </View>
           </View>
         </View>
@@ -216,12 +216,12 @@ const Settings: React.FC<SettingsProps> = ({
         <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
             <MaterialIcons name="file-download" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05D9\u05D9\u05E6\u05D5\u05D0 \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD'}</Text>
+            <Text style={styles.settingLabel}>{'ייצוא נתונים'}</Text>
           </View>
           <View style={styles.settingRight}>
             <Text style={styles.settingValue}>CSV</Text>
             <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+              <Text style={styles.comingSoonText}>{'בקרוב'}</Text>
             </View>
           </View>
         </View>
@@ -237,7 +237,7 @@ const Settings: React.FC<SettingsProps> = ({
         >
           <View style={styles.settingLeft}>
             <MaterialIcons name="backup" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'\u05D2\u05D9\u05D1\u05D5\u05D9 \u05D0\u05D5\u05D8\u05D5\u05DE\u05D8\u05D9'}</Text>
+            <Text style={styles.settingLabel}>{'גיבוי אוטומטי'}</Text>
           </View>
           {renderToggle(autoBackup)}
         </TouchableOpacity>
@@ -246,7 +246,7 @@ const Settings: React.FC<SettingsProps> = ({
       {/* Data Management */}
       <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardHeaderText}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD'}</Text>
+          <Text style={styles.cardHeaderText}>{'ניהול נתונים'}</Text>
         </View>
 
         <TouchableOpacity
@@ -256,7 +256,7 @@ const Settings: React.FC<SettingsProps> = ({
           <View style={styles.settingLeft}>
             <MaterialIcons name="delete-forever" size={20} color={colors.error} />
             <Text style={[styles.settingLabel, { color: colors.error }]}>
-              {'\u05DE\u05D7\u05D9\u05E7\u05EA \u05DB\u05DC \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD'}
+              {'מחיקת כל הנתונים'}
             </Text>
           </View>
           <MaterialIcons name="chevron-left" size={20} color={colors.error} />
@@ -266,23 +266,23 @@ const Settings: React.FC<SettingsProps> = ({
       {/* Legal */}
       <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardHeaderText}>{'\u05DE\u05D9\u05D3\u05E2 \u05DE\u05E9\u05E4\u05D8\u05D9'}</Text>
+          <Text style={styles.cardHeaderText}>{'מידע משפטי'}</Text>
         </View>
 
         {[
           {
             icon: 'gavel' as const,
-            label: '\u05EA\u05E7\u05E0\u05D5\u05DF \u05D4\u05E9\u05D9\u05DE\u05D5\u05E9',
+            label: 'תקנון השימוש',
             section: 'terms' as const,
           },
           {
             icon: 'privacy-tip' as const,
-            label: '\u05DE\u05D3\u05D9\u05E0\u05D9\u05D5\u05EA \u05E4\u05E8\u05D8\u05D9\u05D5\u05EA',
+            label: 'מדיניות פרטיות',
             section: 'privacy' as const,
           },
           {
             icon: 'info' as const,
-            label: '\u05D0\u05D5\u05D3\u05D5\u05EA \u05D4\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4',
+            label: 'אודות האפליקציה',
             section: 'about' as const,
           },
         ].map((item, i) => (
@@ -310,8 +310,8 @@ const Settings: React.FC<SettingsProps> = ({
 
       {/* Version */}
       <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>MONNY {'\u05D2\u05E8\u05E1\u05D4'} 1.0.0</Text>
-        <Text style={styles.versionSubtext}>{'\u05DB\u05DC \u05D4\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA'} 2024</Text>
+        <Text style={styles.versionText}>MONNY {'גרסה'} 1.0.0</Text>
+        <Text style={styles.versionSubtext}>{'כל הזכויות שמורות'} 2024</Text>
       </View>
     </View>
   );
@@ -323,33 +323,33 @@ const Settings: React.FC<SettingsProps> = ({
         onPress={() => setActiveSection('settings')}
       >
         <MaterialIcons name="arrow-forward" size={18} color={colors.primary} />
-        <Text style={styles.backLinkText}>{'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
+        <Text style={styles.backLinkText}>{'חזרה להגדרות'}</Text>
       </TouchableOpacity>
 
       <DarkCard style={styles.contentCard}>
         <View style={styles.contentTitleRow}>
           <MaterialIcons name="gavel" size={22} color={colors.primary} />
           <Text style={styles.contentTitle}>
-            {'\u05EA\u05E7\u05E0\u05D5\u05DF \u05D4\u05E9\u05D9\u05DE\u05D5\u05E9 \u05D1\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9\u05EA MONNY'}
+            {'תקנון השימוש באפליקציית MONNY'}
           </Text>
         </View>
 
         {[
           {
-            title: '1. \u05DB\u05DC\u05DC\u05D9',
-            body: '\u05D1\u05E8\u05D5\u05DB\u05D9\u05DD \u05D4\u05D1\u05D0\u05D9\u05DD \u05DC\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9\u05EA MONNY - \u05DE\u05E2\u05E8\u05DB\u05EA \u05DC\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D0\u05D9\u05E9\u05D9 \u05D5\u05E2\u05E1\u05E7\u05D9. \u05D4\u05E9\u05D9\u05DE\u05D5\u05E9 \u05D1\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4 \u05DB\u05E4\u05D5\u05E3 \u05DC\u05EA\u05E0\u05D0\u05D9\u05DD \u05D4\u05DE\u05E4\u05D5\u05E8\u05D8\u05D9\u05DD \u05D1\u05EA\u05E7\u05E0\u05D5\u05DF \u05D6\u05D4.',
+            title: '1. כללי',
+            body: 'ברוכים הבאים לאפליקציית MONNY - מערכת לניהול פיננסי אישי ועסקי. השימוש באפליקציה כפוף לתנאים המפורטים בתקנון זה.',
           },
           {
-            title: '2. \u05D4\u05E9\u05D9\u05E8\u05D5\u05EA\u05D9\u05DD',
-            body: '\u05D4\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4 \u05DE\u05D0\u05E4\u05E9\u05E8\u05EA \u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05D5\u05EA\u05E7\u05E6\u05D9\u05D1\u05D9\u05DD, \u05DE\u05E2\u05E7\u05D1 \u05D0\u05D7\u05E8 \u05D4\u05DB\u05E0\u05E1\u05D5\u05EA \u05D5\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA, \u05E0\u05D9\u05D4\u05D5\u05DC \u05E1\u05E4\u05E7\u05D9\u05DD \u05D5\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8, \u05D4\u05E4\u05E7\u05EA \u05D3\u05D5\u05D7\u05D5\u05EA \u05DB\u05E1\u05E4\u05D9\u05D9\u05DD, \u05D5\u05E9\u05DC\u05D9\u05D7\u05EA \u05EA\u05D6\u05DB\u05D5\u05E8\u05D5\u05EA \u05D5\u05D3\u05D5\u05D7\u05D5\u05EA \u05D1\u05D5\u05D5\u05D0\u05D8\u05E1\u05D0\u05E4.',
+            title: '2. השירותים',
+            body: 'האפליקציה מאפשרת ניהול פרויקטים ותקציבים, מעקב אחר הכנסות והוצאות, ניהול ספקים ואנשי קשר, הפקת דוחות כספיים, ושליחת תזכורות ודוחות בוואטסאפ.',
           },
           {
-            title: '3. \u05D0\u05D7\u05E8\u05D9\u05D5\u05EA \u05D4\u05DE\u05E9\u05EA\u05DE\u05E9',
-            body: '\u05D4\u05DE\u05E9\u05EA\u05DE\u05E9 \u05D0\u05D7\u05E8\u05D0\u05D9 \u05DC\u05D3\u05D9\u05D5\u05E7 \u05D4\u05DE\u05D9\u05D3\u05E2 \u05E9\u05D4\u05D5\u05D0 \u05DE\u05D6\u05D9\u05DF \u05DC\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4, \u05DC\u05E9\u05DE\u05D9\u05E8\u05D4 \u05E2\u05DC \u05E1\u05D5\u05D3\u05D9\u05D5\u05EA \u05E4\u05E8\u05D8\u05D9 \u05D4\u05D2\u05D9\u05E9\u05D4 \u05E9\u05DC\u05D5, \u05D5\u05DC\u05D0 \u05DC\u05D4\u05E9\u05EA\u05DE\u05E9 \u05D1\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4 \u05DC\u05DE\u05D8\u05E8\u05D5\u05EA \u05D1\u05DC\u05EA\u05D9 \u05D7\u05D5\u05E7\u05D9\u05D5\u05EA.',
+            title: '3. אחריות המשתמש',
+            body: 'המשתמש אחראי לדיוק המידע שהוא מזין לאפליקציה, לשמירה על סודיות פרטי הגישה שלו, ולא להשתמש באפליקציה למטרות בלתי חוקיות.',
           },
           {
-            title: '4. \u05D4\u05D2\u05D1\u05DC\u05EA \u05D0\u05D7\u05E8\u05D9\u05D5\u05EA',
-            body: '\u05D4\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4 \u05DE\u05E1\u05D5\u05E4\u05E7\u05EA "\u05DB\u05DE\u05D5\u05EA \u05E9\u05D4\u05D9\u05D0" (AS IS). \u05D0\u05E0\u05D5 \u05DC\u05D0 \u05E0\u05D5\u05E9\u05D0\u05D9\u05DD \u05D1\u05D0\u05D7\u05E8\u05D9\u05D5\u05EA \u05DC\u05DB\u05DC \u05E0\u05D6\u05E7 \u05D9\u05E9\u05D9\u05E8 \u05D0\u05D5 \u05E2\u05E7\u05D9\u05E3 \u05E9\u05E2\u05DC\u05D5\u05DC \u05DC\u05D4\u05D9\u05D2\u05E8\u05DD \u05DB\u05EA\u05D5\u05E6\u05D0\u05D4 \u05DE\u05D4\u05E9\u05D9\u05DE\u05D5\u05E9 \u05D1\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4.',
+            title: '4. הגבלת אחריות',
+            body: 'האפליקציה מסופקת "כמות שהיא" (AS IS). אנו לא נושאים באחריות לכל נזק ישיר או עקיף שעלול להיגרם כתוצאה מהשימוש באפליקציה.',
           },
         ].map((section, i) => (
           <View key={i} style={styles.legalSection}>
@@ -359,7 +359,7 @@ const Settings: React.FC<SettingsProps> = ({
         ))}
 
         <View style={styles.legalFooter}>
-          <Text style={styles.legalFooterText}>{'\u05E2\u05D3\u05DB\u05D5\u05DF \u05D0\u05D7\u05E8\u05D5\u05DF: \u05E4\u05D1\u05E8\u05D5\u05D0\u05E8'} 2024</Text>
+          <Text style={styles.legalFooterText}>{'עדכון אחרון: פברואר'} 2024</Text>
         </View>
       </DarkCard>
     </View>
@@ -372,31 +372,31 @@ const Settings: React.FC<SettingsProps> = ({
         onPress={() => setActiveSection('settings')}
       >
         <MaterialIcons name="arrow-forward" size={18} color={colors.primary} />
-        <Text style={styles.backLinkText}>{'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
+        <Text style={styles.backLinkText}>{'חזרה להגדרות'}</Text>
       </TouchableOpacity>
 
       <DarkCard style={styles.contentCard}>
         <View style={styles.contentTitleRow}>
           <MaterialIcons name="privacy-tip" size={22} color={colors.primary} />
-          <Text style={styles.contentTitle}>{'\u05DE\u05D3\u05D9\u05E0\u05D9\u05D5\u05EA \u05E4\u05E8\u05D8\u05D9\u05D5\u05EA'}</Text>
+          <Text style={styles.contentTitle}>{'מדיניות פרטיות'}</Text>
         </View>
 
         {[
           {
-            title: '1. \u05D0\u05D9\u05E1\u05D5\u05E3 \u05DE\u05D9\u05D3\u05E2',
-            body: '\u05D0\u05E0\u05D5 \u05D0\u05D5\u05E1\u05E4\u05D9\u05DD \u05E4\u05E8\u05D8\u05D9\u05DD \u05D0\u05D9\u05E9\u05D9\u05D9\u05DD (\u05E9\u05DD, \u05D0\u05D9\u05DE\u05D9\u05D9\u05DC, \u05D8\u05DC\u05E4\u05D5\u05DF), \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9\u05D9\u05DD (\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA, \u05D4\u05D5\u05E6\u05D0\u05D5\u05EA, \u05EA\u05E7\u05E6\u05D9\u05D1\u05D9\u05DD), \u05E4\u05E8\u05D8\u05D9 \u05E1\u05E4\u05E7\u05D9\u05DD, \u05D5\u05EA\u05DE\u05D5\u05E0\u05D5\u05EA \u05E7\u05D1\u05DC\u05D5\u05EA \u05D5\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD.',
+            title: '1. איסוף מידע',
+            body: 'אנו אוספים פרטים אישיים (שם, אימייל, טלפון), נתונים פיננסיים (הכנסות, הוצאות, תקציבים), פרטי ספקים, ותמונות קבלות ומסמכים.',
           },
           {
-            title: '2. \u05E9\u05D9\u05DE\u05D5\u05E9 \u05D1\u05DE\u05D9\u05D3\u05E2',
-            body: '\u05D4\u05DE\u05D9\u05D3\u05E2 \u05DE\u05E9\u05DE\u05E9 \u05D0\u05DA \u05D5\u05E8\u05E7 \u05DC\u05D0\u05E1\u05E4\u05E7\u05EA \u05E9\u05D9\u05E8\u05D5\u05EA\u05D9 \u05D4\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4, \u05E9\u05D9\u05E4\u05D5\u05E8 \u05D7\u05D5\u05D5\u05D9\u05D9\u05EA \u05D4\u05DE\u05E9\u05EA\u05DE\u05E9, \u05D9\u05E6\u05D9\u05E8\u05EA \u05D3\u05D5\u05D7\u05D5\u05EA \u05D5\u05E1\u05D8\u05D8\u05D9\u05E1\u05D8\u05D9\u05E7\u05D5\u05EA \u05D0\u05D9\u05E9\u05D9\u05D5\u05EA, \u05D5\u05E9\u05DC\u05D9\u05D7\u05EA \u05D4\u05EA\u05E8\u05D0\u05D5\u05EA \u05D5\u05EA\u05D6\u05DB\u05D5\u05E8\u05D5\u05EA.',
+            title: '2. שימוש במידע',
+            body: 'המידע משמש אך ורק לאספקת שירותי האפליקציה, שיפור חוויית המשתמש, יצירת דוחות וסטטיסטיקות אישיות, ושליחת התראות ותזכורות.',
           },
           {
-            title: '3. \u05D0\u05D7\u05E1\u05D5\u05DF \u05DE\u05D9\u05D3\u05E2',
-            body: '\u05D4\u05DE\u05D9\u05D3\u05E2 \u05E0\u05E9\u05DE\u05E8 \u05D1\u05D0\u05D5\u05E4\u05DF \u05DE\u05D0\u05D5\u05D1\u05D8\u05D7 \u05D1\u05DE\u05DB\u05E9\u05D9\u05E8 \u05D5\u05D1\u05E9\u05E8\u05EA\u05D9 Supabase. \u05D0\u05E0\u05D5 \u05E0\u05D5\u05E7\u05D8\u05D9\u05DD \u05D1\u05D0\u05DE\u05E6\u05E2\u05D9 \u05D0\u05D1\u05D8\u05D7\u05D4 \u05E1\u05D1\u05D9\u05E8\u05D9\u05DD \u05DC\u05D4\u05D2\u05E0\u05D4 \u05E2\u05DC \u05D4\u05DE\u05D9\u05D3\u05E2 \u05E9\u05DC\u05DA.',
+            title: '3. אחסון מידע',
+            body: 'המידע נשמר באופן מאובטח במכשיר ובשרתי Supabase. אנו נוקטים באמצעי אבטחה סבירים להגנה על המידע שלך.',
           },
           {
-            title: '4. \u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05D4\u05DE\u05E9\u05EA\u05DE\u05E9',
-            body: '\u05D4\u05E0\u05DA \u05E8\u05E9\u05D0\u05D9 \u05D1\u05DB\u05DC \u05E2\u05EA \u05DC\u05E2\u05D9\u05D9\u05DF \u05D1\u05DE\u05D9\u05D3\u05E2, \u05DC\u05EA\u05E7\u05DF \u05DE\u05D9\u05D3\u05E2 \u05E9\u05D2\u05D5\u05D9, \u05DC\u05DE\u05D7\u05D5\u05E7 \u05D0\u05EA \u05D4\u05DE\u05D9\u05D3\u05E2 \u05E9\u05DC\u05DA, \u05D5\u05DC\u05D9\u05D9\u05E6\u05D0 \u05D0\u05EA \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E9\u05DC\u05DA.',
+            title: '4. זכויות המשתמש',
+            body: 'הנך רשאי בכל עת לעיין במידע, לתקן מידע שגוי, למחוק את המידע שלך, ולייצא את הנתונים שלך.',
           },
         ].map((section, i) => (
           <View key={i} style={styles.legalSection}>
@@ -406,7 +406,7 @@ const Settings: React.FC<SettingsProps> = ({
         ))}
 
         <View style={styles.legalFooter}>
-          <Text style={styles.legalFooterText}>{'\u05E2\u05D3\u05DB\u05D5\u05DF \u05D0\u05D7\u05E8\u05D5\u05DF: \u05E4\u05D1\u05E8\u05D5\u05D0\u05E8'} 2024</Text>
+          <Text style={styles.legalFooterText}>{'עדכון אחרון: פברואר'} 2024</Text>
         </View>
       </DarkCard>
     </View>
@@ -419,42 +419,42 @@ const Settings: React.FC<SettingsProps> = ({
         onPress={() => setActiveSection('settings')}
       >
         <MaterialIcons name="arrow-forward" size={18} color={colors.primary} />
-        <Text style={styles.backLinkText}>{'\u05D7\u05D6\u05E8\u05D4 \u05DC\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
+        <Text style={styles.backLinkText}>{'חזרה להגדרות'}</Text>
       </TouchableOpacity>
 
       <DarkCard style={styles.aboutCard}>
         <Text style={styles.aboutAppName}>MONNY</Text>
-        <Text style={styles.aboutDesc}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D7\u05DB\u05DD \u05D5\u05E4\u05E9\u05D5\u05D8'}</Text>
+        <Text style={styles.aboutDesc}>{'ניהול פיננסי חכם ופשוט'}</Text>
 
         <Text style={styles.aboutBody}>
           MONNY{' '}
-          {'\u05D4\u05D9\u05D0 \u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4 \u05DC\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D4\u05DE\u05D0\u05E4\u05E9\u05E8\u05EA \u05DC\u05DA \u05DC\u05E2\u05E7\u05D5\u05D1 \u05D0\u05D7\u05E8 \u05D4\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA \u05D5\u05D4\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA \u05E9\u05DC\u05DA, \u05DC\u05E0\u05D4\u05DC \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05D5\u05EA\u05E7\u05E6\u05D9\u05D1\u05D9\u05DD, \u05D5\u05DC\u05E9\u05DE\u05D5\u05E8 \u05E2\u05DC \u05E7\u05E9\u05E8 \u05E2\u05DD \u05E1\u05E4\u05E7\u05D9\u05DD \u05D5\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8.'}
+          {'היא אפליקציה לניהול פיננסי המאפשרת לך לעקוב אחר ההכנסות וההוצאות שלך, לנהל פרויקטים ותקציבים, ולשמור על קשר עם ספקים ואנשי קשר.'}
         </Text>
 
         <View style={styles.aboutInfoCard}>
           <View style={styles.aboutInfoRow}>
-            <Text style={styles.aboutInfoLabel}>{'\u05D2\u05E8\u05E1\u05D4'}</Text>
+            <Text style={styles.aboutInfoLabel}>{'גרסה'}</Text>
             <Text style={styles.aboutInfoValue}>1.0.0</Text>
           </View>
           <View style={[styles.aboutInfoRow, styles.aboutInfoRowBorder]}>
-            <Text style={styles.aboutInfoLabel}>{'\u05EA\u05D0\u05E8\u05D9\u05DA \u05E2\u05D3\u05DB\u05D5\u05DF'}</Text>
-            <Text style={styles.aboutInfoValue}>{'\u05E4\u05D1\u05E8\u05D5\u05D0\u05E8'} 2024</Text>
+            <Text style={styles.aboutInfoLabel}>{'תאריך עדכון'}</Text>
+            <Text style={styles.aboutInfoValue}>{'פברואר'} 2024</Text>
           </View>
           <View style={[styles.aboutInfoRow, styles.aboutInfoRowBorder]}>
-            <Text style={styles.aboutInfoLabel}>{'\u05DE\u05E4\u05EA\u05D7'}</Text>
+            <Text style={styles.aboutInfoLabel}>{'מפתח'}</Text>
             <Text style={styles.aboutInfoValue}>MONNY Team</Text>
           </View>
         </View>
 
-        <Text style={styles.featuresTitle}>{'\u05EA\u05DB\u05D5\u05E0\u05D5\u05EA \u05E2\u05D9\u05E7\u05E8\u05D9\u05D5\u05EA'}</Text>
+        <Text style={styles.featuresTitle}>{'תכונות עיקריות'}</Text>
         <View style={styles.featuresGrid}>
           {[
-            { icon: 'folder' as const, label: '\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD' },
-            { icon: 'payment' as const, label: '\u05DE\u05E2\u05E7\u05D1 \u05D4\u05D5\u05E6\u05D0\u05D5\u05EA' },
-            { icon: 'add-card' as const, label: '\u05E0\u05D9\u05D4\u05D5\u05DC \u05D4\u05DB\u05E0\u05E1\u05D5\u05EA' },
-            { icon: 'groups' as const, label: '\u05E1\u05E4\u05E7\u05D9\u05DD \u05D5\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8' },
-            { icon: 'analytics' as const, label: '\u05D3\u05D5\u05D7\u05D5\u05EA \u05DE\u05E4\u05D5\u05E8\u05D8\u05D9\u05DD' },
-            { icon: 'share' as const, label: '\u05E9\u05D9\u05EA\u05D5\u05E3 \u05D1\u05D5\u05D5\u05D0\u05D8\u05E1\u05D0\u05E4' },
+            { icon: 'folder' as const, label: 'ניהול פרויקטים' },
+            { icon: 'payment' as const, label: 'מעקב הוצאות' },
+            { icon: 'add-card' as const, label: 'ניהול הכנסות' },
+            { icon: 'groups' as const, label: 'ספקים ואנשי קשר' },
+            { icon: 'analytics' as const, label: 'דוחות מפורטים' },
+            { icon: 'share' as const, label: 'שיתוף בוואטסאפ' },
           ].map((feature, i) => (
             <View key={i} style={styles.featureItem}>
               <MaterialIcons name={feature.icon} size={16} color={colors.primary} />
@@ -465,8 +465,8 @@ const Settings: React.FC<SettingsProps> = ({
       </DarkCard>
 
       <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>{'\u05DB\u05DC \u05D4\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA'} 2024</Text>
-        <Text style={styles.versionSubtext}>{'\u05E0\u05D1\u05E0\u05D4 \u05D1\u05D0\u05D4\u05D1\u05D4'}</Text>
+        <Text style={styles.versionText}>{'כל הזכויות שמורות'} 2024</Text>
+        <Text style={styles.versionSubtext}>{'נבנה באהבה'}</Text>
       </View>
     </View>
   );

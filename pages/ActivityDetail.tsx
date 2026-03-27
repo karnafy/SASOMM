@@ -43,9 +43,9 @@ interface ActivityDetailProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const ActivityDetail: React.FC<ActivityDetailProps> = ({
@@ -66,15 +66,15 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({
 
   const getShareText = () => {
     const symbol = currencySymbols[(expense.currency || 'ILS') as Currency];
-    return `*\u05E4\u05E8\u05D8\u05D9 \u05EA\u05E9\u05DC\u05D5\u05DD \u05DE-MONNY*
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-*\u05E2\u05D1\u05D5\u05E8:* ${expense.title}
-*\u05E1\u05DB\u05D5\u05DD:* ${symbol}${expense.amount.toLocaleString()}
-*\u05EA\u05D0\u05E8\u05D9\u05DA:* ${expense.date}
-*\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8:* ${expense.projectName || '\u05DB\u05DC\u05DC\u05D9'}
-*\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4:* ${expense.tag}
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-_\u05E0\u05E9\u05DC\u05D7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9\u05EA MONNY_`;
+    return `*פרטי תשלום מ-MONNY*
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+*עבור:* ${expense.title}
+*סכום:* ${symbol}${expense.amount.toLocaleString()}
+*תאריך:* ${expense.date}
+*פרויקט:* ${expense.projectName || 'כללי'}
+*קטגוריה:* ${expense.tag}
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+_נשלח מאפליקציית MONNY_`;
   };
 
   const handleWhatsAppShare = () => {
@@ -96,10 +96,10 @@ _\u05E0\u05E9\u05DC\u05D7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
     try {
       await Share.share({
         message: shareText,
-        title: `\u05E4\u05E8\u05D8\u05D9 \u05EA\u05E9\u05DC\u05D5\u05DD - ${expense.title}`,
+        title: `פרטי תשלום - ${expense.title}`,
       });
     } catch (err) {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05DC\u05D0 \u05E0\u05D9\u05EA\u05DF \u05DC\u05E9\u05EA\u05E3');
+      Alert.alert('שגיאה', 'לא ניתן לשתף');
     }
   };
 
@@ -111,15 +111,15 @@ _\u05E0\u05E9\u05DC\u05D7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
     const remainingVal = budget - spent;
     const percentUsed = budget > 0 ? Math.round((spent / budget) * 100) : 0;
 
-    return `*\u05D3\u05D5"\u05D7 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8: ${project.name}*
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-*\u05E1\u05D8\u05D8\u05D5\u05E1:* ${project.status === 'over' ? '\u05D7\u05E8\u05D9\u05D2\u05D4' : project.status === 'warning' ? '\u05D0\u05D6\u05D4\u05E8\u05D4' : '\u05EA\u05E7\u05D9\u05DF'}
-*\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4:* ${project.category}
-*\u05EA\u05E7\u05E6\u05D9\u05D1:* ${symbol}${budget.toLocaleString()}
-*\u05E9\u05D5\u05DC\u05DD:* ${symbol}${spent.toLocaleString()} (${percentUsed}%)
-*\u05D9\u05EA\u05E8\u05D4:* ${symbol}${remainingVal.toLocaleString()}
-\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
-_\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9\u05EA MONNY_`;
+    return `*דו"ח פרויקט: ${project.name}*
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+*סטטוס:* ${project.status === 'over' ? 'חריגה' : project.status === 'warning' ? 'אזהרה' : 'תקין'}
+*קטגוריה:* ${project.category}
+*תקציב:* ${symbol}${budget.toLocaleString()}
+*שולם:* ${symbol}${spent.toLocaleString()} (${percentUsed}%)
+*יתרה:* ${symbol}${remainingVal.toLocaleString()}
+\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
+_הופק מאפליקציית MONNY_`;
   };
 
   const handleProjectShare = async () => {
@@ -128,7 +128,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
     try {
       await Share.share({
         message: shareText,
-        title: `\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8: ${project.name}`,
+        title: `פרויקט: ${project.name}`,
       });
     } catch (err) {
       const text = encodeURIComponent(getSummaryText());
@@ -147,12 +147,12 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
   const handleDeleteProject = () => {
     if (!project) return;
     Alert.alert(
-      '\u05DE\u05D7\u05D9\u05E7\u05EA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8',
-      `\u05D4\u05D0\u05DD \u05D0\u05EA\u05D4 \u05D1\u05D8\u05D5\u05D7 \u05E9\u05D1\u05E8\u05E6\u05D5\u05E0\u05DA \u05DC\u05DE\u05D7\u05D5\u05E7 \u05D0\u05EA \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 "${project.name}"?`,
+      'מחיקת פרויקט',
+      `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
       [
-        { text: '\u05D1\u05D9\u05D8\u05D5\u05DC', style: 'cancel' },
+        { text: 'ביטול', style: 'cancel' },
         {
-          text: '\u05DE\u05D7\u05E7',
+          text: 'מחק',
           style: 'destructive',
           onPress: () => {
             onDeleteProject?.(project.id);
@@ -179,10 +179,10 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
 
   const typeLabel =
     expense.type === 'income'
-      ? '\u05D4\u05DB\u05E0\u05E1\u05D4 \u05DE\u05D0\u05D5\u05E9\u05E8\u05EA'
+      ? 'הכנסה מאושרת'
       : expense.type === 'note'
-      ? '\u05EA\u05D9\u05E2\u05D5\u05D3 \u05DB\u05DC\u05DC\u05D9'
-      : '\u05D4\u05D5\u05E6\u05D0\u05D4 \u05DE\u05D0\u05D5\u05E9\u05E8\u05EA';
+      ? 'תיעוד כללי'
+      : 'הוצאה מאושרת';
 
   const typeIcon: React.ComponentProps<typeof MaterialIcons>['name'] =
     expense.type === 'income'
@@ -259,7 +259,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                   }}
                 >
                   <MaterialIcons name="edit" size={20} color={colors.primary} />
-                  <Text style={styles.menuItemText}>{'\u05E2\u05E8\u05D9\u05DB\u05EA \u05D4\u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
+                  <Text style={styles.menuItemText}>{'עריכת התשלום'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
@@ -269,28 +269,28 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                   }}
                 >
                   <MaterialIcons name="folder" size={20} color={colors.accent} />
-                  <Text style={styles.menuItemText}>{'\u05E2\u05E8\u05D9\u05DB\u05EA \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
+                  <Text style={styles.menuItemText}>{'עריכת הפרויקט'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem} onPress={handleExportReport}>
                   <MaterialIcons name="description" size={20} color={colors.warning} />
-                  <Text style={styles.menuItemText}>{'\u05D4\u05D5\u05E6\u05D0\u05EA \u05D3\u05D5"\u05D7'}</Text>
+                  <Text style={styles.menuItemText}>{'הוצאת דו"ח'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem} onPress={handleProjectShare}>
                   <MaterialIcons name="share" size={20} color={colors.success} />
-                  <Text style={styles.menuItemText}>{'\u05E9\u05D9\u05EA\u05D5\u05E3 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
+                  <Text style={styles.menuItemText}>{'שיתוף פרויקט'}</Text>
                 </TouchableOpacity>
                 <View style={styles.menuDivider} />
               </>
             )}
             <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
               <MaterialIcons name="ios-share" size={20} color={colors.textSecondary} />
-              <Text style={styles.menuItemText}>{'\u05E9\u05EA\u05E3 \u05E2\u05E1\u05E7\u05D4'}</Text>
+              <Text style={styles.menuItemText}>{'שתף עסקה'}</Text>
             </TouchableOpacity>
             {project && (
               <TouchableOpacity style={styles.menuItem} onPress={handleDeleteProject}>
                 <MaterialIcons name="delete" size={20} color={colors.error} />
                 <Text style={[styles.menuItemText, { color: colors.error }]}>
-                  {'\u05DE\u05D7\u05D9\u05E7\u05EA \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}
+                  {'מחיקת הפרויקט'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -300,7 +300,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
 
       {/* Top Bar */}
       <ScreenTopBar
-        title="\u05E4\u05E8\u05D8\u05D9 \u05E4\u05E2\u05D5\u05DC\u05D4"
+        title="פרטי פעולה"
         onBack={goBack}
         rightAction={
           <TouchableOpacity onPress={handleWhatsAppShare} hitSlop={8}>
@@ -324,7 +324,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           </View>
 
           <Text style={styles.amountLabel}>
-            {expense.type === 'note' ? '\u05EA\u05D5\u05DB\u05DF \u05D4\u05E4\u05E2\u05D9\u05DC\u05D5\u05EA' : '\u05E1\u05DB\u05D5\u05DD \u05D4\u05E2\u05E1\u05E7\u05D4'}
+            {expense.type === 'note' ? 'תוכן הפעילות' : 'סכום העסקה'}
           </Text>
 
           {expense.amount !== undefined ? (
@@ -343,7 +343,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
           )}
 
           <Text style={styles.dateText}>
-            {expense.date}  {'\u2022'}  {expense.title}
+            {expense.date}  {'\•'}  {expense.title}
           </Text>
         </View>
 
@@ -356,9 +356,9 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 <MaterialIcons name="account-balance" size={20} color={colors.primary} />
               </View>
               <View style={styles.detailInfo}>
-                <Text style={styles.detailLabel}>{'\u05D0\u05DE\u05E6\u05E2\u05D9 \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
+                <Text style={styles.detailLabel}>{'אמצעי תשלום'}</Text>
                 <Text style={styles.detailValue}>
-                  {expense.paymentMethod || '\u05D3\u05D9\u05D2\u05D9\u05D8\u05DC\u05D9 / \u05D4\u05E2\u05D1\u05E8\u05D4'}
+                  {expense.paymentMethod || 'דיגיטלי / העברה'}
                 </Text>
               </View>
             </View>
@@ -377,9 +377,9 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 <MaterialIcons name="folder-special" size={20} color={colors.accent} />
               </View>
               <View style={[styles.detailInfo, { flex: 1 }]}>
-                <Text style={styles.detailLabel}>{'\u05E9\u05D9\u05D5\u05DA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
+                <Text style={styles.detailLabel}>{'שיוך פרויקט'}</Text>
                 <Text style={[styles.detailValue, { color: colors.accent }]}>
-                  {expense.projectName || '\u05DB\u05DC\u05DC\u05D9'}
+                  {expense.projectName || 'כללי'}
                 </Text>
               </View>
               <MaterialIcons name="chevron-left" size={20} color={colors.textTertiary} />
@@ -394,7 +394,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                     <MaterialIcons name="category" size={20} color={colors.accent} />
                   </View>
                   <View style={styles.detailInfo}>
-                    <Text style={styles.detailLabel}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
+                    <Text style={styles.detailLabel}>{'קטגוריה'}</Text>
                     <Text style={styles.detailValue}>{expense.tag}</Text>
                   </View>
                 </View>
@@ -407,8 +407,8 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
         {supplier && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{'\u05D0\u05D9\u05E9 \u05E7\u05E9\u05E8 \u05DC\u05E2\u05E1\u05E7\u05D4'}</Text>
-              <Text style={styles.sectionSubtitle}>{'\u05E1\u05E4\u05E7 \u05E8\u05E9\u05D5\u05DD'}</Text>
+              <Text style={styles.sectionTitle}>{'איש קשר לעסקה'}</Text>
+              <Text style={styles.sectionSubtitle}>{'ספק רשום'}</Text>
             </View>
 
             <DarkCard style={styles.supplierCard}>
@@ -430,7 +430,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 <Text style={styles.supplierPhone}>{supplier.phone}</Text>
                 <View style={styles.whatsappBadge}>
                   <View style={styles.activeDot} />
-                  <Text style={styles.whatsappBadgeText}>WhatsApp {'\u05E4\u05E2\u05D9\u05DC'}</Text>
+                  <Text style={styles.whatsappBadgeText}>WhatsApp {'פעיל'}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -455,9 +455,9 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
         {/* Receipt Images */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{'\u05E0\u05E1\u05E4\u05D7\u05D9\u05DD \u05D5\u05E7\u05D1\u05DC\u05D5\u05EA'}</Text>
+            <Text style={styles.sectionTitle}>{'נספחים וקבלות'}</Text>
             <Text style={styles.sectionSubtitle}>
-              {expense.receiptImages?.length || 0} {'\u05E7\u05D1\u05E6\u05D9\u05DD'}
+              {expense.receiptImages?.length || 0} {'קבצים'}
             </Text>
           </View>
 
@@ -491,7 +491,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                   size={32}
                   color={colors.textTertiary}
                 />
-                <Text style={styles.addImageText}>{'\u05D4\u05D5\u05E1\u05E3 \u05E0\u05E1\u05E4\u05D7'}</Text>
+                <Text style={styles.addImageText}>{'הוסף נספח'}</Text>
               </TouchableOpacity>
             </ScrollView>
           ) : (
@@ -500,14 +500,14 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 <MaterialIcons name="no-photography" size={40} color={colors.textTertiary} />
               </View>
               <Text style={styles.noImagesText}>
-                {'\u05DC\u05D0 \u05E6\u05D5\u05E8\u05E3 \u05EA\u05D9\u05E2\u05D5\u05D3 \u05D5\u05D9\u05D6\u05D5\u05D0\u05DC\u05D9'}
+                {'לא צורף תיעוד ויזואלי'}
               </Text>
               <TouchableOpacity
                 style={styles.addReceiptBtn}
                 onPress={() => onNavigate(AppScreen.EDIT_ACTIVITY, expense.id)}
               >
                 <MaterialIcons name="add-a-photo" size={16} color={colors.primary} />
-                <Text style={styles.addReceiptText}>{'\u05D4\u05D5\u05E1\u05E3 \u05E7\u05D1\u05DC\u05D4 \u05E2\u05DB\u05E9\u05D9\u05D5'}</Text>
+                <Text style={styles.addReceiptText}>{'הוסף קבלה עכשיו'}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -516,7 +516,7 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
         {/* Audit Trail */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{'\u05D9\u05D5\u05DE\u05DF \u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD \u05D5\u05D1\u05D9\u05E7\u05D5\u05E8\u05EA'}</Text>
+            <Text style={styles.sectionTitle}>{'יומן שינויים וביקורת'}</Text>
             <View style={styles.auditBadge}>
               <MaterialIcons name="lock" size={12} color={colors.textTertiary} />
               <Text style={styles.auditBadgeText}>Audit Safe</Text>
@@ -529,12 +529,12 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
               <MaterialIcons name="person" size={18} color={colors.primary} />
             </View>
             <View style={styles.auditContent}>
-              <Text style={styles.auditTitle}>{'\u05E0\u05D5\u05E6\u05E8 \u05E2\u05DC \u05D9\u05D3\u05D9 \u05D4\u05DE\u05E0\u05D4\u05DC'}</Text>
-              <Text style={styles.auditDate}>{expense.date} {'\u2022'} 10:45</Text>
+              <Text style={styles.auditTitle}>{'נוצר על ידי המנהל'}</Text>
+              <Text style={styles.auditDate}>{expense.date} {'\•'} 10:45</Text>
               <View style={styles.auditNote}>
                 <Text style={styles.auditNoteText}>
-                  {'\u05D4\u05E4\u05E2\u05D5\u05DC\u05D4 \u05E0\u05D5\u05E1\u05E4\u05D4 \u05DC\u05DE\u05E2\u05E8\u05DB\u05EA \u05D5\u05E9\u05D5\u05D9\u05D9\u05DB\u05D4 \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 '}
-                  {expense.projectName || '\u05D4\u05DE\u05E8\u05DB\u05D6\u05D9'}.
+                  {'הפעולה נוספה למערכת ושוייכה לפרויקט '}
+                  {expense.projectName || 'המרכזי'}.
                 </Text>
               </View>
             </View>
@@ -550,12 +550,12 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 <View style={styles.auditContent}>
                   <Text style={styles.auditTitle}>{entry.action}</Text>
                   <Text style={styles.auditDate}>
-                    {entry.date} {'\u2022'} {entry.time || '14:20'}
+                    {entry.date} {'\•'} {entry.time || '14:20'}
                   </Text>
                   <View style={styles.auditNote}>
                     {entry.oldValue && entry.newValue ? (
                       <View>
-                        <Text style={styles.changeLabel}>{'\u05E9\u05D9\u05E0\u05D5\u05D9 \u05D1\u05E2\u05E8\u05DA:'}</Text>
+                        <Text style={styles.changeLabel}>{'שינוי בערך:'}</Text>
                         <View style={styles.changeRow}>
                           <Text style={styles.oldValue}>{entry.oldValue}</Text>
                           <MaterialIcons
@@ -581,9 +581,9 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
                 <MaterialIcons name="receipt-long" size={18} color={colors.primary} />
               </View>
               <View style={styles.auditContent}>
-                <Text style={styles.auditTitle}>{'\u05EA\u05D9\u05E2\u05D5\u05D3 \u05D4\u05D5\u05DB\u05D7\u05EA \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
+                <Text style={styles.auditTitle}>{'תיעוד הוכחת תשלום'}</Text>
                 <Text style={styles.auditDate}>
-                  {expense.date} {'\u2022'} {expense.time || '10:46'}
+                  {expense.date} {'\•'} {expense.time || '10:46'}
                 </Text>
                 <Text style={styles.verifiedText}>Verified Secure Scan</Text>
               </View>
@@ -594,13 +594,13 @@ _\u05D4\u05D5\u05E4\u05E7 \u05DE\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D9
         {/* Action Buttons */}
         <View style={styles.actionRow}>
           <GradientButton
-            label="\u05E2\u05E8\u05D5\u05DA"
+            label="ערוך"
             variant="outline"
             onPress={() => onNavigate(AppScreen.EDIT_ACTIVITY, expense.id)}
             style={styles.actionBtn}
           />
           <GradientButton
-            label="\u05DE\u05D7\u05E7"
+            label="מחק"
             variant="danger"
             onPress={handleDeleteProject}
             style={styles.actionBtn}

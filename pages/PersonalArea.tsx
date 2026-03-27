@@ -28,9 +28,9 @@ interface PersonalAreaProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const PROFILE_STORAGE_KEY = 'user_profile';
@@ -40,7 +40,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
   goBack,
   globalCurrency,
 }) => {
-  const [userName, setUserName] = useState('\u05DE\u05E9\u05EA\u05DE\u05E9');
+  const [userName, setUserName] = useState('משתמש');
   const [userEmail, setUserEmail] = useState('user@example.com');
   const [userPhone, setUserPhone] = useState('050-1234567');
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -54,7 +54,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         const saved = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
         if (saved) {
           const profile = JSON.parse(saved);
-          setUserName(profile.name || '\u05DE\u05E9\u05EA\u05DE\u05E9');
+          setUserName(profile.name || 'משתמש');
           setUserEmail(profile.email || '');
           setUserPhone(profile.phone || '');
           setUserAvatar(profile.avatar || null);
@@ -71,7 +71,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
       if (useCamera) {
         const permResult = await ImagePicker.requestCameraPermissionsAsync();
         if (!permResult.granted) {
-          Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05EA \u05D2\u05D9\u05E9\u05D4 \u05DC\u05DE\u05E6\u05DC\u05DE\u05D4');
+          Alert.alert('שגיאה', 'נדרשת הרשאת גישה למצלמה');
           return;
         }
         const result = await ImagePicker.launchCameraAsync({
@@ -87,7 +87,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
       } else {
         const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permResult.granted) {
-          Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05EA \u05D2\u05D9\u05E9\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4');
+          Alert.alert('שגיאה', 'נדרשת הרשאת גישה לגלריה');
           return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -102,7 +102,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         }
       }
     } catch (err) {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D1\u05D7\u05D9\u05E8\u05EA \u05EA\u05DE\u05D5\u05E0\u05D4');
+      Alert.alert('שגיאה', 'שגיאה בבחירת תמונה');
     }
     setShowPhotoModal(false);
   };
@@ -150,46 +150,46 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
   const settingsItems = [
     {
       icon: 'language' as const,
-      label: '\u05E9\u05E4\u05D4',
-      value: '\u05E2\u05D1\u05E8\u05D9\u05EA',
+      label: 'שפה',
+      value: 'עברית',
     },
     {
       icon: 'payment' as const,
-      label: '\u05DE\u05D8\u05D1\u05E2 \u05D1\u05E8\u05D9\u05E8\u05EA \u05DE\u05D7\u05D3\u05DC',
+      label: 'מטבע ברירת מחדל',
       value: `${currencySymbols[globalCurrency]} ${globalCurrency}`,
     },
     {
       icon: 'notifications' as const,
-      label: '\u05D4\u05EA\u05E8\u05D0\u05D5\u05EA',
-      value: '\u05E4\u05E2\u05D9\u05DC',
+      label: 'התראות',
+      value: 'פעיל',
     },
     {
       icon: 'dark-mode' as const,
-      label: '\u05DE\u05E6\u05D1 \u05DB\u05D4\u05D4',
-      value: '\u05DB\u05D1\u05D5\u05D9',
+      label: 'מצב כהה',
+      value: 'כבוי',
     },
   ];
 
   const quickLinks = [
     {
       icon: 'help' as const,
-      label: '\u05E2\u05D6\u05E8\u05D4 \u05D5\u05EA\u05DE\u05D9\u05DB\u05D4',
-      onPress: () => Alert.alert('\u05E2\u05D6\u05E8\u05D4 \u05D5\u05EA\u05DE\u05D9\u05DB\u05D4'),
+      label: 'עזרה ותמיכה',
+      onPress: () => Alert.alert('עזרה ותמיכה'),
     },
     {
       icon: 'privacy-tip' as const,
-      label: '\u05E4\u05E8\u05D8\u05D9\u05D5\u05EA \u05D5\u05D0\u05D1\u05D8\u05D7\u05D4',
-      onPress: () => Alert.alert('\u05E4\u05E8\u05D8\u05D9\u05D5\u05EA'),
+      label: 'פרטיות ואבטחה',
+      onPress: () => Alert.alert('פרטיות'),
     },
     {
       icon: 'description' as const,
-      label: '\u05EA\u05E0\u05D0\u05D9 \u05E9\u05D9\u05DE\u05D5\u05E9',
-      onPress: () => Alert.alert('\u05EA\u05E0\u05D0\u05D9 \u05E9\u05D9\u05DE\u05D5\u05E9'),
+      label: 'תנאי שימוש',
+      onPress: () => Alert.alert('תנאי שימוש'),
     },
     {
       icon: 'info' as const,
-      label: '\u05D0\u05D5\u05D3\u05D5\u05EA \u05D4\u05D0\u05E4\u05DC\u05D9\u05E7\u05E6\u05D9\u05D4',
-      onPress: () => Alert.alert('MONNY v1.0', '\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D7\u05DB\u05DD'),
+      label: 'אודות האפליקציה',
+      onPress: () => Alert.alert('MONNY v1.0', 'ניהול פיננסי חכם'),
     },
   ];
 
@@ -202,7 +202,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
           onPress={() => setShowPhotoModal(false)}
         >
           <DarkCard style={styles.photoModalCard}>
-            <Text style={styles.photoModalTitle}>{'\u05D1\u05D7\u05E8 \u05EA\u05DE\u05D5\u05E0\u05EA \u05E4\u05E8\u05D5\u05E4\u05D9\u05DC'}</Text>
+            <Text style={styles.photoModalTitle}>{'בחר תמונת פרופיל'}</Text>
 
             <TouchableOpacity
               style={styles.photoModalItem}
@@ -211,7 +211,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               <View style={styles.photoModalIcon}>
                 <MaterialIcons name="photo-camera" size={22} color={colors.primary} />
               </View>
-              <Text style={styles.photoModalItemText}>{'\u05E6\u05DC\u05DD \u05EA\u05DE\u05D5\u05E0\u05D4'}</Text>
+              <Text style={styles.photoModalItemText}>{'צלם תמונה'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -221,7 +221,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               <View style={styles.photoModalIcon}>
                 <MaterialIcons name="photo-library" size={22} color={colors.primary} />
               </View>
-              <Text style={styles.photoModalItemText}>{'\u05D1\u05D7\u05E8 \u05DE\u05D4\u05D2\u05DC\u05E8\u05D9\u05D4'}</Text>
+              <Text style={styles.photoModalItemText}>{'בחר מהגלריה'}</Text>
             </TouchableOpacity>
 
             {userAvatar && (
@@ -233,7 +233,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                   <MaterialIcons name="delete" size={22} color={colors.error} />
                 </View>
                 <Text style={[styles.photoModalItemText, { color: colors.error }]}>
-                  {'\u05D4\u05E1\u05E8 \u05EA\u05DE\u05D5\u05E0\u05D4'}
+                  {'הסר תמונה'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -242,7 +242,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               style={styles.photoModalCancel}
               onPress={() => setShowPhotoModal(false)}
             >
-              <Text style={styles.photoModalCancelText}>{'\u05D1\u05D9\u05D8\u05D5\u05DC'}</Text>
+              <Text style={styles.photoModalCancelText}>{'ביטול'}</Text>
             </TouchableOpacity>
           </DarkCard>
         </Pressable>
@@ -250,7 +250,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
 
       {/* Header with gradient + centered avatar */}
       <GradientHeader style={styles.headerContainer}>
-        <ScreenTopBar title={'\u05D0\u05D9\u05D6\u05D5\u05E8 \u05D0\u05D9\u05E9\u05D9'} onBack={goBack} />
+        <ScreenTopBar title={'איזור אישי'} onBack={goBack} />
         <View style={styles.avatarSection}>
           <TouchableOpacity onPress={() => setShowPhotoModal(true)} style={styles.avatarTouchable}>
             <AvatarCircle
@@ -285,7 +285,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 style={styles.editInput}
                 value={userName}
                 onChangeText={setUserName}
-                placeholder={'\u05E9\u05DD \u05DE\u05DC\u05D0'}
+                placeholder={'שם מלא'}
                 placeholderTextColor={colors.textTertiary}
                 textAlign="center"
               />
@@ -293,7 +293,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 style={styles.editInput}
                 value={userEmail}
                 onChangeText={setUserEmail}
-                placeholder={'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}
+                placeholder={'אימייל'}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="email-address"
                 textAlign="center"
@@ -302,30 +302,30 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 style={styles.editInput}
                 value={userPhone}
                 onChangeText={setUserPhone}
-                placeholder={'\u05D8\u05DC\u05E4\u05D5\u05DF'}
+                placeholder={'טלפון'}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="phone-pad"
                 textAlign="center"
               />
               <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveBtnText}>{'\u05E9\u05DE\u05D5\u05E8 \u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD'}</Text>
+                <Text style={styles.saveBtnText}>{'שמור שינויים'}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.profileDetails}>
               <View style={styles.profileRow}>
                 <MaterialIcons name="person" size={18} color={colors.primary} />
-                <Text style={styles.profileDetailLabel}>{'\u05E9\u05DD'}</Text>
+                <Text style={styles.profileDetailLabel}>{'שם'}</Text>
                 <Text style={styles.profileDetailValue}>{userName}</Text>
               </View>
               <View style={[styles.profileRow, styles.profileRowBorder]}>
                 <MaterialIcons name="email" size={18} color={colors.primary} />
-                <Text style={styles.profileDetailLabel}>{'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}</Text>
+                <Text style={styles.profileDetailLabel}>{'אימייל'}</Text>
                 <Text style={styles.profileDetailValue}>{userEmail}</Text>
               </View>
               <View style={[styles.profileRow, styles.profileRowBorder]}>
                 <MaterialIcons name="phone" size={18} color={colors.primary} />
-                <Text style={styles.profileDetailLabel}>{'\u05D8\u05DC\u05E4\u05D5\u05DF'}</Text>
+                <Text style={styles.profileDetailLabel}>{'טלפון'}</Text>
                 <Text style={styles.profileDetailValue}>{userPhone}</Text>
               </View>
               <TouchableOpacity
@@ -333,7 +333,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 onPress={() => setIsEditing(true)}
               >
                 <MaterialIcons name="edit" size={16} color={colors.primary} />
-                <Text style={styles.editProfileText}>{'\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D5\u05E4\u05D9\u05DC'}</Text>
+                <Text style={styles.editProfileText}>{'עריכת פרופיל'}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -342,7 +342,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         {/* Settings Section */}
         <DarkCard style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{'\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA'}</Text>
+            <Text style={styles.sectionHeaderText}>{'הגדרות'}</Text>
           </View>
           {settingsItems.map((item, i) => (
             <View
@@ -364,7 +364,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         {/* Quick Links */}
         <DarkCard style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{'\u05E7\u05D9\u05E9\u05D5\u05E8\u05D9\u05DD \u05DE\u05D4\u05D9\u05E8\u05D9\u05DD'}</Text>
+            <Text style={styles.sectionHeaderText}>{'קישורים מהירים'}</Text>
           </View>
           {quickLinks.map((item, i) => (
             <TouchableOpacity
@@ -396,18 +396,18 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         <View style={styles.placeholderRow}>
           <DarkCard style={styles.placeholderCard}>
             <MaterialIcons name="lock" size={22} color={colors.textTertiary} />
-            <Text style={styles.placeholderLabel}>{'\u05D0\u05D1\u05D8\u05D7\u05D4'}</Text>
-            <Text style={styles.placeholderSoon}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+            <Text style={styles.placeholderLabel}>{'אבטחה'}</Text>
+            <Text style={styles.placeholderSoon}>{'בקרוב'}</Text>
           </DarkCard>
           <DarkCard style={styles.placeholderCard}>
             <MaterialIcons name="backup" size={22} color={colors.textTertiary} />
-            <Text style={styles.placeholderLabel}>{'\u05D2\u05D9\u05D1\u05D5\u05D9'}</Text>
-            <Text style={styles.placeholderSoon}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+            <Text style={styles.placeholderLabel}>{'גיבוי'}</Text>
+            <Text style={styles.placeholderSoon}>{'בקרוב'}</Text>
           </DarkCard>
           <DarkCard style={styles.placeholderCard}>
             <MaterialIcons name="cloud-sync" size={22} color={colors.textTertiary} />
-            <Text style={styles.placeholderLabel}>{'\u05E1\u05E0\u05DB\u05E8\u05D5\u05DF'}</Text>
-            <Text style={styles.placeholderSoon}>{'\u05D1\u05E7\u05E8\u05D5\u05D1'}</Text>
+            <Text style={styles.placeholderLabel}>{'סנכרון'}</Text>
+            <Text style={styles.placeholderSoon}>{'בקרוב'}</Text>
           </DarkCard>
         </View>
 
@@ -416,15 +416,15 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
           style={styles.logoutBtn}
           onPress={() => {
             Alert.alert(
-              '\u05D4\u05EA\u05E0\u05EA\u05E7\u05D5\u05EA',
-              '\u05D4\u05D0\u05DD \u05D0\u05EA\u05D4 \u05D1\u05D8\u05D5\u05D7 \u05E9\u05D1\u05E8\u05E6\u05D5\u05E0\u05DA \u05DC\u05D4\u05EA\u05E0\u05EA\u05E7?',
+              'התנתקות',
+              'האם אתה בטוח שברצונך להתנתק?',
               [
-                { text: '\u05D1\u05D9\u05D8\u05D5\u05DC', style: 'cancel' },
+                { text: 'ביטול', style: 'cancel' },
                 {
-                  text: '\u05D4\u05EA\u05E0\u05EA\u05E7',
+                  text: 'התנתק',
                   style: 'destructive',
                   onPress: () => {
-                    Alert.alert('\u05D4\u05EA\u05E0\u05EA\u05E7\u05EA \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4');
+                    Alert.alert('התנתקת בהצלחה');
                     goBack();
                   },
                 },
@@ -433,7 +433,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
           }}
         >
           <MaterialIcons name="logout" size={20} color={colors.error} />
-          <Text style={styles.logoutText}>{'\u05D4\u05EA\u05E0\u05EA\u05E7\u05D5\u05EA'}</Text>
+          <Text style={styles.logoutText}>{'התנתקות'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

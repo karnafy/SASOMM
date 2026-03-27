@@ -75,6 +75,7 @@ export interface Expense {
   paymentMethod?: string;
   includesVat?: boolean;
   history?: AuditEntry[];
+  created_at?: string;
 }
 
 export interface Income {
@@ -92,6 +93,7 @@ export interface Income {
   paymentMethod?: string;
   includesVat?: boolean;
   history?: AuditEntry[];
+  created_at?: string;
 }
 
 export interface Supplier {

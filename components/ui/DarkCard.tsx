@@ -39,7 +39,7 @@ export function DarkCard({ children, style, onPress }: DarkCardProps) {
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Pressable style={style && (style as ViewStyle).flex ? { flex: (style as ViewStyle).flex } : undefined} onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
         <Animated.View style={[cardStyle, { transform: [{ scale: scaleAnim }] }]}>
           {children}
         </Animated.View>

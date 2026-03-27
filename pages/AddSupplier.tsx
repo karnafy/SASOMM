@@ -25,12 +25,12 @@ interface AddSupplierProps {
 }
 
 const CATEGORIES = [
-  '\u05D0\u05D9\u05E0\u05E1\u05D8\u05DC\u05E6\u05D9\u05D4',
-  '\u05D7\u05E9\u05DE\u05DC',
-  '\u05D1\u05E0\u05D9\u05D9\u05D4',
-  '\u05E8\u05D9\u05D4\u05D5\u05D8',
-  '\u05D2\u05D9\u05E0\u05D5\u05DF',
-  '\u05DB\u05DC\u05DC\u05D9',
+  'אינסטלציה',
+  'חשמל',
+  'בנייה',
+  'ריהוט',
+  'גינון',
+  'כללי',
 ];
 
 const AddSupplier: React.FC<AddSupplierProps> = ({
@@ -40,7 +40,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
   returnTo,
 }) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('\u05DB\u05DC\u05DC\u05D9');
+  const [category, setCategory] = useState('כללי');
   const [phone, setPhone] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState('');
@@ -53,8 +53,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
     setIsSaving(true);
     try {
       await onSave(
-        name || '\u05E1\u05E4\u05E7 \u05D7\u05D3\u05E9',
-        finalCategory || '\u05DB\u05DC\u05DC\u05D9',
+        name || 'ספק חדש',
+        finalCategory || 'כללי',
         phone,
         avatar || `https://picsum.photos/seed/${encodeURIComponent(name || 'default')}/100`
       );
@@ -67,8 +67,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(
-        '\u05E9\u05D2\u05D9\u05D0\u05D4',
-        '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4'
+        'שגיאה',
+        'נדרשת הרשאה לגלריה'
       );
       return;
     }
@@ -88,7 +88,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
   return (
     <View style={styles.container}>
       <ScreenTopBar
-        title={'\u05DB\u05E8\u05D8\u05D9\u05E1 \u05E1\u05E4\u05E7 \u05D7\u05D3\u05E9'}
+        title={'כרטיס ספק חדש'}
         onBack={goBack}
       />
 
@@ -111,7 +111,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <View style={styles.avatarPlaceholder}>
                 <MaterialIcons name="person-add" size={48} color={colors.textTertiary} />
                 <Text style={styles.avatarPlaceholderText}>
-                  {'\u05DC\u05D7\u05E5 \u05DC\u05D4\u05E2\u05DC\u05D0\u05D4'}
+                  {'לחץ להעלאה'}
                 </Text>
               </View>
             )}
@@ -127,13 +127,13 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>
-                {'\u05E9\u05DD \u05D4\u05E1\u05E4\u05E7 / \u05D4\u05E2\u05E1\u05E7 *'}
+                {'שם הספק / העסק *'}
               </Text>
               <MaterialIcons name="badge" size={16} color={colors.textTertiary} />
             </View>
             <TextInput
               style={styles.textInput}
-              placeholder={'\u05DC\u05D3\u05D5\u05D2\u05DE\u05D4: \u05D0.\u05D0 \u05D0\u05D9\u05E0\u05E1\u05D8\u05DC\u05E6\u05D9\u05D4'}
+              placeholder={'לדוגמה: א.א אינסטלציה'}
               placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={setName}
@@ -145,7 +145,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>
-                {'\u05DE\u05E1\u05E4\u05E8 \u05D8\u05DC\u05E4\u05D5\u05DF \u05DC\u05D6\u05D9\u05D4\u05D5\u05D9'}
+                {'מספר טלפון לזיהוי'}
               </Text>
               <MaterialIcons name="call" size={16} color={colors.textTertiary} />
             </View>
@@ -164,7 +164,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>
-                {'\u05EA\u05D7\u05D5\u05DD \u05D4\u05EA\u05DE\u05D7\u05D5\u05EA \u05E2\u05D9\u05E7\u05E8\u05D9'}
+                {'תחום התמחות עיקרי'}
               </Text>
             </View>
 
@@ -200,7 +200,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
                 >
                   <MaterialIcons name="add" size={14} color={colors.accent} />
                   <Text style={styles.categoryChipAddText}>
-                    {'\u05D0\u05D7\u05E8'}
+                    {'אחר'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -208,7 +208,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <View style={styles.newCategoryRow}>
                 <TextInput
                   style={[styles.textInput, { flex: 1 }]}
-                  placeholder={'\u05D4\u05E7\u05DC\u05D3 \u05E9\u05DD \u05EA\u05D7\u05D5\u05DD...'}
+                  placeholder={'הקלד שם תחום...'}
                   placeholderTextColor={colors.textTertiary}
                   value={newCategory}
                   onChangeText={setNewCategory}
@@ -236,8 +236,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
         <GradientButton
           label={
             isSaving
-              ? '\u05DE\u05E2\u05D1\u05D3 \u05DE\u05E2\u05E8\u05DB\u05EA...'
-              : '\u05D0\u05E9\u05E8 \u05D5\u05E9\u05DE\u05D5\u05E8 \u05E1\u05E4\u05E7'
+              ? 'מעבד מערכת...'
+              : 'אשר ושמור ספק'
           }
           onPress={handleSave}
           disabled={!canSave}

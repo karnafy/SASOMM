@@ -20,11 +20,11 @@ interface TopHeaderProps {
 }
 
 const menuItems: { label: string; icon: IconName; screen: AppScreen }[] = [
-  { label: '\u05D0\u05D9\u05D6\u05D5\u05E8 \u05D0\u05D9\u05E9\u05D9', icon: 'person', screen: AppScreen.PERSONAL_AREA },
-  { label: '\u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD', icon: 'folder-special', screen: AppScreen.PROJECTS },
-  { label: '\u05E1\u05E4\u05E7\u05D9\u05DD \u05D5\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8', icon: 'people', screen: AppScreen.SUPPLIERS },
-  { label: '\u05DE\u05E8\u05DB\u05D6 \u05D4\u05D3\u05D5"\u05D7\u05D5\u05EA', icon: 'analytics', screen: AppScreen.REPORTS_CENTER },
-  { label: '\u05D4\u05D2\u05D3\u05E8\u05D5\u05EA', icon: 'settings', screen: AppScreen.SETTINGS },
+  { label: 'איזור אישי', icon: 'person', screen: AppScreen.PERSONAL_AREA },
+  { label: 'כל הפרויקטים', icon: 'folder-special', screen: AppScreen.PROJECTS },
+  { label: 'ספקים ואנשי קשר', icon: 'people', screen: AppScreen.SUPPLIERS },
+  { label: 'מרכז הדו"חות', icon: 'analytics', screen: AppScreen.REPORTS_CENTER },
+  { label: 'הגדרות', icon: 'settings', screen: AppScreen.SETTINGS },
 ];
 
 export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
@@ -36,7 +36,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
         <Pressable style={styles.overlay} onPress={() => setIsMenuOpen(false)}>
           <View style={styles.menuCardWrapper}>
             <View style={styles.menuCard}>
-              <Text style={styles.menuTitle}>{'\u05EA\u05E4\u05E8\u05D9\u05D8 \u05E0\u05D9\u05D4\u05D5\u05DC'}</Text>
+              <Text style={styles.menuTitle}>{'תפריט ניהול'}</Text>
               {menuItems.map((item, i) => (
                 <TouchableOpacity
                   key={i}
@@ -62,7 +62,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
               >
                 <MaterialIcons name="logout" size={20} color={colors.error} />
                 <Text style={[styles.menuRowLabel, { color: colors.error }]}>
-                  {'\u05D4\u05EA\u05E0\u05EA\u05E7\u05D5\u05EA'}
+                  {'התנתקות'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -99,16 +99,17 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
+    alignItems: 'flex-start',
   },
   menuCardWrapper: {
-    marginTop: 100,
+    marginTop: 70,
+    marginLeft: spacing.lg,
+    width: 260,
   },
   menuCard: {
     backgroundColor: colors.bgSecondary,
-    borderRadius: radii['3xl'],
-    padding: spacing.xl,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
   },

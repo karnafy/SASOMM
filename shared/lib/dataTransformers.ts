@@ -23,6 +23,7 @@ export function supabaseExpenseToLocal(row: Tables<'expenses'>): Expense {
     receiptImages: row.receipt_images || undefined,
     paymentMethod: row.payment_method || undefined,
     includesVat: row.includes_vat || false,
+    created_at: (row as any).created_at || undefined,
   };
 }
 
@@ -41,6 +42,7 @@ export function supabaseIncomeToLocal(row: Tables<'incomes'>): Income {
     receiptImages: row.receipt_images || undefined,
     paymentMethod: row.payment_method || undefined,
     includesVat: row.includes_vat || false,
+    created_at: (row as any).created_at || undefined,
   };
 }
 

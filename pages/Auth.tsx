@@ -46,17 +46,17 @@ export default function Auth() {
     }
 
     if (!currentEmail || !currentPassword) {
-      setError('\u05E0\u05D0 \u05DC\u05DE\u05DC\u05D0 \u05D0\u05EA \u05DB\u05DC \u05D4\u05E9\u05D3\u05D5\u05EA');
+      setError('נא למלא את כל השדות');
       return;
     }
 
     if (!isLogin && currentPassword !== confirmPassword) {
-      setError('\u05D4\u05E1\u05D9\u05E1\u05DE\u05D0\u05D5\u05EA \u05D0\u05D9\u05E0\u05DF \u05EA\u05D5\u05D0\u05DE\u05D5\u05EA');
+      setError('הסיסמאות אינן תואמות');
       return;
     }
 
     if (currentPassword.length < 6) {
-      setError('\u05D4\u05E1\u05D9\u05E1\u05DE\u05D0 \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05DB\u05D9\u05DC \u05DC\u05E4\u05D7\u05D5\u05EA 6 \u05EA\u05D5\u05D5\u05D9\u05DD');
+      setError('הסיסמא חייבת להכיל לפחות 6 תווים');
       setLoading(false);
       return;
     }
@@ -68,7 +68,7 @@ export default function Auth() {
         const { error } = await signIn(currentEmail, currentPassword);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
-            setError('\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC \u05D0\u05D5 \u05E1\u05D9\u05E1\u05DE\u05D0 \u05E9\u05D2\u05D5\u05D9\u05D9\u05DD');
+            setError('אימייל או סיסמא שגויים');
           } else {
             setError(error.message);
           }
@@ -77,17 +77,17 @@ export default function Auth() {
         const { error } = await signUp(currentEmail, currentPassword);
         if (error) {
           if (error.message.includes('already registered')) {
-            setError('\u05DE\u05E9\u05EA\u05DE\u05E9 \u05E2\u05DD \u05D0\u05D9\u05DE\u05D9\u05D9\u05DC \u05D6\u05D4 \u05DB\u05D1\u05E8 \u05E7\u05D9\u05D9\u05DD');
+            setError('משתמש עם אימייל זה כבר קיים');
           } else {
             setError(error.message);
           }
         } else {
-          setSuccessMessage('\u05E0\u05E8\u05E9\u05DE\u05EA \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4! \u05D0\u05E0\u05D0 \u05D0\u05E9\u05E8 \u05D0\u05EA \u05D4\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC \u05E9\u05DC\u05DA.');
+          setSuccessMessage('נרשמת בהצלחה! אנא אשר את האימייל שלך.');
           setIsLogin(true);
         }
       }
     } catch (err) {
-      setError('\u05D0\u05D9\u05E8\u05E2\u05D4 \u05E9\u05D2\u05D9\u05D0\u05D4, \u05E0\u05E1\u05D4 \u05E9\u05D5\u05D1');
+      setError('אירעה שגיאה, נסה שוב');
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,7 @@ export default function Auth() {
               <MaterialIcons name="account-balance" size={36} color={colors.white} />
             </LinearGradient>
             <Text style={styles.logoText}>Monny</Text>
-            <Text style={styles.subtitle}>{'\u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05D9\u05E0\u05E0\u05E1\u05D9 \u05D7\u05DB\u05DD'}</Text>
+            <Text style={styles.subtitle}>{'ניהול פיננסי חכם'}</Text>
           </View>
 
           {/* Card */}
@@ -138,7 +138,7 @@ export default function Auth() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.segmentText, isLogin && styles.segmentTextActive]}>
-                  {'\u05D4\u05EA\u05D7\u05D1\u05E8\u05D5\u05EA'}
+                  {'התחברות'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -147,14 +147,14 @@ export default function Auth() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.segmentText, !isLogin && styles.segmentTextActive]}>
-                  {'\u05D4\u05E8\u05E9\u05DE\u05D4'}
+                  {'הרשמה'}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{'\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC'}</Text>
+              <Text style={styles.label}>{'אימייל'}</Text>
               <TextInput
                 ref={emailRef}
                 style={styles.input}
@@ -171,13 +171,13 @@ export default function Auth() {
 
             {/* Password Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{'\u05E1\u05D9\u05E1\u05DE\u05D0'}</Text>
+              <Text style={styles.label}>{'סיסמא'}</Text>
               <TextInput
                 ref={passwordRef}
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder={'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
+                placeholder={'\•\•\•\•\•\•\•\•'}
                 placeholderTextColor={colors.textTertiary}
                 secureTextEntry
                 textAlign="left"
@@ -187,12 +187,12 @@ export default function Auth() {
             {/* Confirm Password (signup only) */}
             {!isLogin && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{'\u05D0\u05D9\u05DE\u05D5\u05EA \u05E1\u05D9\u05E1\u05DE\u05D0'}</Text>
+                <Text style={styles.label}>{'אימות סיסמא'}</Text>
                 <TextInput
                   style={styles.input}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  placeholder={'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
+                  placeholder={'\•\•\•\•\•\•\•\•'}
                   placeholderTextColor={colors.textTertiary}
                   secureTextEntry
                   textAlign="left"
@@ -230,7 +230,7 @@ export default function Auth() {
                 {loading ? (
                   <View style={styles.buttonContent}>
                     <ActivityIndicator size="small" color={colors.bgPrimary} />
-                    <Text style={styles.submitButtonText}>{'\u05DE\u05E2\u05D1\u05D3...'}</Text>
+                    <Text style={styles.submitButtonText}>{'מעבד...'}</Text>
                   </View>
                 ) : (
                   <View style={styles.buttonContent}>
@@ -240,7 +240,7 @@ export default function Auth() {
                       color={colors.bgPrimary}
                     />
                     <Text style={styles.submitButtonText}>
-                      {isLogin ? '\u05D4\u05EA\u05D7\u05D1\u05E8' : '\u05D4\u05D9\u05E8\u05E9\u05DD'}
+                      {isLogin ? 'התחבר' : 'הירשם'}
                     </Text>
                   </View>
                 )}
@@ -250,7 +250,7 @@ export default function Auth() {
             {/* Social Auth Divider */}
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{'\u05D0\u05D5'}</Text>
+              <Text style={styles.dividerText}>{'או'}</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -258,14 +258,14 @@ export default function Auth() {
             <View style={styles.socialRow}>
               <TouchableOpacity
                 style={styles.socialButton}
-                onPress={() => Alert.alert('\u05D1\u05E7\u05E8\u05D5\u05D1')}
+                onPress={() => Alert.alert('בקרוב')}
                 activeOpacity={0.8}
               >
                 <Text style={styles.socialButtonTextG}>G</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.socialButton}
-                onPress={() => Alert.alert('\u05D1\u05E7\u05E8\u05D5\u05D1')}
+                onPress={() => Alert.alert('בקרוב')}
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="apple" size={22} color={colors.textSecondary} />
@@ -276,15 +276,15 @@ export default function Auth() {
             <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
               <Text style={styles.toggleText}>
                 {isLogin
-                  ? '\u05D0\u05D9\u05DF \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05D9\u05E8\u05E9\u05DD'
-                  : '\u05D9\u05E9 \u05DC\u05DA \u05D7\u05E9\u05D1\u05D5\u05DF? \u05D4\u05EA\u05D7\u05D1\u05E8'}
+                  ? 'אין לך חשבון? הירשם'
+                  : 'יש לך חשבון? התחבר'}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
           <Text style={styles.footer}>
-            {'\u00A9 2026 MONNY. \u05DB\u05DC \u05D4\u05D6\u05DB\u05D5\u05D9\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA.'}
+            {'\© 2026 MONNY. כל הזכויות שמורות.'}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

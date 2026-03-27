@@ -54,9 +54,9 @@ interface DashboardProps {
 }
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const categoryIcons: Record<MainCategory, IconName> = {
@@ -176,10 +176,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   // ---------------------------------------------------------------------------
 
   const quickAccessItems: { id: string; label: string; icon: IconName; screen: AppScreen }[] = [
-    { id: 'proj', label: '\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9', icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
-    { id: 'supp', label: '\u05E1\u05E4\u05E7 \u05D7\u05D3\u05E9', icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
-    { id: 'all', label: '\u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD', icon: 'folder-open', screen: AppScreen.PROJECTS },
-    { id: 'contacts', label: '\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8', icon: 'contacts', screen: AppScreen.SUPPLIERS },
+    { id: 'proj', label: 'פרויקט חדש', icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
+    { id: 'supp', label: 'ספק חדש', icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
+    { id: 'all', label: 'כל הפרויקטים', icon: 'folder-open', screen: AppScreen.PROJECTS },
+    { id: 'contacts', label: 'אנשי קשר', icon: 'contacts', screen: AppScreen.SUPPLIERS },
   ];
 
   // ---------------------------------------------------------------------------
@@ -189,11 +189,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   const sendReminder = () => {
     const debtSuppliers = suppliers.filter((s) => s.status === 'debt' && s.phone);
     if (debtSuppliers.length === 0) {
-      Alert.alert('', '\u05D0\u05D9\u05DF \u05E1\u05E4\u05E7\u05D9\u05DD \u05E2\u05DD \u05D7\u05D5\u05D1\u05D5\u05EA \u05DC\u05E9\u05DC\u05D9\u05D7\u05EA \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA');
+      Alert.alert('', 'אין ספקים עם חובות לשליחת תזכורת');
       return;
     }
     const message = encodeURIComponent(
-      '\u05E9\u05DC\u05D5\u05DD, \u05D6\u05D5\u05D4\u05D9 \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA \u05D9\u05D3\u05D9\u05D3\u05D5\u05EA\u05D9\u05EA \u05DC\u05D2\u05D1\u05D9 \u05D9\u05EA\u05E8\u05EA \u05D4\u05D7\u05D5\u05D1 \u05E9\u05DC\u05DA. \u05D0\u05E9\u05DE\u05D7 \u05DC\u05E1\u05D2\u05D5\u05E8 \u05D0\u05EA \u05D4\u05D7\u05E9\u05D1\u05D5\u05DF \u05D1\u05D4\u05E7\u05D3\u05DD. \u05EA\u05D5\u05D3\u05D4!',
+      'שלום, זוהי תזכורת ידידותית לגבי יתרת החוב שלך. אשמח לסגור את החשבון בהקדם. תודה!',
     );
     const firstSupplier = debtSuppliers[0];
     const cleanPhone = firstSupplier.phone.replace(/\D/g, '');
@@ -213,14 +213,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         <View style={styles.headerRow}>
           <CurrencyToggle selected={globalCurrency} onSelect={setGlobalCurrency} />
           <Text style={styles.greeting}>
-            {userName ? `\u05E9\u05DC\u05D5\u05DD, ${userName}` : '\u05E9\u05DC\u05D5\u05DD,'}
+            {userName ? `שלום, ${userName}` : 'שלום,'}
           </Text>
         </View>
 
         {/* Summary GlassCard */}
         <GlassCard style={styles.summaryCard}>
           {/* Expenses label + big amount */}
-          <Text style={styles.summaryLabel}>{'\u05D4\u05D5\u05E6\u05D0\u05D5\u05EA'}</Text>
+          <Text style={styles.summaryLabel}>{'הוצאות'}</Text>
           <Text style={styles.summaryAmount}>
             {sym}{formatNumber(convertAmount(totals.expenses))}
           </Text>
@@ -228,14 +228,14 @@ const Dashboard: React.FC<DashboardProps> = ({
           {/* Sub-cards row: income + net */}
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA'}</Text>
+              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
               <Text style={[styles.subCardAmount, { color: colors.success }]}>
                 {sym}{formatNumber(convertAmount(totals.income))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'\u05D9\u05EA\u05E8\u05D4 \u05E0\u05D8\u05D5'}</Text>
+              <Text style={styles.subCardLabel}>{'יתרה נטו'}</Text>
               <Text style={[styles.subCardAmount, { color: totals.net >= 0 ? colors.success : colors.error }]}>
                 {totals.net < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(totals.net)))}
               </Text>
@@ -255,8 +255,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <MaterialIcons name="remove-circle" size={26} color={colors.error} />
               </View>
               <View style={styles.quickActionTextWrap}>
-                <Text style={styles.quickActionSmall}>{'\u05D4\u05D5\u05E1\u05E4\u05EA'}</Text>
-                <Text style={[styles.quickActionBig, { color: colors.error }]}>{'\u05D4\u05D5\u05E6\u05D0\u05D4'}</Text>
+                <Text style={styles.quickActionSmall}>{'הוספת'}</Text>
+                <Text style={[styles.quickActionBig, { color: colors.error }]}>{'הוצאה'}</Text>
               </View>
             </GlassCard>
           </TouchableOpacity>
@@ -271,8 +271,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <MaterialIcons name="add-circle" size={26} color={colors.success} />
               </View>
               <View style={styles.quickActionTextWrap}>
-                <Text style={styles.quickActionSmall}>{'\u05D4\u05D5\u05E1\u05E4\u05EA'}</Text>
-                <Text style={[styles.quickActionBig, { color: colors.success }]}>{'\u05D4\u05DB\u05E0\u05E1\u05D4'}</Text>
+                <Text style={styles.quickActionSmall}>{'הוספת'}</Text>
+                <Text style={[styles.quickActionBig, { color: colors.success }]}>{'הכנסה'}</Text>
               </View>
             </GlassCard>
           </TouchableOpacity>
@@ -284,7 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Categories – 3 cards in a row ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D5\u05EA'} />
+          <SectionHeader title={'קטגוריות'} />
           <View style={styles.categoryRow}>
             {categoryTotals.map((cat) => {
               const percentSpent =
@@ -322,12 +322,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Quick Access ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'\u05D2\u05D9\u05E9\u05D4 \u05DE\u05D4\u05D9\u05E8\u05D4'} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.quickAccessScroll}
-          >
+          <SectionHeader title={'גישה מהירה'} />
+          <View style={styles.quickAccessRow}>
             {quickAccessItems.map((action) => (
               <TouchableOpacity
                 key={action.id}
@@ -346,20 +342,20 @@ const Dashboard: React.FC<DashboardProps> = ({
               <DarkCard style={styles.quickAccessIconCard}>
                 <MaterialIcons name="notifications-active" size={24} color={colors.warning} />
               </DarkCard>
-              <Text style={styles.quickAccessLabel}>{'\u05E9\u05DC\u05D7 \u05EA\u05D6\u05DB\u05D5\u05E8\u05EA'}</Text>
+              <Text style={styles.quickAccessLabel}>{'שלח תזכורת'}</Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
 
         {/* ===== Recent Activity ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'\u05E4\u05E2\u05D9\u05DC\u05D5\u05EA \u05D0\u05D7\u05E8\u05D5\u05E0\u05D4'} />
+          <SectionHeader title={'פעילות אחרונה'} />
 
           {allActivities.length === 0 ? (
             <DarkCard style={styles.emptyCard}>
               <EmptyState
                 icon="history"
-                message={'\u05D0\u05D9\u05DF \u05E4\u05E2\u05D9\u05DC\u05D5\u05EA \u05E2\u05D3\u05D9\u05D9\u05DF'}
+                message={'אין פעילות עדיין'}
               />
             </DarkCard>
           ) : (
@@ -375,7 +371,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     icon={isIncome ? 'arrow-downward' : 'arrow-upward'}
                     iconColor={isIncome ? colors.success : colors.error}
                     title={act.title}
-                    meta={metaParts.join(' \u2022 ')}
+                    meta={metaParts.join(' \• ')}
                     amount={`${isIncome ? '+' : '-'}${sym}${formatNumber(convertAmount(act.amount))}`}
                     isIncome={isIncome}
                     onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, act.id)}
@@ -390,8 +386,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         {recentProjects.length > 0 && (
           <View style={styles.section}>
             <SectionHeader
-              title={'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05D0\u05D7\u05E8\u05D5\u05E0\u05D9\u05DD'}
-              linkText={'\u05D4\u05E6\u05D2 \u05D4\u05DB\u05DC'}
+              title={'פרויקטים אחרונים'}
+              linkText={'הצג הכל'}
               onLinkPress={() => onNavigate(AppScreen.PROJECTS)}
             />
             <ScrollView
@@ -450,7 +446,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <Text style={styles.projectCategory}>{project.category}</Text>
 
                     <View style={styles.projectBottom}>
-                      <Text style={styles.tinyLabel}>{'\u05D9\u05EA\u05E8\u05D4'}</Text>
+                      <Text style={styles.tinyLabel}>{'יתרה'}</Text>
                       <Text
                         style={[
                           styles.projectRemainingValue,
@@ -473,8 +469,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         {suppliers.length > 0 && (
           <View style={styles.section}>
             <SectionHeader
-              title={'\u05E1\u05E4\u05E7\u05D9\u05DD'}
-              linkText={'\u05D4\u05E6\u05D2 \u05D4\u05DB\u05DC'}
+              title={'ספקים'}
+              linkText={'הצג הכל'}
               onLinkPress={() => onNavigate(AppScreen.SUPPLIERS)}
             />
             <ScrollView
@@ -618,7 +614,7 @@ const styles = StyleSheet.create({
 
   /* ---- Dark Zone ---- */
   darkZone: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.xl,
   },
   section: {
@@ -628,28 +624,29 @@ const styles = StyleSheet.create({
   /* ---- Category Cards (3 in a row) ---- */
   categoryRow: {
     flexDirection: 'row-reverse',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   categoryCard: {
     flex: 1,
-    padding: spacing.md,
-    alignItems: 'flex-end',
+    padding: spacing.lg,
+    alignItems: 'center',
+    minHeight: 140,
   },
   categoryCardName: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textSecondary,
-    fontFamily: fonts.medium,
-    marginBottom: spacing.xs,
+    fontFamily: fonts.semibold,
+    marginBottom: spacing.sm,
     writingDirection: 'rtl',
-    textAlign: 'right',
+    textAlign: 'center',
   },
   categoryCardAmount: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.primary,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
     writingDirection: 'rtl',
-    textAlign: 'right',
+    textAlign: 'center',
   },
   categoryProgressBar: {
     alignSelf: 'stretch',
@@ -662,28 +659,29 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   categoryCardFooterPct: {
-    fontSize: 9,
+    fontSize: 10,
     color: colors.textTertiary,
     fontFamily: fonts.semibold,
   },
   categoryCardFooterTotal: {
-    fontSize: 9,
+    fontSize: 10,
     color: colors.textTertiary,
     fontFamily: fonts.regular,
   },
 
   /* ---- Quick Access ---- */
-  quickAccessScroll: {
-    gap: spacing.xl,
-    paddingHorizontal: 2,
+  quickAccessRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
   },
   quickAccessItem: {
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   quickAccessIconCard: {
-    width: 58,
-    height: 58,
+    width: 54,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.xl,
@@ -694,7 +692,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     writingDirection: 'rtl',
     textAlign: 'center',
-    maxWidth: 58,
+    maxWidth: 64,
   },
 
   /* ---- Activity ---- */

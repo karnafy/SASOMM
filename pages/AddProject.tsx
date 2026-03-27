@@ -28,9 +28,9 @@ interface AddProjectProps {
 }
 
 const CURRENCIES: { val: Currency; symbol: string }[] = [
-  { val: 'ILS', symbol: '\u20AA' },
+  { val: 'ILS', symbol: '\₪' },
   { val: 'USD', symbol: '$' },
-  { val: 'EUR', symbol: '\u20AC' },
+  { val: 'EUR', symbol: '\€' },
 ];
 
 const CONVERSION_RATES: Record<Currency, number> = {
@@ -40,12 +40,12 @@ const CONVERSION_RATES: Record<Currency, number> = {
 };
 
 const SUB_CATEGORIES = [
-  '\u05E9\u05D9\u05E4\u05D5\u05E5',
-  '\u05DE\u05E9\u05E4\u05D7\u05D4',
-  '\u05D5\u05E2\u05D3 \u05D1\u05D9\u05EA',
-  '\u05E2\u05D5\u05D1\u05D3\u05D9\u05DD',
-  '\u05EA\u05D7\u05D6\u05D5\u05E7\u05D4',
-  '\u05DB\u05DC\u05DC\u05D9',
+  'שיפוץ',
+  'משפחה',
+  'ועד בית',
+  'עובדים',
+  'תחזוקה',
+  'כללי',
 ];
 
 const ICON_OPTIONS: IconName[] = [
@@ -101,7 +101,7 @@ const AddProject: React.FC<AddProjectProps> = ({
     project ? convertAmount(project.budget).toFixed(0) : ''
   );
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(globalCurrency);
-  const [category, setCategory] = useState(project?.category || '\u05DB\u05DC\u05DC\u05D9');
+  const [category, setCategory] = useState(project?.category || 'כללי');
   const [mainCategory, setMainCategory] = useState<MainCategory>(
     project?.mainCategory || preselectedMainCategory || 'projects'
   );
@@ -114,7 +114,7 @@ const AddProject: React.FC<AddProjectProps> = ({
   const [showAllIcons, setShowAllIcons] = useState(false);
 
   const currentSymbol =
-    CURRENCIES.find((c) => c.val === selectedCurrency)?.symbol || '\u20AA';
+    CURRENCIES.find((c) => c.val === selectedCurrency)?.symbol || '\₪';
 
   const handleSave = useCallback(async () => {
     if (isSaving) return;
@@ -128,13 +128,13 @@ const AddProject: React.FC<AddProjectProps> = ({
     setIsSaving(true);
     try {
       await onSave(
-        name || '\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9',
+        name || 'פרויקט חדש',
         valueForApp,
-        finalCategory || '\u05DB\u05DC\u05DC\u05D9',
+        finalCategory || 'כללי',
         mainCategory
       );
     } catch {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05E9\u05DE\u05D9\u05E8\u05D4. \u05E0\u05E1\u05D4 \u05E9\u05D5\u05D1.');
+      Alert.alert('שגיאה', 'שגיאה בשמירה. נסה שוב.');
     } finally {
       setIsSaving(false);
     }
@@ -145,7 +145,7 @@ const AddProject: React.FC<AddProjectProps> = ({
   return (
     <View style={styles.container}>
       <ScreenTopBar
-        title={project ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8' : '\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9'}
+        title={project ? 'עריכת פרויקט' : 'פרויקט חדש'}
         onBack={goBack}
       />
 
@@ -158,14 +158,14 @@ const AddProject: React.FC<AddProjectProps> = ({
         {/* Budget Input Card */}
         <View style={styles.card}>
           <Text style={styles.cardLabelCenter}>
-            {'\u05EA\u05E7\u05E6\u05D9\u05D1 \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}
+            {'תקציב הפרויקט'}
           </Text>
 
           {/* Previous budget (edit mode) */}
           {project && (
             <View style={styles.previousBudgetRow}>
               <Text style={styles.previousBudgetLabel}>
-                {'\u05EA\u05E7\u05E6\u05D9\u05D1 \u05E7\u05D5\u05D3\u05DD: '}
+                {'תקציב קודם: '}
               </Text>
               <Text style={styles.previousBudgetValue}>
                 {CURRENCIES.find((c) => c.val === globalCurrency)?.symbol}
@@ -219,11 +219,11 @@ const AddProject: React.FC<AddProjectProps> = ({
         {/* Project Name */}
         <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
-            {'\u05E9\u05DD \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}
+            {'שם הפרויקט'}
           </Text>
           <TextInput
             style={styles.textInput}
-            placeholder={'\u05DC\u05D3\u05D5\u05D2\u05DE\u05D4: \u05E9\u05D9\u05E4\u05D5\u05E5 \u05D3\u05D9\u05E8\u05D4 \u05EA\u05DC \u05D0\u05D1\u05D9\u05D1'}
+            placeholder={'לדוגמה: שיפוץ דירה תל אביב'}
             placeholderTextColor={colors.textTertiary}
             value={name}
             onChangeText={setName}
@@ -234,7 +234,7 @@ const AddProject: React.FC<AddProjectProps> = ({
         {/* Main Category — 3-option selector */}
         <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
-            {'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05E8\u05D0\u05E9\u05D9\u05EA'}
+            {'קטגוריה ראשית'}
           </Text>
           <View style={styles.mainCategoryGrid}>
             {(Object.keys(MAIN_CATEGORIES) as MainCategory[]).map((cat) => (
@@ -266,7 +266,7 @@ const AddProject: React.FC<AddProjectProps> = ({
         {/* Sub Category */}
         <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
-            {'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05EA \u05DE\u05E9\u05E0\u05D4'}
+            {'קטגורית משנה'}
           </Text>
           {!isAddingCategory ? (
             <View style={styles.chipsRow}>
@@ -297,14 +297,14 @@ const AddProject: React.FC<AddProjectProps> = ({
                 style={[styles.chip, styles.chipAddAccent]}
                 onPress={() => setIsAddingCategory(true)}
               >
-                <Text style={styles.chipAddAccentText}>+ {'\u05D0\u05D7\u05E8'}</Text>
+                <Text style={styles.chipAddAccentText}>+ {'אחר'}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.newCategoryRow}>
               <TextInput
                 style={[styles.textInput, { flex: 1 }]}
-                placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05D7\u05D3\u05E9\u05D4...'}
+                placeholder={'קטגוריה חדשה...'}
                 placeholderTextColor={colors.textTertiary}
                 value={newCategory}
                 onChangeText={setNewCategory}
@@ -324,7 +324,7 @@ const AddProject: React.FC<AddProjectProps> = ({
         {/* Icon Selector — grid in bgTertiary circles, selected gets primary border */}
         <View style={styles.card}>
           <Text style={styles.cardLabelRight}>
-            {'\u05D0\u05D9\u05E7\u05D5\u05DF'}
+            {'איקון'}
           </Text>
           <View style={styles.iconGrid}>
             {visibleIcons.map((iconName) => (
@@ -352,7 +352,7 @@ const AddProject: React.FC<AddProjectProps> = ({
               onPress={() => setShowAllIcons(true)}
             >
               <Text style={styles.showMoreText}>
-                {'\u05D4\u05E6\u05D2 \u05E2\u05D5\u05D3'} ({ICON_OPTIONS.length - 12})
+                {'הצג עוד'} ({ICON_OPTIONS.length - 12})
               </Text>
               <MaterialIcons name="expand-more" size={18} color={colors.primary} />
             </TouchableOpacity>
@@ -362,7 +362,7 @@ const AddProject: React.FC<AddProjectProps> = ({
               style={styles.showMoreBtn}
               onPress={() => setShowAllIcons(false)}
             >
-              <Text style={styles.showMoreText}>{'\u05D4\u05E1\u05EA\u05E8'}</Text>
+              <Text style={styles.showMoreText}>{'הסתר'}</Text>
               <MaterialIcons name="expand-less" size={18} color={colors.primary} />
             </TouchableOpacity>
           )}
@@ -374,10 +374,10 @@ const AddProject: React.FC<AddProjectProps> = ({
         <GradientButton
           label={
             isSaving
-              ? '\u05E9\u05D5\u05DE\u05E8...'
+              ? 'שומר...'
               : project
-              ? '\u05E9\u05DE\u05D5\u05E8 \u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD'
-              : '\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'
+              ? 'שמור שינויים'
+              : 'צור פרויקט'
           }
           onPress={handleSave}
           disabled={isSaving}

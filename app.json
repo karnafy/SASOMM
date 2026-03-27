@@ -25,6 +25,10 @@
         "projectId": "d8bbca95-9c0e-4cd4-a345-52d3076b39ec"
       }
     },
-    "owner": "karnafstudio"
+    "owner": "karnafstudio",
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ]
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -48,14 +48,31 @@ interface AddExpenseProps {
   editActivity?: (Expense | Income) & { projectId?: string };
   globalCurrency: Currency;
   convertAmount: (amount: number, from?: Currency, to?: Currency) => number;
+  formDraft?: ExpenseFormDraft | null;
+  onSaveDraft?: (draft: ExpenseFormDraft | null) => void;
 }
 
-const CURRENCY_SYMBOLS: Record<Currency, string> = { ILS: '\u20AA', USD: '$', EUR: '\u20AC' };
+export interface ExpenseFormDraft {
+  transactionType: 'expense' | 'income';
+  amount: string;
+  currency: Currency;
+  description: string;
+  selectedProjectId: string;
+  selectedSupplierId: string;
+  category: string;
+  paymentMethod: string;
+  includesVat: boolean;
+  receiptImages: string[];
+  isAddingCategory: boolean;
+  newCategory: string;
+}
+
+const CURRENCY_SYMBOLS: Record<Currency, string> = { ILS: '\₪', USD: '$', EUR: '\€' };
 const CURRENCIES: Currency[] = ['ILS', 'USD', 'EUR'];
 
-const EXPENSE_CATEGORIES = ['\u05D0\u05D5\u05DB\u05DC', '\u05D3\u05DC\u05E7', '\u05D7\u05D9\u05E0\u05D5\u05DA', '\u05E9\u05D9\u05E4\u05D5\u05E5', '\u05D7\u05D5\u05DE\u05E8\u05D9\u05DD', '\u05E9\u05DB\u05E8', '\u05D5\u05E2\u05D3', '\u05DB\u05DC\u05DC\u05D9'];
-const INCOME_CATEGORIES = ['\u05DC\u05E7\u05D5\u05D7', '\u05D4\u05D7\u05D6\u05E8 \u05DE\u05E1', '\u05D1\u05D5\u05E0\u05D5\u05E1', '\u05DE\u05DB\u05D9\u05E8\u05D4', '\u05D3\u05D9\u05D1\u05D9\u05D3\u05E0\u05D3', '\u05DB\u05DC\u05DC\u05D9'];
-const PAYMENT_METHODS = ['\u05DE\u05D6\u05D5\u05DE\u05DF', '\u05D0\u05E9\u05E8\u05D0\u05D9', '\u05D4\u05E2\u05D1\u05E8\u05D4', "\u05E6'\u05E7", '\u05D1\u05D9\u05D8', '\u05E4\u05D9\u05D9\u05D1\u05D5\u05E7\u05E1'];
+const EXPENSE_CATEGORIES = ['אוכל', 'דלק', 'חינוך', 'שיפוץ', 'חומרים', 'שכר', 'ועד', 'כללי'];
+const INCOME_CATEGORIES = ['לקוח', 'החזר מס', 'בונוס', 'מכירה', 'דיבידנד', 'כללי'];
+const PAYMENT_METHODS = ['מזומן', 'אשראי', 'העברה', "צ'ק", 'ביט', 'פייבוקס'];
 
 const AddExpense: React.FC<AddExpenseProps> = ({
   onNavigate,
@@ -70,28 +87,48 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   editActivity,
   globalCurrency,
   convertAmount,
+  formDraft,
+  onSaveDraft,
 }) => {
+  const draft = formDraft || null;
+  const restoringDraft = useRef(!!draft);
+
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>(
-    editActivity?.type || initialType
+    editActivity?.type || draft?.transactionType || initialType
   );
-  const [amount, setAmount] = useState(editActivity ? editActivity.amount.toString() : '');
-  const [currency, setCurrency] = useState<Currency>(editActivity?.currency || 'ILS');
-  const [description, setDescription] = useState(editActivity?.title || '');
+  const [amount, setAmount] = useState(
+    editActivity ? editActivity.amount.toString() : draft?.amount ?? ''
+  );
+  const [currency, setCurrency] = useState<Currency>(
+    editActivity?.currency || draft?.currency || 'ILS'
+  );
+  const [description, setDescription] = useState(editActivity?.title || (draft?.description ?? ''));
   const [selectedProjectId, setSelectedProjectId] = useState(
-    editActivity?.projectId || preselectedProjectId || projects[0]?.id || ''
+    editActivity?.projectId || draft?.selectedProjectId || preselectedProjectId || projects[0]?.id || ''
   );
   const [selectedSupplierId, setSelectedSupplierId] = useState(
-    editActivity?.supplierId || preselectedSupplierId || ''
+    editActivity?.supplierId || draft?.selectedSupplierId || preselectedSupplierId || ''
   );
-  const [category, setCategory] = useState(editActivity?.tag || '\u05DB\u05DC\u05DC\u05D9');
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState('');
-  const [receiptImages, setReceiptImages] = useState<string[]>(editActivity?.receiptImages || []);
-  const [paymentMethod, setPaymentMethod] = useState(editActivity?.paymentMethod || '\u05DE\u05D6\u05D5\u05DE\u05DF');
+  const [category, setCategory] = useState(editActivity?.tag || draft?.category || 'כללי');
+  const [isAddingCategory, setIsAddingCategory] = useState(draft?.isAddingCategory ?? false);
+  const [newCategory, setNewCategory] = useState(draft?.newCategory ?? '');
+  const [receiptImages, setReceiptImages] = useState<string[]>(
+    editActivity?.receiptImages || draft?.receiptImages || []
+  );
+  const [paymentMethod, setPaymentMethod] = useState(
+    editActivity?.paymentMethod || draft?.paymentMethod || 'מזומן'
+  );
   const [includesVat, setIncludesVat] = useState(
-    editActivity?.includesVat !== undefined ? editActivity.includesVat : true
+    editActivity?.includesVat !== undefined ? editActivity.includesVat : draft?.includesVat ?? true
   );
   const [isSaving, setIsSaving] = useState(false);
+
+  // Clear draft after restoring
+  useEffect(() => {
+    if (formDraft) {
+      onSaveDraft?.(null);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Modal states
   const [projectPickerVisible, setProjectPickerVisible] = useState(false);
@@ -103,9 +140,10 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   const typeColor = isExp ? colors.error : colors.success;
 
   useEffect(() => {
-    if (!editActivity) {
+    if (!editActivity && !restoringDraft.current) {
       setTransactionType(initialType);
     }
+    restoringDraft.current = false;
   }, [initialType, editActivity]);
 
   useEffect(() => {
@@ -119,7 +157,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
     const numAmount = parseFloat(amount);
     const finalCategory = isAddingCategory ? newCategory : category;
     if (isNaN(numAmount) || numAmount <= 0) {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05D0\u05E0\u05D0 \u05D4\u05D6\u05DF \u05E1\u05DB\u05D5\u05DD \u05EA\u05E7\u05D9\u05DF');
+      Alert.alert('שגיאה', 'אנא הזן סכום תקין');
       return;
     }
     setIsSaving(true);
@@ -139,7 +177,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         editActivity?.type
       );
     } catch {
-      Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05E9\u05DE\u05D9\u05E8\u05D4. \u05E0\u05E1\u05D4 \u05E9\u05D5\u05D1.');
+      Alert.alert('שגיאה', 'שגיאה בשמירה. נסה שוב.');
     } finally {
       setIsSaving(false);
     }
@@ -154,7 +192,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05DE\u05E6\u05DC\u05DE\u05D4');
+        Alert.alert('שגיאה', 'נדרשת הרשאה למצלמה');
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -176,7 +214,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
       if (Platform.OS !== 'web') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('\u05E9\u05D2\u05D9\u05D0\u05D4', '\u05E0\u05D3\u05E8\u05E9\u05EA \u05D4\u05E8\u05E9\u05D0\u05D4 \u05DC\u05D2\u05DC\u05E8\u05D9\u05D4');
+          Alert.alert('שגיאה', 'נדרשת הרשאה לגלריה');
           return;
         }
       }
@@ -205,6 +243,21 @@ const AddExpense: React.FC<AddExpenseProps> = ({
     }
   }, [handlePickFromGallery]);
 
+  const navigateWithDraft = useCallback((screen: AppScreen) => {
+    onSaveDraft?.({
+      transactionType, amount, currency, description,
+      selectedProjectId, selectedSupplierId, category,
+      paymentMethod, includesVat, receiptImages,
+      isAddingCategory, newCategory,
+    });
+    onNavigate(screen);
+  }, [
+    transactionType, amount, currency, description,
+    selectedProjectId, selectedSupplierId, category,
+    paymentMethod, includesVat, receiptImages,
+    isAddingCategory, newCategory, onNavigate, onSaveDraft,
+  ]);
+
   const removeImage = useCallback((index: number) => {
     setReceiptImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
@@ -219,7 +272,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
       <Pressable style={styles.modalOverlay} onPress={() => setProjectPickerVisible(false)}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{'\u05D1\u05D7\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
+            <Text style={styles.modalTitle}>{'בחר פרויקט'}</Text>
             <TouchableOpacity onPress={() => setProjectPickerVisible(false)}>
               <MaterialIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -263,14 +316,14 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
-              {isExp ? '\u05D1\u05D7\u05E8 \u05E1\u05E4\u05E7' : '\u05D1\u05D7\u05E8 \u05DE\u05E7\u05D5\u05E8'}
+              {isExp ? 'בחר ספק' : 'בחר מקור'}
             </Text>
             <TouchableOpacity onPress={() => setSupplierPickerVisible(false)}>
               <MaterialIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
           <FlatList
-            data={[{ id: '', name: isExp ? '\u05D1\u05D7\u05E8 \u05E1\u05E4\u05E7...' : '\u05D1\u05D7\u05E8 \u05DE\u05E7\u05D5\u05E8...' } as Supplier, ...suppliers]}
+            data={[{ id: '', name: isExp ? 'בחר ספק...' : 'בחר מקור...' } as Supplier, ...suppliers]}
             keyExtractor={(item) => item.id || '__none__'}
             renderItem={({ item }) => (
               <TouchableOpacity
@@ -310,10 +363,10 @@ const AddExpense: React.FC<AddExpenseProps> = ({
       <ScreenTopBar
         title={
           editActivity
-            ? '\u05E2\u05E8\u05D9\u05DB\u05EA \u05EA\u05E0\u05D5\u05E2\u05D4'
+            ? 'עריכת תנועה'
             : isExp
-            ? '\u05D4\u05D5\u05E6\u05D0\u05D4 \u05D7\u05D3\u05E9\u05D4'
-            : '\u05D4\u05DB\u05E0\u05E1\u05D4 \u05D7\u05D3\u05E9\u05D4'
+            ? 'הוצאה חדשה'
+            : 'הכנסה חדשה'
         }
         onBack={goBack}
       />
@@ -340,7 +393,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                 isExp ? styles.typeToggleTextActive : styles.typeToggleTextInactive,
               ]}
             >
-              {'\u05D4\u05D5\u05E6\u05D0\u05D4'}
+              {'הוצאה'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -357,7 +410,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                 !isExp ? styles.typeToggleTextActive : styles.typeToggleTextInactive,
               ]}
             >
-              {'\u05D4\u05DB\u05E0\u05E1\u05D4'}
+              {'הכנסה'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -365,7 +418,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         {/* Amount Input Card */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>
-            {isExp ? '\u05E1\u05DB\u05D5\u05DD \u05D4\u05D4\u05D5\u05E6\u05D0\u05D4' : '\u05E1\u05DB\u05D5\u05DD \u05D4\u05D4\u05DB\u05E0\u05E1\u05D4'}
+            {isExp ? 'סכום ההוצאה' : 'סכום ההכנסה'}
           </Text>
 
           {/* Currency chips */}
@@ -412,13 +465,13 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
         {/* VAT Toggle */}
         <View style={styles.vatCard}>
-          <Text style={styles.vatLabel}>{'\u05DB\u05D5\u05DC\u05DC \u05DE\u05E2"\u05DE'}</Text>
+          <Text style={styles.vatLabel}>{'כולל מע"מ'}</Text>
           <ToggleSwitch value={includesVat} onToggle={() => setIncludesVat((v) => !v)} />
         </View>
 
         {/* Payment Method */}
         <View style={styles.card}>
-          <Text style={styles.cardLabelLeft}>{'\u05E9\u05D9\u05D8\u05EA \u05EA\u05E9\u05DC\u05D5\u05DD'}</Text>
+          <Text style={styles.cardLabelLeft}>{'שיטת תשלום'}</Text>
           <View style={styles.chipsRow}>
             {PAYMENT_METHODS.map((method) => (
               <TouchableOpacity
@@ -449,13 +502,13 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         {/* Project Selector */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardLabelLeft}>{'\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8'}</Text>
+            <Text style={styles.cardLabelLeft}>{'פרויקט'}</Text>
             <TouchableOpacity
               style={styles.addNewBtn}
-              onPress={() => onNavigate(AppScreen.ADD_PROJECT)}
+              onPress={() => navigateWithDraft(AppScreen.ADD_PROJECT)}
             >
               <MaterialIcons name="add" size={16} color={colors.primary} />
-              <Text style={styles.addNewText}>{'\u05D7\u05D3\u05E9'}</Text>
+              <Text style={styles.addNewText}>{'חדש'}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -463,7 +516,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
             onPress={() => setProjectPickerVisible(true)}
           >
             <Text style={styles.pickerButtonText}>
-              {selectedProject?.name || '\u05D1\u05D7\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8...'}
+              {selectedProject?.name || 'בחר פרויקט...'}
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={22} color={colors.textTertiary} />
           </TouchableOpacity>
@@ -473,14 +526,14 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardLabelLeft}>
-              {isExp ? '\u05E1\u05E4\u05E7' : '\u05DE\u05E7\u05D5\u05E8'}
+              {isExp ? 'ספק' : 'מקור'}
             </Text>
             <TouchableOpacity
               style={styles.addNewBtn}
-              onPress={() => onNavigate(AppScreen.ADD_SUPPLIER)}
+              onPress={() => navigateWithDraft(AppScreen.ADD_SUPPLIER)}
             >
               <MaterialIcons name="add" size={16} color={colors.primary} />
-              <Text style={styles.addNewText}>{'\u05D7\u05D3\u05E9'}</Text>
+              <Text style={styles.addNewText}>{'חדש'}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -493,7 +546,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                 !selectedSupplier && styles.pickerPlaceholder,
               ]}
             >
-              {selectedSupplier?.name || (isExp ? '\u05D1\u05D7\u05E8 \u05E1\u05E4\u05E7...' : '\u05D1\u05D7\u05E8 \u05DE\u05E7\u05D5\u05E8...')}
+              {selectedSupplier?.name || (isExp ? 'בחר ספק...' : 'בחר מקור...')}
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={22} color={colors.textTertiary} />
           </TouchableOpacity>
@@ -501,10 +554,10 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
         {/* Description */}
         <View style={styles.card}>
-          <Text style={styles.cardLabelLeft}>{'\u05EA\u05D9\u05D0\u05D5\u05E8'}</Text>
+          <Text style={styles.cardLabelLeft}>{'תיאור'}</Text>
           <TextInput
             style={styles.textInput}
-            placeholder={isExp ? '\u05DC\u05DE\u05D4 \u05E9\u05D9\u05DE\u05E9 \u05D4\u05EA\u05E9\u05DC\u05D5\u05DD?' : '\u05E4\u05D9\u05E8\u05D5\u05D8 \u05D4\u05D4\u05DB\u05E0\u05E1\u05D4...'}
+            placeholder={isExp ? 'למה שימש התשלום?' : 'פירוט ההכנסה...'}
             placeholderTextColor={colors.textTertiary}
             value={description}
             onChangeText={setDescription}
@@ -514,7 +567,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
         {/* Category */}
         <View style={styles.card}>
-          <Text style={styles.cardLabelLeft}>{'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4'}</Text>
+          <Text style={styles.cardLabelLeft}>{'קטגוריה'}</Text>
           {!isAddingCategory ? (
             <View style={styles.chipsRow}>
               {activeCategories.map((cat) => (
@@ -544,14 +597,14 @@ const AddExpense: React.FC<AddExpenseProps> = ({
                 style={[styles.chip, styles.chipAdd]}
                 onPress={() => setIsAddingCategory(true)}
               >
-                <Text style={styles.chipAddText}>+ {'\u05D0\u05D7\u05E8'}</Text>
+                <Text style={styles.chipAddText}>+ {'אחר'}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.newCategoryRow}>
               <TextInput
                 style={[styles.textInput, { flex: 1 }]}
-                placeholder={'\u05E7\u05D8\u05D2\u05D5\u05E8\u05D9\u05D4 \u05D7\u05D3\u05E9\u05D4...'}
+                placeholder={'קטגוריה חדשה...'}
                 placeholderTextColor={colors.textTertiary}
                 value={newCategory}
                 onChangeText={setNewCategory}
@@ -570,7 +623,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
         {/* Receipt Images */}
         <View style={styles.card}>
-          <Text style={styles.cardLabelLeft}>{'\u05EA\u05D9\u05E2\u05D5\u05D3'}</Text>
+          <Text style={styles.cardLabelLeft}>{'תיעוד'}</Text>
           <View style={styles.imagesGrid}>
             {receiptImages.map((img, index) => (
               <View key={index} style={styles.imageThumb}>
@@ -588,7 +641,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
               onPress={handlePickImage}
             >
               <MaterialIcons name="add-a-photo" size={24} color={typeColor} />
-              <Text style={[styles.imageAddText, { color: typeColor }]}>{'\u05E6\u05DC\u05DD'}</Text>
+              <Text style={[styles.imageAddText, { color: typeColor }]}>{'צלם'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -599,10 +652,10 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         <GradientButton
           label={
             isSaving
-              ? '\u05E9\u05D5\u05DE\u05E8...'
+              ? 'שומר...'
               : editActivity
-              ? '\u05E2\u05D3\u05DB\u05DF'
-              : '\u05E9\u05DE\u05D5\u05E8'
+              ? 'עדכן'
+              : 'שמור'
           }
           onPress={handleSave}
           disabled={!amount || isSaving}
@@ -618,17 +671,17 @@ const AddExpense: React.FC<AddExpenseProps> = ({
       <Modal visible={imagePickerVisible} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setImagePickerVisible(false)}>
           <View style={styles.imagePickerModal}>
-            <Text style={styles.imagePickerTitle}>{'\u05EA\u05D9\u05E2\u05D5\u05D3 - \u05D1\u05D7\u05E8 \u05DE\u05E7\u05D5\u05E8'}</Text>
+            <Text style={styles.imagePickerTitle}>{'תיעוד - בחר מקור'}</Text>
             <TouchableOpacity style={styles.imagePickerOption} onPress={handlePickFromCamera}>
               <MaterialIcons name="camera-alt" size={22} color={colors.primary} />
-              <Text style={styles.imagePickerOptionText}>{'\u05DE\u05E6\u05DC\u05DE\u05D4'}</Text>
+              <Text style={styles.imagePickerOptionText}>{'מצלמה'}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.imagePickerOption} onPress={handlePickFromGallery}>
               <MaterialIcons name="photo-library" size={22} color={colors.primary} />
-              <Text style={styles.imagePickerOptionText}>{'\u05D2\u05DC\u05E8\u05D9\u05D4'}</Text>
+              <Text style={styles.imagePickerOptionText}>{'גלריה'}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.imagePickerCancel} onPress={() => setImagePickerVisible(false)}>
-              <Text style={styles.imagePickerCancelText}>{'\u05D1\u05D9\u05D8\u05D5\u05DC'}</Text>
+              <Text style={styles.imagePickerCancelText}>{'ביטול'}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

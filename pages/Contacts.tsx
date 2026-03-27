@@ -26,16 +26,16 @@ interface ContactsProps {
 type TabId = 'all' | 'credit' | 'debt' | 'settled';
 
 const currencySymbols: Record<Currency, string> = {
-  ILS: '\u20AA',
+  ILS: '\₪',
   USD: '$',
-  EUR: '\u20AC',
+  EUR: '\€',
 };
 
 const tabs: { id: TabId; label: string }[] = [
-  { id: 'all', label: '\u05D4\u05DB\u05DC' },
-  { id: 'credit', label: '\u05D7\u05D9\u05D9\u05D1\u05D9\u05DD \u05DC\u05D9' },
-  { id: 'debt', label: '\u05D0\u05E0\u05D9 \u05D7\u05D9\u05D9\u05D1' },
-  { id: 'settled', label: '\u05DE\u05D0\u05D5\u05E4\u05E1' },
+  { id: 'all', label: 'הכל' },
+  { id: 'credit', label: 'חייבים לי' },
+  { id: 'debt', label: 'אני חייב' },
+  { id: 'settled', label: 'מאופס' },
 ];
 
 const Contacts: React.FC<ContactsProps> = ({
@@ -120,7 +120,7 @@ const Contacts: React.FC<ContactsProps> = ({
     <View style={styles.emptyState}>
       <MaterialIcons name="person-search" size={48} color={colors.textTertiary} />
       <Text style={styles.emptyText}>
-        {'\u05DC\u05D0 \u05E0\u05DE\u05E6\u05D0\u05D5 \u05E1\u05E4\u05E7\u05D9\u05DD'}
+        {'לא נמצאו ספקים'}
       </Text>
     </View>
   );
@@ -140,7 +140,7 @@ const Contacts: React.FC<ContactsProps> = ({
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>
-            {'\u05E1\u05E4\u05E7\u05D9\u05DD \u05D5\u05D0\u05E0\u05E9\u05D9 \u05E7\u05E9\u05E8'}
+            {'ספקים ואנשי קשר'}
           </Text>
 
           <TouchableOpacity
@@ -158,7 +158,7 @@ const Contacts: React.FC<ContactsProps> = ({
           <TextInput
             style={styles.searchInput}
             placeholder={
-              '\u05D7\u05D9\u05E4\u05D5\u05E9 \u05DC\u05E4\u05D9 \u05E9\u05DD \u05D0\u05D5 \u05EA\u05D7\u05D5\u05DD...'
+              'חיפוש לפי שם או תחום...'
             }
             placeholderTextColor={colors.textTertiary}
             value={searchQuery}
