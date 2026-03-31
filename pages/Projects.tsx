@@ -97,9 +97,14 @@ const Projects: React.FC<ProjectsProps> = ({
   const totals = useMemo(() => {
     const totalBudget = projects.reduce((sum, p) => sum + p.budget, 0);
     const totalSpent = projects.reduce((sum, p) => sum + p.spent, 0);
+    const totalIncome = projects.reduce(
+      (sum, p) => sum + (p.incomes || []).reduce((s, i) => s + i.amount, 0),
+      0,
+    );
     return {
       budget: totalBudget,
       spent: totalSpent,
+      income: totalIncome,
       remaining: totalBudget - totalSpent,
     };
   }, [projects]);
@@ -150,8 +155,14 @@ const Projects: React.FC<ProjectsProps> = ({
         <View style={styles.summaryRow}>
           <GlassCard style={styles.summaryPill}>
             <Text style={styles.pillLabel}>תקציב</Text>
-            <Text style={[styles.pillValue, { color: colors.primary }]}>
+            <Text style={[styles.pillValue, { color: colors.white }]}>
               {sym}{formatAmount(totals.budget)}
+            </Text>
+          </GlassCard>
+          <GlassCard style={styles.summaryPill}>
+            <Text style={styles.pillLabel}>הכנסות</Text>
+            <Text style={[styles.pillValue, { color: colors.success }]}>
+              {sym}{formatAmount(totals.income)}
             </Text>
           </GlassCard>
           <GlassCard style={styles.summaryPill}>
@@ -162,7 +173,7 @@ const Projects: React.FC<ProjectsProps> = ({
           </GlassCard>
           <GlassCard style={styles.summaryPill}>
             <Text style={styles.pillLabel}>יתרה</Text>
-            <Text style={[styles.pillValue, { color: colors.success }]}>
+            <Text style={[styles.pillValue, { color: totals.remaining >= 0 ? colors.success : colors.error }]}>
               {totals.remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(totals.remaining))}
             </Text>
           </GlassCard>
@@ -200,6 +211,10 @@ const Projects: React.FC<ProjectsProps> = ({
           </DarkCard>
         ) : (
           filteredProjects.map((project) => {
+            const projectIncome = (project.incomes || []).reduce(
+              (s, i) => s + i.amount,
+              0,
+            );
             const percent =
               project.budget > 0
                 ? Math.round((project.spent / project.budget) * 100)
@@ -252,6 +267,12 @@ const Projects: React.FC<ProjectsProps> = ({
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
+                    <Text style={styles.amountLabel}>הכנסות</Text>
+                    <Text style={[styles.amountValue, { color: colors.success }]}>
+                      {sym}{formatAmount(projectIncome)}
+                    </Text>
+                  </View>
+                  <View style={styles.amountCol}>
                     <Text style={styles.amountLabel}>הוצאות</Text>
                     <Text style={[styles.amountValue, { color: colors.error }]}>
                       {sym}{formatAmount(project.spent)}
@@ -259,7 +280,7 @@ const Projects: React.FC<ProjectsProps> = ({
                   </View>
                   <View style={styles.amountCol}>
                     <Text style={styles.amountLabel}>יתרה</Text>
-                    <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.primary : colors.error }]}>
+                    <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.success : colors.error }]}>
                       {remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(remaining))}
                     </Text>
                   </View>
