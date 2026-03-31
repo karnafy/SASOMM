@@ -80,7 +80,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   const totalIncome = (project.incomes || []).reduce((sum, i) => sum + i.amount, 0);
   const totalExpenses = project.spent;
-  const remaining = project.budget + totalIncome - totalExpenses;
+  const remaining = project.budget - totalExpenses;
   const percentUsed =
     project.budget > 0 ? Math.round((totalExpenses / project.budget) * 100) : 0;
 

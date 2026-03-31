@@ -379,7 +379,7 @@ function AppContent() {
       budget: convertAmount(totalBudget),
       income: convertAmount(totalIncome),
       expenses: convertAmount(totalExpenses),
-      net: convertAmount(totalBudget + totalIncome - totalExpenses),
+      net: convertAmount(totalBudget - totalExpenses),
     };
   }, [projects, convertAmount]);
 
