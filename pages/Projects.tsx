@@ -151,33 +151,36 @@ const Projects: React.FC<ProjectsProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Summary Pills */}
-        <View style={styles.summaryRow}>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>תקציב</Text>
-            <Text style={[styles.pillValue, { color: colors.white }]}>
-              {sym}{formatAmount(totals.budget)}
-            </Text>
-          </GlassCard>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>הכנסות</Text>
-            <Text style={[styles.pillValue, { color: colors.success }]}>
-              {sym}{formatAmount(totals.income)}
-            </Text>
-          </GlassCard>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>הוצאות</Text>
-            <Text style={[styles.pillValue, { color: colors.error }]}>
-              {sym}{formatAmount(totals.spent)}
-            </Text>
-          </GlassCard>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>יתרה</Text>
-            <Text style={[styles.pillValue, { color: totals.remaining >= 0 ? colors.success : colors.error }]}>
-              {totals.remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(totals.remaining))}
-            </Text>
-          </GlassCard>
-        </View>
+        {/* Summary Card - same layout as Dashboard */}
+        <GlassCard style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>{'יתרה'}</Text>
+          <Text style={[styles.summaryAmount, { color: totals.remaining >= 0 ? colors.success : colors.error }]}>
+            {totals.remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(totals.remaining))}
+          </Text>
+
+          <View style={styles.subCardsRow}>
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'תקציב'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.white }]}>
+                {sym}{formatAmount(totals.budget)}
+              </Text>
+            </GlassCard>
+
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.success }]}>
+                {sym}{formatAmount(totals.income)}
+              </Text>
+            </GlassCard>
+
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.error }]}>
+                {sym}{formatAmount(totals.spent)}
+              </Text>
+            </GlassCard>
+          </View>
+        </GlassCard>
 
         {/* Filter Pills */}
         <View style={styles.filterRow}>
@@ -366,28 +369,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Summary Pills
-  summaryRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  // Summary Card (Dashboard style)
+  summaryCard: {
+    padding: spacing['2xl'],
     marginBottom: spacing.lg,
+    alignItems: 'flex-end',
   },
-  summaryPill: {
+  summaryLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.medium,
+    marginBottom: spacing.xs,
+    writingDirection: 'rtl',
+  },
+  summaryAmount: {
+    fontSize: 34,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    marginBottom: spacing.lg,
+    writingDirection: 'rtl',
+  },
+  subCardsRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.md,
+    alignSelf: 'stretch',
+  },
+  subCard: {
     flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
+    padding: spacing.md,
+    alignItems: 'flex-end',
   },
-  pillLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
+  subCardLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
     fontFamily: fonts.medium,
     marginBottom: 4,
     writingDirection: 'rtl',
   },
-  pillValue: {
-    fontSize: 13,
+  subCardAmount: {
+    fontSize: 14,
     fontFamily: fonts.bold,
+    writingDirection: 'rtl',
   },
 
   // Filter Row
