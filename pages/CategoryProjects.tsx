@@ -60,9 +60,14 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
   const categoryTotals = useMemo(() => {
     const totalBudget = categoryProjects.reduce((sum, p) => sum + p.budget, 0);
     const totalSpent = categoryProjects.reduce((sum, p) => sum + p.spent, 0);
+    const totalIncome = categoryProjects.reduce(
+      (sum, p) => sum + (p.incomes || []).reduce((s, i) => s + i.amount, 0),
+      0,
+    );
     return {
       budget: totalBudget,
       spent: totalSpent,
+      income: totalIncome,
       remaining: totalBudget - totalSpent,
     };
   }, [categoryProjects]);
@@ -122,27 +127,36 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Summary Glass Pills */}
-        <View style={styles.summaryRow}>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>{'תקציב'}</Text>
-            <Text style={[styles.pillValue, { color: colors.primary }]}>
-              {symbol}{formatAmount(categoryTotals.budget)}
-            </Text>
-          </GlassCard>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>{'הוצאות'}</Text>
-            <Text style={[styles.pillValue, { color: colors.error }]}>
-              {symbol}{formatAmount(categoryTotals.spent)}
-            </Text>
-          </GlassCard>
-          <GlassCard style={styles.summaryPill}>
-            <Text style={styles.pillLabel}>{'יתרה'}</Text>
-            <Text style={[styles.pillValue, { color: categoryTotals.remaining >= 0 ? colors.success : colors.error }]}>
-              {categoryTotals.remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(categoryTotals.remaining))}
-            </Text>
-          </GlassCard>
-        </View>
+        {/* Summary Card - Dashboard style */}
+        <GlassCard style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>{'יתרה'}</Text>
+          <Text style={[styles.summaryAmount, { color: categoryTotals.remaining >= 0 ? colors.success : colors.error }]}>
+            {categoryTotals.remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(categoryTotals.remaining))}
+          </Text>
+
+          <View style={styles.subCardsRow}>
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'תקציב'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.white }]}>
+                {symbol}{formatAmount(categoryTotals.budget)}
+              </Text>
+            </GlassCard>
+
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.success }]}>
+                {symbol}{formatAmount(categoryTotals.income)}
+              </Text>
+            </GlassCard>
+
+            <GlassCard style={styles.subCard}>
+              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.error }]}>
+                {symbol}{formatAmount(categoryTotals.spent)}
+              </Text>
+            </GlassCard>
+          </View>
+        </GlassCard>
 
         {/* Filter Pills */}
         {subCategories.length > 1 && (
@@ -178,6 +192,9 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
           </DarkCard>
         ) : (
           filteredProjects.map((project) => {
+            const projectIncome = (project.incomes || []).reduce(
+              (s, i) => s + i.amount, 0,
+            );
             const percent =
               project.budget > 0
                 ? Math.round((project.spent / project.budget) * 100)
@@ -227,6 +244,12 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
+                    <Text style={styles.amountLabel}>{'הכנסות'}</Text>
+                    <Text style={[styles.amountValue, { color: colors.success }]}>
+                      {symbol}{formatAmount(projectIncome)}
+                    </Text>
+                  </View>
+                  <View style={styles.amountCol}>
                     <Text style={styles.amountLabel}>{'הוצאות'}</Text>
                     <Text style={[styles.amountValue, { color: colors.error }]}>
                       {symbol}{formatAmount(project.spent)}
@@ -234,7 +257,7 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
                   </View>
                   <View style={styles.amountCol}>
                     <Text style={styles.amountLabel}>{'יתרה'}</Text>
-                    <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.primary : colors.error }]}>
+                    <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.success : colors.error }]}>
                       {remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(remaining))}
                     </Text>
                   </View>
@@ -329,28 +352,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Summary Pills
-  summaryRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  // Summary Card (Dashboard style)
+  summaryCard: {
+    padding: spacing['2xl'],
     marginBottom: spacing.lg,
+    alignItems: 'flex-end',
   },
-  summaryPill: {
+  summaryLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.medium,
+    marginBottom: spacing.xs,
+    writingDirection: 'rtl',
+  },
+  summaryAmount: {
+    fontSize: 34,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    marginBottom: spacing.lg,
+    writingDirection: 'rtl',
+  },
+  subCardsRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.md,
+    alignSelf: 'stretch',
+  },
+  subCard: {
     flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
+    padding: spacing.md,
+    alignItems: 'flex-end',
   },
-  pillLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
+  subCardLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
     fontFamily: fonts.medium,
     marginBottom: 4,
     writingDirection: 'rtl',
   },
-  pillValue: {
-    fontSize: 13,
+  subCardAmount: {
+    fontSize: 14,
     fontFamily: fonts.bold,
+    writingDirection: 'rtl',
   },
 
   // Filter Row

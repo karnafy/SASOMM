@@ -229,7 +229,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const quickAccessItems: { id: string; label: string; icon: IconName; screen: AppScreen }[] = [
     { id: 'proj', label: 'פרויקט חדש', icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
     { id: 'supp', label: 'ספק חדש', icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
-    { id: 'all', label: 'כל הפרויקטים', icon: 'folder-open', screen: AppScreen.PROJECTS },
+    { id: 'debt', label: 'חוב חדש', icon: 'receipt-long', screen: AppScreen.ADD_DEBT },
     { id: 'contacts', label: 'אנשי קשר', icon: 'contacts', screen: AppScreen.SUPPLIERS },
   ];
 
@@ -389,7 +389,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onPress={() => onNavigate(action.screen)}
               >
                 <DarkCard style={styles.quickAccessIconCard}>
-                  <MaterialIcons name={action.icon} size={24} color={colors.primary} />
+                  <MaterialIcons
+                    name={action.icon}
+                    size={24}
+                    color={action.id === 'debt' ? colors.warning : colors.primary}
+                  />
                 </DarkCard>
                 <Text style={styles.quickAccessLabel}>{action.label}</Text>
               </TouchableOpacity>
@@ -398,7 +402,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Send reminder */}
             <TouchableOpacity style={styles.quickAccessItem} onPress={sendReminder}>
               <DarkCard style={styles.quickAccessIconCard}>
-                <MaterialIcons name="notifications-active" size={24} color={colors.warning} />
+                <MaterialIcons name="notifications-active" size={24} color={colors.primary} />
               </DarkCard>
               <Text style={styles.quickAccessLabel}>{'שלח תזכורת'}</Text>
             </TouchableOpacity>
