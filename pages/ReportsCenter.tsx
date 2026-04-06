@@ -82,7 +82,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({
     let text = '';
 
     if (type === 'summary') {
-      text = `*דו"ח סיכום - MONNY*
+      text = `*דו"ח סיכום - SASOMM*
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 *סה"כ הכנסות:* ${symbol}${convertAmount(stats.totalIncome).toLocaleString()}
 *סה"כ הוצאות:* ${symbol}${convertAmount(stats.totalSpent).toLocaleString()}
@@ -92,9 +92,9 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({
 *ספקים:* ${stats.supplierCount}
 *עסקאות:* ${stats.totalTransactions}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
-_הופק על ידי MONNY_`;
+_הופק על ידי SASOMM_`;
     } else if (type === 'projects') {
-      text = `*דו"ח פרויקטים - MONNY*
+      text = `*דו"ח פרויקטים - SASOMM*
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 ${projects
         .map(
@@ -105,11 +105,11 @@ ${projects
         )
         .join('\n\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\n')}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
-_הופק על ידי MONNY_`;
+_הופק על ידי SASOMM_`;
     } else {
       const debtSuppliers = suppliers.filter((s) => s.status === 'debt');
       const creditSuppliers = suppliers.filter((s) => s.status === 'credit');
-      text = `*דו"ח ספקים - MONNY*
+      text = `*דו"ח ספקים - SASOMM*
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 *חובות (${debtSuppliers.length}):*
 ${
@@ -131,7 +131,7 @@ ${
           .join('\n') || 'אין זכויות'
       }
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
-_הופק על ידי MONNY_`;
+_הופק על ידי SASOMM_`;
     }
 
     const encoded = encodeURIComponent(text);

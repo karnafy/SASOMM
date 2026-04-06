@@ -117,7 +117,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
       formattedPhone = '972' + cleanPhone;
     }
     const message = encodeURIComponent(
-      `שלום ${supplier.name}, רציתי לברר לגבי מצב החשבון שלי באפליקציית MONNY.`
+      `שלום ${supplier.name}, רציתי לברר לגבי מצב החשבון שלי באפליקציית SASOMM.`
     );
     openExternalURL(`https://wa.me/${formattedPhone}?text=${message}`);
   };
@@ -135,7 +135,7 @@ const SupplierDetail: React.FC<SupplierDetailProps> = ({
 
   const handleEmail = () => {
     const email = `${supplier.name.replace(/\s+/g, '.')}@example.com`.toLowerCase();
-    openExternalURL(`mailto:${email}?subject=MONNY - פניה מספק`);
+    openExternalURL(`mailto:${email}?subject=SASOMM - פניה מספק`);
   };
 
   // Build transaction list from projects

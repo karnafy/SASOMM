@@ -88,7 +88,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
             style={styles.logoIcon}
             resizeMode="contain"
           />
-          <Text style={styles.logoText}>MONNY</Text>
+          <Text style={styles.logoText}>SASOMM</Text>
         </TouchableOpacity>
       </View>
     </>

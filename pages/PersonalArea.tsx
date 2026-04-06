@@ -189,7 +189,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
     {
       icon: 'info' as const,
       label: 'אודות האפליקציה',
-      onPress: () => Alert.alert('MONNY v1.0', 'ניהול פיננסי חכם'),
+      onPress: () => Alert.alert('SASOMM v1.0', 'ניהול פיננסי חכם'),
     },
   ];
 

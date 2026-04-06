@@ -310,7 +310,7 @@ const Settings: React.FC<SettingsProps> = ({
 
       {/* Version */}
       <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>MONNY {'גרסה'} 1.0.0</Text>
+        <Text style={styles.versionText}>SASOMM {'גרסה'} 1.0.0</Text>
         <Text style={styles.versionSubtext}>{'כל הזכויות שמורות'} 2024</Text>
       </View>
     </View>
@@ -330,14 +330,14 @@ const Settings: React.FC<SettingsProps> = ({
         <View style={styles.contentTitleRow}>
           <MaterialIcons name="gavel" size={22} color={colors.primary} />
           <Text style={styles.contentTitle}>
-            {'תקנון השימוש באפליקציית MONNY'}
+            {'תקנון השימוש באפליקציית SASOMM'}
           </Text>
         </View>
 
         {[
           {
             title: '1. כללי',
-            body: 'ברוכים הבאים לאפליקציית MONNY - מערכת לניהול פיננסי אישי ועסקי. השימוש באפליקציה כפוף לתנאים המפורטים בתקנון זה.',
+            body: 'ברוכים הבאים לאפליקציית SASOMM - מערכת לניהול פיננסי אישי ועסקי. השימוש באפליקציה כפוף לתנאים המפורטים בתקנון זה.',
           },
           {
             title: '2. השירותים',
@@ -423,11 +423,11 @@ const Settings: React.FC<SettingsProps> = ({
       </TouchableOpacity>
 
       <DarkCard style={styles.aboutCard}>
-        <Text style={styles.aboutAppName}>MONNY</Text>
+        <Text style={styles.aboutAppName}>SASOMM</Text>
         <Text style={styles.aboutDesc}>{'ניהול פיננסי חכם ופשוט'}</Text>
 
         <Text style={styles.aboutBody}>
-          MONNY{' '}
+          SASOMM{' '}
           {'היא אפליקציה לניהול פיננסי המאפשרת לך לעקוב אחר ההכנסות וההוצאות שלך, לנהל פרויקטים ותקציבים, ולשמור על קשר עם ספקים ואנשי קשר.'}
         </Text>
 
@@ -442,7 +442,7 @@ const Settings: React.FC<SettingsProps> = ({
           </View>
           <View style={[styles.aboutInfoRow, styles.aboutInfoRowBorder]}>
             <Text style={styles.aboutInfoLabel}>{'מפתח'}</Text>
-            <Text style={styles.aboutInfoValue}>MONNY Team</Text>
+            <Text style={styles.aboutInfoValue}>SASOMM Team</Text>
           </View>
         </View>
 

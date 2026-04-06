@@ -1,8 +1,8 @@
-# CLAUDE.md - Monny Project
+# CLAUDE.md - SASOMM Project
 
 ## Overview
 
-Monny is a personal and project expense management app built with React Native / Expo and Supabase. It tracks expenses, income, budgets, suppliers, and debts across multiple projects with multi-currency support (ILS, USD, EUR).
+SASOMM is a personal and project expense management app built with React Native / Expo and Supabase. It tracks expenses, income, budgets, suppliers, and debts across multiple projects with multi-currency support (ILS, USD, EUR).
 
 ## Project Structure
 

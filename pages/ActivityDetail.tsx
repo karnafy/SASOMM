@@ -66,7 +66,7 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({
 
   const getShareText = () => {
     const symbol = currencySymbols[(expense.currency || 'ILS') as Currency];
-    return `*פרטי תשלום מ-MONNY*
+    return `*פרטי תשלום מ-SASOMM*
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 *עבור:* ${expense.title}
 *סכום:* ${symbol}${expense.amount.toLocaleString()}
@@ -74,7 +74,7 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({
 *פרויקט:* ${expense.projectName || 'כללי'}
 *קטגוריה:* ${expense.tag}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
-_נשלח מאפליקציית MONNY_`;
+_נשלח מאפליקציית SASOMM_`;
   };
 
   const handleWhatsAppShare = () => {
@@ -119,7 +119,7 @@ _נשלח מאפליקציית MONNY_`;
 *שולם:* ${symbol}${spent.toLocaleString()} (${percentUsed}%)
 *יתרה:* ${symbol}${remainingVal.toLocaleString()}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
-_הופק מאפליקציית MONNY_`;
+_הופק מאפליקציית SASOMM_`;
   };
 
   const handleProjectShare = async () => {

@@ -58,7 +58,7 @@ export default function LoadingScreen() {
           </LinearGradient>
         </Animated.View>
 
-        <Text style={styles.title}>Monny</Text>
+        <Text style={styles.title}>SASOMM</Text>
 
         <ActivityIndicator size="large" color={colors.primary} style={styles.spinner} />
         <Text style={styles.loadingText}>{'טוען נתונים...'}</Text>

@@ -124,7 +124,7 @@ export default function Auth() {
             >
               <MaterialIcons name="account-balance" size={36} color={colors.white} />
             </LinearGradient>
-            <Text style={styles.logoText}>Monny</Text>
+            <Text style={styles.logoText}>SASOMM</Text>
             <Text style={styles.subtitle}>{'ניהול פיננסי חכם'}</Text>
           </View>
 
@@ -284,7 +284,7 @@ export default function Auth() {
 
           {/* Footer */}
           <Text style={styles.footer}>
-            {'\© 2026 MONNY. כל הזכויות שמורות.'}
+            {'\© 2026 SASOMM. כל הזכויות שמורות.'}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -6,7 +6,7 @@ model: haiku
 
 # Requirements Reader Agent
 
-You are a requirements enforcement agent for the Monny project. Your job is to read the project requirements and provide relevant context to guide implementation.
+You are a requirements enforcement agent for the SASOMM project. Your job is to read the project requirements and provide relevant context to guide implementation.
 
 ## Instructions
 

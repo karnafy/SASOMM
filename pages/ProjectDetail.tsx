@@ -548,7 +548,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             }
 
             <div class="footer">
-              <p>דוח זה הופק על ידי MONNY - ניהול פיננסי חכם</p>
+              <p>דוח זה הופק על ידי SASOMM - ניהול פיננסי חכם</p>
             </div>
           </div>
         </body>

@@ -1,8 +1,8 @@
-# Monny - Product Requirements Document
+# SASOMM - Product Requirements Document
 
 ## 1. Product Overview
 
-**Monny** is a personal and project expense management mobile app for freelancers, small business owners, and individuals who need to track finances across multiple projects. Built with React Native / Expo and backed by Supabase.
+**SASOMM** is a personal and project expense management mobile app for freelancers, small business owners, and individuals who need to track finances across multiple projects. Built with React Native / Expo and backed by Supabase.
 
 **Target Users:** Hebrew-speaking users managing project-based finances (contractors, freelancers, small agencies).
 
