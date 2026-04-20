@@ -9,9 +9,11 @@ import {
   Alert,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Contacts from 'expo-contacts';
 import { AppScreen } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { ScreenTopBar } from '../components/ui/ScreenTopBar';
@@ -83,6 +85,41 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
     }
   };
 
+  const handleImportContact = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('', 'ייבוא אנשי קשר זמין רק באפליקציית הנייד');
+      return;
+    }
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('שגיאה', 'נדרשת הרשאה לאנשי הקשר');
+      return;
+    }
+    const { data } = await Contacts.getContactsAsync({
+      fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Image],
+    });
+    if (!data || data.length === 0) {
+      Alert.alert('', 'לא נמצאו אנשי קשר');
+      return;
+    }
+    // Show a simple list via Alert on mobile
+    // For a better UX we could use a modal, but Alert with options works for now
+    const contact = await new Promise<Contacts.Contact | null>((resolve) => {
+      // Use presentContactPickerAsync if available (iOS), otherwise pick first match
+      Contacts.presentContactPickerAsync?.()
+        .then((c) => resolve(c))
+        .catch(() => resolve(null));
+    });
+    if (contact) {
+      setName(contact.name || '');
+      const phoneNumber = contact.phoneNumbers?.[0]?.number || '';
+      setPhone(phoneNumber);
+      if (contact.image?.uri) {
+        setAvatar(contact.image.uri);
+      }
+    }
+  };
+
   const canSave = name.trim().length > 0 && !isSaving;
 
   return (
@@ -120,6 +157,16 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
             <MaterialIcons name="add-a-photo" size={18} color={colors.bgPrimary} />
           </View>
         </View>
+
+        {/* Import from contacts button */}
+        <TouchableOpacity
+          style={styles.importContactBtn}
+          onPress={handleImportContact}
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="contact-phone" size={20} color={colors.primary} />
+          <Text style={styles.importContactText}>{'ייבוא מאנשי קשר'}</Text>
+        </TouchableOpacity>
 
         {/* Form Fields */}
         <View style={styles.form}>
@@ -310,6 +357,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: colors.bgPrimary,
+  },
+
+  // Import Contact
+  importContactBtn: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing['3xl'],
+    marginBottom: spacing['2xl'],
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.primary + '66',
+    backgroundColor: colors.primary + '0D',
+  },
+  importContactText: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    writingDirection: 'rtl',
   },
 
   // Form

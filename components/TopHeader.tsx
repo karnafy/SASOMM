@@ -84,11 +84,10 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
           activeOpacity={0.7}
         >
           <Image
-            source={require('../assets/logo-icon.png')}
-            style={styles.logoIcon}
+            source={require('../assets/logo-sasomm.png')}
+            style={styles.logoImage}
             resizeMode="contain"
           />
-          <Text style={styles.logoText}>SASOMM</Text>
         </TouchableOpacity>
       </View>
     </>
@@ -155,16 +154,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoIcon: {
-    width: 48,
-    height: 48,
-  },
-  logoText: {
-    fontSize: 28,
-    fontFamily: fonts.extrabold,
-    color: colors.white,
-    marginLeft: 10,
-    letterSpacing: 1,
+  logoImage: {
+    width: 180,
+    height: 44,
   },
   hamburger: {
     width: 44,

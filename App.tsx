@@ -17,6 +17,7 @@ import {
   useSuppliers,
   useDebts,
   useMutations,
+  useExchangeRates,
   AppScreen,
   Currency,
   MainCategory,
@@ -63,16 +64,11 @@ TextAny.defaultProps = {
   style: { fontFamily: 'OpenSans_400Regular' },
 };
 
-const CONVERSION_RATES: Record<Currency, number> = {
-  'ILS': 1,
-  'USD': 1 / 3.75,
-  'EUR': 1 / 4.05,
-};
-
 // Main App Content (requires auth)
 function AppContent() {
   const { user, signOut } = useAuth();
   const userId = user?.id;
+  const { rates: CONVERSION_RATES } = useExchangeRates();
   const userName = user?.email?.split('@')[0] || '';
   const scrollRef = useRef<ScrollView>(null);
 
@@ -110,7 +106,7 @@ function AppContent() {
       const inILS = from === 'ILS' ? amount : amount / CONVERSION_RATES[from];
       return inILS * CONVERSION_RATES[to];
     },
-    [globalCurrency]
+    [globalCurrency, CONVERSION_RATES]
   );
 
   const navigate = useCallback(
@@ -254,7 +250,7 @@ function AppContent() {
         setIsSaving(false);
       }
     },
-    [createProject, refetchProjects, globalCurrency, returnToScreen]
+    [createProject, refetchProjects, globalCurrency, returnToScreen, CONVERSION_RATES]
   );
 
   // Handler: Delete Project
@@ -332,7 +328,7 @@ function AppContent() {
         console.error('Error updating budget:', error);
       }
     },
-    [updateProject, refetchProjects, globalCurrency]
+    [updateProject, refetchProjects, globalCurrency, CONVERSION_RATES]
   );
 
   // Handler: Add Note
@@ -468,6 +464,8 @@ function AppContent() {
         return <Settings {...commonProps} setGlobalCurrency={setGlobalCurrency} />;
       case AppScreen.DEBTS:
         return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
+      case AppScreen.ADD_DEBT:
+        return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} autoOpenAdd />;
       default:
         return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} userName={userName} />;
     }

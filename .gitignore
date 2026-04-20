@@ -1,1 +1,50 @@
 node_modules
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code local
+.claude/settings.local.json
+
+# Generated backups
+sasomm_backup_*.json
+
+# Temp / archives
+stitch.zip
+stitch (1).zip
+stitch/
+*.tmp
+
+# Designer references (72MB EPS etc — not source)
+UI/
+*.eps
+
+# Build artifacts
+*.apk
+*.ipa
+*.aab
+
+# Python / conda scratch
+__pycache__/
+*.pyc
+.venv/
+venv/

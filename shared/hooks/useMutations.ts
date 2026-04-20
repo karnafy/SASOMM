@@ -8,13 +8,7 @@ import {
   localSupplierToSupabase,
   localActivityToSupabase,
 } from '../lib/dataTransformers';
-
-// Conversion rates (ILS as base)
-const CONVERSION_RATES: Record<Currency, number> = {
-  'ILS': 1,
-  'USD': 1 / 3.75,
-  'EUR': 1 / 4.05
-};
+import { useExchangeRates } from './useExchangeRates';
 
 // ============================================
 // Transaction Data Types
@@ -54,6 +48,7 @@ interface CreateSupplierData {
 // ============================================
 
 export function useMutations(userId: string | undefined) {
+  const { rates: CONVERSION_RATES } = useExchangeRates();
 
   // ============================================
   // Save Transaction (Create/Edit Expense or Income)
@@ -75,6 +70,10 @@ export function useMutations(userId: string | undefined) {
     // Convert amount to ILS for storage
     const amountInILS = data.amount / CONVERSION_RATES[data.currency];
 
+    // Track original currency/amount if not ILS
+    const originalAmount = data.currency !== 'ILS' ? data.amount : undefined;
+    const originalCurrency = data.currency !== 'ILS' ? data.currency : undefined;
+
     // If editing, get old transaction from ORIGINAL table to calculate balance reversal
     let oldTransaction: any = null;
     if (editId) {
@@ -93,7 +92,9 @@ export function useMutations(userId: string | undefined) {
           title: data.description,
           tag: data.category,
           amount: amountInILS,
-          currency: 'ILS', // Always store in ILS
+          currency: 'ILS', // Always store in ILS for calculations
+          originalAmount,
+          originalCurrency,
           supplierId: data.supplierId,
           receiptImages: data.receiptImages,
           paymentMethod: data.paymentMethod,
@@ -106,6 +107,8 @@ export function useMutations(userId: string | undefined) {
           tag: data.category,
           amount: amountInILS,
           currency: 'ILS',
+          originalAmount,
+          originalCurrency,
           supplierId: data.supplierId,
           receiptImages: data.receiptImages,
           paymentMethod: data.paymentMethod,

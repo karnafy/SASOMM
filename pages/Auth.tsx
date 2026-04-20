@@ -17,11 +17,13 @@ import { useAuth } from '@monn/shared';
 import { colors, fonts, glowButton, radii, spacing } from '../theme';
 
 export default function Auth() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -50,6 +52,11 @@ export default function Auth() {
       return;
     }
 
+    if (!isLogin && !fullName.trim()) {
+      setError('נא להזין שם מלא');
+      return;
+    }
+
     if (!isLogin && currentPassword !== confirmPassword) {
       setError('הסיסמאות אינן תואמות');
       return;
@@ -74,7 +81,10 @@ export default function Auth() {
           }
         }
       } else {
-        const { error } = await signUp(currentEmail, currentPassword);
+        const { error } = await signUp(currentEmail, currentPassword, {
+          full_name: fullName.trim(),
+          phone: phone.trim() || undefined,
+        });
         if (error) {
           if (error.message.includes('already registered')) {
             setError('משתמש עם אימייל זה כבר קיים');
@@ -93,11 +103,28 @@ export default function Auth() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setError(error.message || 'שגיאה בהתחברות עם Google');
+      }
+    } catch (err) {
+      setError('שגיאה בהתחברות עם Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError('');
     setSuccessMessage('');
     setConfirmPassword('');
+    setFullName('');
+    setPhone('');
   };
 
   return (
@@ -151,6 +178,35 @@ export default function Auth() {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Full Name + Phone (signup only) */}
+            {!isLogin && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>{'שם מלא *'}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={fullName}
+                    onChangeText={setFullName}
+                    placeholder={'שם פרטי ומשפחה'}
+                    placeholderTextColor={colors.textTertiary}
+                    textAlign="right"
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>{'טלפון (אופציונלי)'}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="050-0000000"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="phone-pad"
+                    textAlign="left"
+                  />
+                </View>
+              </>
+            )}
 
             {/* Email Input */}
             <View style={styles.inputGroup}>
@@ -258,17 +314,20 @@ export default function Auth() {
             <View style={styles.socialRow}>
               <TouchableOpacity
                 style={styles.socialButton}
-                onPress={() => Alert.alert('בקרוב')}
+                onPress={handleGoogleSignIn}
+                disabled={loading}
                 activeOpacity={0.8}
               >
                 <Text style={styles.socialButtonTextG}>G</Text>
+                <Text style={styles.socialButtonLabel}>{'Google'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.socialButton}
-                onPress={() => Alert.alert('בקרוב')}
+                onPress={() => Alert.alert('בקרוב', 'התחברות עם Apple תתווסף בקרוב')}
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="apple" size={22} color={colors.textSecondary} />
+                <Text style={styles.socialButtonLabel}>{'Apple'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -478,19 +537,27 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   socialButton: {
-    width: 46,
-    height: 46,
+    flex: 1,
+    height: 48,
     borderRadius: 12,
     backgroundColor: colors.bgSecondary,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 10,
   },
   socialButtonTextG: {
     fontSize: 18,
     fontFamily: fonts.bold,
+    color: colors.textPrimary,
+  },
+  socialButtonLabel: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
     color: colors.textSecondary,
+    writingDirection: 'rtl',
   },
 
   /* Toggle */

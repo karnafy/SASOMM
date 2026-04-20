@@ -434,7 +434,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     iconColor={isIncome ? colors.success : colors.error}
                     title={act.title}
                     meta={metaParts.join(' \• ')}
-                    amount={`${isIncome ? '+' : '-'}${sym}${formatNumber(convertAmount(act.amount))}`}
+                    amount={`${isIncome ? '+' : '-'}${sym}${formatNumber(convertAmount(act.amount))}${act.originalCurrency && act.originalCurrency !== 'ILS' ? ` (${currencySymbols[act.originalCurrency as Currency]}${act.originalAmount?.toLocaleString()})` : ''}`}
                     isIncome={isIncome}
                     onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, act.id)}
                   />

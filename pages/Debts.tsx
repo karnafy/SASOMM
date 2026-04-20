@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,8 @@ const openExternalURL = (url: string) => {
   }
 };
 import * as ImagePicker from 'expo-image-picker';
-import { AppScreen, Debt, Currency, ReminderInterval, Project } from '@monn/shared';
+import * as Contacts from 'expo-contacts';
+import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -41,6 +42,7 @@ interface DebtsProps {
   debts: Debt[];
   onSaveDebt: (debt: Omit<Debt, 'id' | 'createdAt'> & { id?: string }) => void;
   onDeleteDebt: (id: string) => void;
+  autoOpenAdd?: boolean;
 }
 
 const REMINDER_LABELS: Record<ReminderInterval, string> = {
@@ -68,11 +70,20 @@ const Debts: React.FC<DebtsProps> = ({
   debts,
   onSaveDebt,
   onDeleteDebt,
+  autoOpenAdd,
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeDirection, setActiveDirection] = useState<DebtDirection>('owed_to_me');
+
+  useEffect(() => {
+    if (autoOpenAdd) {
+      setShowAddModal(true);
+    }
+  }, [autoOpenAdd]);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
   // Form state
+  const [direction, setDirection] = useState<DebtDirection>('owed_to_me');
   const [personName, setPersonName] = useState('');
   const [personPhone, setPersonPhone] = useState('');
   const [amount, setAmount] = useState('');
@@ -80,15 +91,25 @@ const Debts: React.FC<DebtsProps> = ({
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [notes, setNotes] = useState('');
   const [reminderInterval, setReminderInterval] = useState<ReminderInterval>('none');
+  const [dueDate, setDueDate] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
 
-  const totalDebt = debts
+  const normalizedDebts = debts.map((d) => ({
+    ...d,
+    direction: (d.direction || 'owed_to_me') as DebtDirection,
+  }));
+
+  const directionDebts = normalizedDebts.filter(
+    (d) => d.direction === activeDirection
+  );
+  const totalDebt = directionDebts
     .filter((d) => !d.isPaid)
     .reduce((sum, d) => sum + convertAmount(d.amount), 0);
 
   const resetForm = () => {
+    setDirection(activeDirection);
     setPersonName('');
     setPersonPhone('');
     setAmount('');
@@ -96,6 +117,7 @@ const Debts: React.FC<DebtsProps> = ({
     setSelectedProjectId('');
     setNotes('');
     setReminderInterval('none');
+    setDueDate('');
     setImageUrl('');
     setEditingDebt(null);
   };
@@ -107,6 +129,7 @@ const Debts: React.FC<DebtsProps> = ({
 
   const openEditModal = (debt: Debt) => {
     setEditingDebt(debt);
+    setDirection((debt.direction || 'owed_to_me') as DebtDirection);
     setPersonName(debt.personName);
     setPersonPhone(debt.personPhone || '');
     setAmount(debt.amount.toString());
@@ -114,8 +137,30 @@ const Debts: React.FC<DebtsProps> = ({
     setSelectedProjectId(debt.projectId || '');
     setNotes(debt.notes || '');
     setReminderInterval(debt.reminderInterval);
+    setDueDate(debt.dueDate || '');
     setImageUrl(debt.imageUrl || '');
     setShowAddModal(true);
+  };
+
+  const handlePickContact = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('לא זמין', 'בחירת איש קשר זמינה רק בנייד');
+      return;
+    }
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('שגיאה', 'נדרשת הרשאת גישה לאנשי קשר');
+        return;
+      }
+      const contact = await Contacts.presentContactPickerAsync();
+      if (!contact) return;
+      if (contact.name) setPersonName(contact.name);
+      const phone = contact.phoneNumbers?.[0]?.number;
+      if (phone) setPersonPhone(phone);
+    } catch (err) {
+      Alert.alert('שגיאה', 'שגיאה בבחירת איש קשר');
+    }
   };
 
   const handleImageUpload = async () => {
@@ -165,6 +210,7 @@ const Debts: React.FC<DebtsProps> = ({
 
     const debtData = {
       id: editingDebt?.id,
+      direction,
       personName: personName.trim(),
       personPhone: personPhone.trim() || undefined,
       amount: parseFloat(amount),
@@ -173,6 +219,7 @@ const Debts: React.FC<DebtsProps> = ({
       projectName,
       notes: notes.trim() || undefined,
       reminderInterval,
+      dueDate: dueDate.trim() || undefined,
       isPaid: editingDebt?.isPaid || false,
       lastReminderDate: editingDebt?.lastReminderDate,
       nextReminderDate: calculateNextReminder(reminderInterval),
@@ -232,8 +279,14 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
     });
   };
 
-  const activeDebts = debts.filter((d) => !d.isPaid);
-  const paidDebts = debts.filter((d) => d.isPaid);
+  const activeDebts = directionDebts.filter((d) => !d.isPaid);
+  const paidDebts = directionDebts.filter((d) => d.isPaid);
+
+  const isOwedToMe = activeDirection === 'owed_to_me';
+  const summaryLabel = isOwedToMe ? 'סה"כ חייבים לי' : 'סה"כ אני חייב';
+  const emptyLabel = isOwedToMe ? 'אין חובות פעילים' : 'אין תזכורות תשלום';
+  const personLabel = 'שם *';
+  const summaryColor = isOwedToMe ? colors.error : colors.warning;
   const selectedProjectName = selectedProjectId
     ? projects.find((p) => p.id === selectedProjectId)?.name || ''
     : '';
@@ -297,8 +350,63 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 {editingDebt ? 'עריכת חוב' : 'חוב חדש'}
               </Text>
 
+              {/* Direction Toggle */}
+              <Text style={styles.fieldLabel}>{'סוג החוב *'}</Text>
+              <View style={styles.directionRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.directionBtn,
+                    direction === 'owed_to_me' && styles.directionBtnActive,
+                  ]}
+                  onPress={() => setDirection('owed_to_me')}
+                >
+                  <MaterialIcons
+                    name="trending-down"
+                    size={18}
+                    color={
+                      direction === 'owed_to_me'
+                        ? colors.bgPrimary
+                        : colors.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.directionText,
+                      direction === 'owed_to_me' && styles.directionTextActive,
+                    ]}
+                  >
+                    {'חייבים לי'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.directionBtn,
+                    direction === 'i_owe' && styles.directionBtnActive,
+                  ]}
+                  onPress={() => setDirection('i_owe')}
+                >
+                  <MaterialIcons
+                    name="trending-up"
+                    size={18}
+                    color={
+                      direction === 'i_owe'
+                        ? colors.bgPrimary
+                        : colors.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.directionText,
+                      direction === 'i_owe' && styles.directionTextActive,
+                    ]}
+                  >
+                    {'אני חייב'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
               {/* Person Name */}
-              <Text style={styles.fieldLabel}>{'שם החייב *'}</Text>
+              <Text style={styles.fieldLabel}>{personLabel}</Text>
               <TextInput
                 style={styles.input}
                 value={personName}
@@ -310,14 +418,24 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
 
               {/* Phone */}
               <Text style={styles.fieldLabel}>{'טלפון (לשליחת תזכורות)'}</Text>
-              <TextInput
-                style={[styles.input, { textAlign: 'left' }]}
-                value={personPhone}
-                onChangeText={setPersonPhone}
-                placeholder="050-0000000"
-                placeholderTextColor={colors.textTertiary}
-                keyboardType="phone-pad"
-              />
+              <View style={styles.phoneRowInput}>
+                <TextInput
+                  style={[styles.input, styles.phoneInputField, { textAlign: 'left' }]}
+                  value={personPhone}
+                  onChangeText={setPersonPhone}
+                  placeholder="050-0000000"
+                  placeholderTextColor={colors.textTertiary}
+                  keyboardType="phone-pad"
+                />
+                {Platform.OS !== 'web' && (
+                  <TouchableOpacity
+                    style={styles.contactPickerBtn}
+                    onPress={handlePickContact}
+                  >
+                    <MaterialIcons name="contacts" size={22} color={colors.primary} />
+                  </TouchableOpacity>
+                )}
+              </View>
 
               {/* Amount & Currency */}
               <Text style={styles.fieldLabel}>{'סכום *'}</Text>
@@ -325,10 +443,14 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 <TextInput
                   style={[styles.input, styles.amountInput]}
                   value={amount}
-                  onChangeText={setAmount}
+                  onChangeText={(text) => {
+                    const sanitized = text.replace(/[^0-9.]/g, '');
+                    setAmount(sanitized);
+                  }}
                   placeholder="0"
                   placeholderTextColor={colors.textTertiary}
-                  keyboardType="numeric"
+                  keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
+                  inputMode="decimal"
                   textAlign="left"
                 />
                 <View style={styles.currencyRow}>
@@ -431,6 +553,40 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 </TouchableOpacity>
               )}
 
+              {/* Due Date */}
+              <Text style={styles.fieldLabel}>
+                {direction === 'i_owe' ? 'תאריך תשלום' : 'תאריך החזרה צפוי'}
+              </Text>
+              {Platform.OS === 'web' ? (
+                // @ts-ignore — web-only native input
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e: any) => setDueDate(e.target.value)}
+                  style={{
+                    backgroundColor: colors.bgTertiary,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.subtleBorder,
+                    borderStyle: 'solid',
+                    padding: '12px 16px',
+                    fontSize: 15,
+                    color: colors.textPrimary,
+                    fontFamily: fonts.semibold,
+                    width: '100%',
+                    outline: 'none',
+                  } as any}
+                />
+              ) : (
+                <TextInput
+                  style={[styles.input, { textAlign: 'left' }]}
+                  value={dueDate}
+                  onChangeText={setDueDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textTertiary}
+                />
+              )}
+
               {/* Reminder Interval */}
               <Text style={styles.fieldLabel}>{'תזכורת'}</Text>
               <View style={styles.reminderGrid}>
@@ -492,15 +648,61 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
           <View style={{ width: 44 }} />
         </View>
 
+        {/* Direction Tabs */}
+        <View style={styles.tabsRow}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeDirection === 'owed_to_me' && styles.tabActive,
+            ]}
+            onPress={() => setActiveDirection('owed_to_me')}
+          >
+            <MaterialIcons
+              name="trending-down"
+              size={16}
+              color={activeDirection === 'owed_to_me' ? colors.bgPrimary : colors.white}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeDirection === 'owed_to_me' && styles.tabTextActive,
+              ]}
+            >
+              {'חייבים לי'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeDirection === 'i_owe' && styles.tabActive,
+            ]}
+            onPress={() => setActiveDirection('i_owe')}
+          >
+            <MaterialIcons
+              name="trending-up"
+              size={16}
+              color={activeDirection === 'i_owe' ? colors.bgPrimary : colors.white}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeDirection === 'i_owe' && styles.tabTextActive,
+              ]}
+            >
+              {'אני חייב'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Summary Glass Card */}
         <GlassCard style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>{'סה"כ חיובים לי'}</Text>
-          <Text style={styles.summaryAmount}>
+          <Text style={styles.summaryLabel}>{summaryLabel}</Text>
+          <Text style={[styles.summaryAmount, { color: summaryColor }]}>
             {currencySymbols[globalCurrency]}
             {totalDebt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </Text>
           <Text style={styles.summaryCount}>
-            {activeDebts.length} {'חובות פעילים'}
+            {activeDebts.length} {isOwedToMe ? 'חובות פעילים' : 'תזכורות תשלום'}
           </Text>
         </GlassCard>
       </GradientHeader>
@@ -544,6 +746,16 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                   </View>
                 )}
 
+                {debt.dueDate && (
+                  <View style={styles.dueDateBadge}>
+                    <MaterialIcons name="event" size={12} color={colors.primary} />
+                    <Text style={styles.dueDateBadgeText}>
+                      {debt.direction === 'i_owe' ? 'לתשלום עד: ' : 'החזרה עד: '}
+                      {debt.dueDate}
+                    </Text>
+                  </View>
+                )}
+
                 {debt.reminderInterval !== 'none' && (
                   <View style={styles.reminderBadge}>
                     <MaterialIcons name="schedule" size={12} color={colors.warning} />
@@ -570,7 +782,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
 
                 {/* Actions */}
                 <View style={styles.debtActions}>
-                  {debt.personPhone && (
+                  {debt.personPhone && debt.direction !== 'i_owe' && (
                     <TouchableOpacity
                       style={[styles.debtActionBtn, { flex: 1 }]}
                       onPress={() => handleSendWhatsApp(debt)}
@@ -609,9 +821,9 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
         ) : (
           <DarkCard style={styles.emptyCard}>
             <MaterialIcons name="savings" size={40} color={colors.textTertiary} />
-            <Text style={styles.emptyText}>{'אין חובות פעילים'}</Text>
+            <Text style={styles.emptyText}>{emptyLabel}</Text>
             <GradientButton
-              label="הוסף חוב חדש"
+              label={isOwedToMe ? 'הוסף חוב חדש' : 'הוסף תזכורת תשלום'}
               onPress={openAddModal}
               style={styles.emptyAddBtn}
             />
@@ -699,6 +911,108 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontFamily: fonts.bold,
     color: colors.error,
+  },
+
+  // Direction Tabs (header)
+  tabsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.lg,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  tabActive: {
+    backgroundColor: colors.white,
+    borderColor: colors.white,
+  },
+  tabText: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    writingDirection: 'rtl',
+  },
+  tabTextActive: {
+    color: colors.bgPrimary,
+  },
+
+  // Direction Buttons (modal)
+  directionRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  directionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: radii.md,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  directionBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  directionText: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    color: colors.textSecondary,
+    writingDirection: 'rtl',
+  },
+  directionTextActive: {
+    color: colors.bgPrimary,
+  },
+
+  // Phone row with contact picker
+  phoneRowInput: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'stretch',
+  },
+  phoneInputField: {
+    flex: 1,
+  },
+  contactPickerBtn: {
+    width: 48,
+    borderRadius: radii.md,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Due date badge
+  dueDateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+    backgroundColor: 'rgba(0,217,217,0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radii.sm,
+    alignSelf: 'flex-start',
+  },
+  dueDateBadgeText: {
+    fontSize: 11,
+    color: colors.primary,
+    fontFamily: fonts.semibold,
+    writingDirection: 'rtl',
   },
   summaryCount: {
     fontSize: 12,

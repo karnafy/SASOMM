@@ -8,14 +8,20 @@ import {
   Alert,
   Modal,
   Pressable,
+  TextInput,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppScreen, Currency } from '@monn/shared';
+import { AppScreen, Currency, useAuth, useProfile, exportUserData, importUserData } from '@monn/shared';
+import type { ExportBundle } from '@monn/shared';
+import { supabase } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { ScreenTopBar } from '../components/ui/ScreenTopBar';
 import { DarkCard } from '../components/ui/DarkCard';
 import { CurrencyToggle } from '../components/ui/CurrencyToggle';
+import { GradientButton } from '../components/ui/GradientButton';
 
 interface SettingsProps {
   onNavigate: (screen: AppScreen) => void;
@@ -49,7 +55,90 @@ const Settings: React.FC<SettingsProps> = ({
   >('settings');
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [autoBackup, setAutoBackup] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const { user } = useAuth();
+  const { profile, updateProfile } = useProfile(user?.id);
+
+  const [showEditName, setShowEditName] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'משתמש';
+  const displayEmail = user?.email || profile?.email || '';
+
+  const openEditName = () => {
+    setNameInput(profile?.full_name || '');
+    setShowEditName(true);
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      Alert.alert('שגיאה', 'אנא הזן שם');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await updateProfile({ full_name: trimmed });
+      setShowEditName(false);
+    } catch (err) {
+      Alert.alert('שגיאה', 'לא ניתן לעדכן את השם');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openChangePassword = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowChangePassword(true);
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      Alert.alert('שגיאה', 'הסיסמה החדשה חייבת להיות באורך 6 תווים לפחות');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('שגיאה', 'הסיסמאות אינן תואמות');
+      return;
+    }
+    if (!displayEmail) {
+      Alert.alert('שגיאה', 'לא נמצא אימייל משתמש');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: displayEmail,
+        password: currentPassword,
+      });
+      if (verifyError) {
+        Alert.alert('שגיאה', 'סיסמה נוכחית שגויה');
+        return;
+      }
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (updateError) {
+        Alert.alert('שגיאה', updateError.message || 'לא ניתן לעדכן סיסמה');
+        return;
+      }
+      Alert.alert('הצלחה', 'הסיסמה עודכנה בהצלחה');
+      setShowChangePassword(false);
+    } catch (err) {
+      Alert.alert('שגיאה', 'שגיאה בעדכון הסיסמה');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Load settings
   useEffect(() => {
@@ -60,7 +149,6 @@ const Settings: React.FC<SettingsProps> = ({
           const settings = JSON.parse(saved);
           setNotifications(settings.notifications ?? true);
           setDarkMode(settings.darkMode ?? false);
-          setAutoBackup(settings.autoBackup ?? true);
         }
       } catch (err) {
         console.error('Failed to load settings:', err);
@@ -78,6 +166,94 @@ const Settings: React.FC<SettingsProps> = ({
     } catch (err) {
       console.error('Failed to save setting:', err);
     }
+  };
+
+  const handleExport = async () => {
+    if (!user?.id) {
+      Alert.alert('שגיאה', 'משתמש לא מחובר');
+      return;
+    }
+    try {
+      setIsExporting(true);
+      const bundle = await exportUserData(user.id);
+      const json = JSON.stringify(bundle, null, 2);
+      const date = new Date().toISOString().split('T')[0];
+      const fileName = `sasomm_backup_${date}.json`;
+
+      if (Platform.OS === 'web') {
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        Alert.alert('הצלחה', `הורד הקובץ ${fileName}`);
+      } else {
+        Alert.alert(
+          'הצלחה',
+          `יוצאו ${bundle.projects.length} פרויקטים, ${bundle.expenses.length} הוצאות ו-${bundle.incomes.length} הכנסות. (שיתוף בנייד יתווסף בקרוב)`
+        );
+      }
+    } catch (err: any) {
+      Alert.alert('שגיאה', err?.message || 'שגיאה בייצוא');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const processImportedBundle = async (bundle: ExportBundle) => {
+    if (!user?.id) return;
+    try {
+      setIsImporting(true);
+      const result = await importUserData(bundle, user.id);
+      const total = Object.values(result).reduce((a, b) => a + b, 0);
+      Alert.alert('הצלחה', `יובאו ${total} רשומות בסך הכל`);
+    } catch (err: any) {
+      Alert.alert('שגיאה בייבוא', err?.message || 'שגיאה בלתי ידועה');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleImport = () => {
+    if (!user?.id) {
+      Alert.alert('שגיאה', 'משתמש לא מחובר');
+      return;
+    }
+    Alert.alert(
+      'שחזור מגיבוי',
+      'הנתונים מהקובץ יתווספו לחשבון שלך (לא ימחקו נתונים קיימים). להמשיך?',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'המשך',
+          onPress: () => {
+            if (Platform.OS === 'web') {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'application/json';
+              input.onchange = async () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                try {
+                  const text = await file.text();
+                  const bundle: ExportBundle = JSON.parse(text);
+                  await processImportedBundle(bundle);
+                } catch (err: any) {
+                  Alert.alert('שגיאה', 'הקובץ לא תקין');
+                }
+              };
+              input.click();
+            } else {
+              Alert.alert('בקרוב', 'ייבוא בנייד יתווסף בקרוב');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleClearData = () => {
@@ -144,6 +320,50 @@ const Settings: React.FC<SettingsProps> = ({
 
   const renderSettings = () => (
     <View style={styles.sections}>
+      {/* Account */}
+      <DarkCard style={styles.settingsCard}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardHeaderText}>{'חשבון'}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.settingItem, styles.settingItemBorder]}
+          onPress={openEditName}
+        >
+          <View style={styles.settingLeft}>
+            <MaterialIcons name="person" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>{'שם'}</Text>
+          </View>
+          <View style={styles.settingRight}>
+            <Text style={styles.settingValue} numberOfLines={1}>
+              {displayName}
+            </Text>
+            <MaterialIcons name="edit" size={16} color={colors.textTertiary} />
+          </View>
+        </TouchableOpacity>
+
+        <View style={[styles.settingItem, styles.settingItemBorder]}>
+          <View style={styles.settingLeft}>
+            <MaterialIcons name="email" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>{'אימייל'}</Text>
+          </View>
+          <Text style={styles.settingValue} numberOfLines={1}>
+            {displayEmail}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={openChangePassword}
+        >
+          <View style={styles.settingLeft}>
+            <MaterialIcons name="lock" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>{'שינוי סיסמה'}</Text>
+          </View>
+          <MaterialIcons name="chevron-left" size={20} color={colors.textTertiary} />
+        </TouchableOpacity>
+      </DarkCard>
+
       {/* Default Currency — CurrencyToggle */}
       <DarkCard style={styles.settingsCard}>
         <View style={styles.cardHeader}>
@@ -212,34 +432,66 @@ const Settings: React.FC<SettingsProps> = ({
           </View>
         </View>
 
-        {/* Export placeholder */}
-        <View style={[styles.settingItem, styles.settingItemBorder]}>
+        {/* Cloud status (honest — replaces misleading auto-backup) */}
+        <View style={styles.settingItem}>
           <View style={styles.settingLeft}>
-            <MaterialIcons name="file-download" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'ייצוא נתונים'}</Text>
+            <MaterialIcons name="cloud-done" size={20} color={colors.success} />
+            <Text style={styles.settingLabel}>{'סנכרון ענן'}</Text>
           </View>
-          <View style={styles.settingRight}>
-            <Text style={styles.settingValue}>CSV</Text>
-            <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>{'בקרוב'}</Text>
-            </View>
+          <View style={styles.syncBadge}>
+            <Text style={styles.syncBadgeText}>{'פעיל'}</Text>
           </View>
         </View>
+      </DarkCard>
 
-        {/* Auto Backup */}
+      {/* Backup / Export / Import */}
+      <DarkCard style={styles.settingsCard}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardHeaderText}>{'גיבוי ושחזור'}</Text>
+        </View>
+
         <TouchableOpacity
-          style={styles.settingItem}
-          onPress={() => {
-            const newVal = !autoBackup;
-            setAutoBackup(newVal);
-            saveSetting('autoBackup', newVal);
-          }}
+          style={[styles.settingItem, styles.settingItemBorder]}
+          onPress={handleExport}
+          disabled={isExporting}
         >
           <View style={styles.settingLeft}>
-            <MaterialIcons name="backup" size={20} color={colors.primary} />
-            <Text style={styles.settingLabel}>{'גיבוי אוטומטי'}</Text>
+            <MaterialIcons name="file-download" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>
+              {isExporting ? 'מייצא...' : 'ייצוא כל הנתונים (JSON)'}
+            </Text>
           </View>
-          {renderToggle(autoBackup)}
+          {isExporting ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <MaterialIcons
+              name="chevron-left"
+              size={20}
+              color={colors.textTertiary}
+            />
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={handleImport}
+          disabled={isImporting}
+        >
+          <View style={styles.settingLeft}>
+            <MaterialIcons name="file-upload" size={20} color={colors.primary} />
+            <Text style={styles.settingLabel}>
+              {isImporting ? 'משחזר...' : 'שחזור מגיבוי (JSON)'}
+            </Text>
+          </View>
+          {isImporting ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <MaterialIcons
+              name="chevron-left"
+              size={20}
+              color={colors.textTertiary}
+            />
+          )}
         </TouchableOpacity>
       </DarkCard>
 
@@ -473,6 +725,108 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Edit Name Modal */}
+      <Modal visible={showEditName} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => !isSaving && setShowEditName(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{'עריכת שם'}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={nameInput}
+              onChangeText={setNameInput}
+              placeholder={'שם מלא'}
+              placeholderTextColor={colors.textTertiary}
+              textAlign="right"
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <GradientButton
+                label="ביטול"
+                variant="outline"
+                onPress={() => setShowEditName(false)}
+                style={styles.modalActionBtn}
+                disabled={isSaving}
+              />
+              <GradientButton
+                label={isSaving ? 'שומר...' : 'שמור'}
+                onPress={handleSaveName}
+                style={styles.modalActionBtn}
+                disabled={isSaving || !nameInput.trim()}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal visible={showChangePassword} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => !isSaving && setShowChangePassword(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{'שינוי סיסמה'}</Text>
+
+            <Text style={styles.modalFieldLabel}>{'סיסמה נוכחית'}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder={'••••••'}
+              placeholderTextColor={colors.textTertiary}
+              secureTextEntry
+              textAlign="left"
+            />
+
+            <Text style={styles.modalFieldLabel}>{'סיסמה חדשה'}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder={'לפחות 6 תווים'}
+              placeholderTextColor={colors.textTertiary}
+              secureTextEntry
+              textAlign="left"
+            />
+
+            <Text style={styles.modalFieldLabel}>{'אישור סיסמה חדשה'}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder={'הקלד שוב'}
+              placeholderTextColor={colors.textTertiary}
+              secureTextEntry
+              textAlign="left"
+            />
+
+            <View style={styles.modalActions}>
+              <GradientButton
+                label="ביטול"
+                variant="outline"
+                onPress={() => setShowChangePassword(false)}
+                style={styles.modalActionBtn}
+                disabled={isSaving}
+              />
+              <GradientButton
+                label={isSaving ? 'שומר...' : 'שמור'}
+                onPress={handleChangePassword}
+                style={styles.modalActionBtn}
+                disabled={
+                  isSaving ||
+                  !currentPassword ||
+                  !newPassword ||
+                  !confirmPassword
+                }
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Header */}
       <View style={styles.topBar}>
         <ScreenTopBar title={getTitle()} onBack={handleBack} />
@@ -579,6 +933,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+
+  syncBadge: {
+    backgroundColor: colors.success + '20',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.success + '60',
+  },
+  syncBadgeText: {
+    fontSize: 10,
+    color: colors.success,
+    fontFamily: fonts.bold,
+    writingDirection: 'rtl',
   },
 
   // Coming soon badge
@@ -782,6 +1151,62 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     color: colors.textSecondary,
     writingDirection: 'rtl',
+  },
+
+  // Modals
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii['2xl'],
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 20,
+    writingDirection: 'rtl',
+  },
+  modalFieldLabel: {
+    fontSize: 11,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginTop: 12,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  modalInput: {
+    backgroundColor: colors.bgTertiary,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.textPrimary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  modalActionBtn: {
+    flex: 1,
   },
 });
 

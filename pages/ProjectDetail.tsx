@@ -77,6 +77,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const [noteText, setNoteText] = useState('');
   const [noteImages, setNoteImages] = useState<string[]>([]);
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[] | null>(null);
+  const [previewIndex, setPreviewIndex] = useState(0);
+
+  const openImagePreview = (images: string[], startIndex = 0) => {
+    if (!images?.length) return;
+    setPreviewImages(images);
+    setPreviewIndex(startIndex);
+  };
 
   const totalIncome = (project.incomes || []).reduce((sum, i) => sum + i.amount, 0);
   const totalExpenses = project.spent;
@@ -308,18 +316,30 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       }
 
       const fileName = `דוח_${project.name.replace(/[/\\?%*:|"<>]/g, '_')}_${date}.csv`;
-      const file = new File(Paths.cache, fileName);
-      await file.write(BOM + csv);
 
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.shareAsync(file.uri, {
-          mimeType: 'text/csv',
-          dialogTitle: 'שיתוף דוח CSV',
-          UTI: 'public.comma-separated-values-text',
-        });
+      if (Platform.OS === 'web') {
+        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       } else {
-        Alert.alert('שגיאה', 'שיתוף קבצים אינו זמין במכשיר זה');
+        const file = new File(Paths.cache, fileName);
+        await file.write(BOM + csv);
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(file.uri, {
+            mimeType: 'text/csv',
+            dialogTitle: 'שיתוף דוח CSV',
+            UTI: 'public.comma-separated-values-text',
+          });
+        } else {
+          Alert.alert('שגיאה', 'שיתוף קבצים אינו זמין במכשיר זה');
+        }
       }
 
       setShowReportModal(false);
@@ -555,17 +575,35 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
         </html>
       `;
 
-      const { uri } = await Print.printToFileAsync({ html });
-
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'שיתוף דוח PDF',
-          UTI: 'com.adobe.pdf',
-        });
+      if (Platform.OS === 'web') {
+        const win = window.open('', '_blank');
+        if (!win) {
+          Alert.alert('שגיאה', 'חוסם חלונות קופצים מונע את פתיחת הדוח');
+          return;
+        }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => {
+          try {
+            win.focus();
+            win.print();
+          } catch {
+            // user can print manually
+          }
+        }, 500);
       } else {
-        Alert.alert('שגיאה', 'שיתוף קבצים אינו זמין במכשיר זה');
+        const { uri } = await Print.printToFileAsync({ html });
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'שיתוף דוח PDF',
+            UTI: 'com.adobe.pdf',
+          });
+        } else {
+          Alert.alert('שגיאה', 'שיתוף קבצים אינו זמין במכשיר זה');
+        }
       }
 
       setShowReportModal(false);
@@ -659,6 +697,70 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Image Preview Modal */}
+      <Modal
+        visible={previewImages !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewImages(null)}
+      >
+        <Pressable
+          style={styles.previewOverlay}
+          onPress={() => setPreviewImages(null)}
+        >
+          <View style={styles.previewInner}>
+            {previewImages && previewImages[previewIndex] ? (
+              <Image
+                source={{ uri: previewImages[previewIndex] }}
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+            ) : null}
+            {previewImages && previewImages.length > 1 ? (
+              <View style={styles.previewNav}>
+                <TouchableOpacity
+                  style={styles.previewNavBtn}
+                  onPress={() =>
+                    setPreviewIndex((i) =>
+                      i <= 0 ? previewImages.length - 1 : i - 1
+                    )
+                  }
+                >
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={28}
+                    color={colors.white}
+                  />
+                </TouchableOpacity>
+                <Text style={styles.previewCounter}>
+                  {previewIndex + 1} / {previewImages.length}
+                </Text>
+                <TouchableOpacity
+                  style={styles.previewNavBtn}
+                  onPress={() =>
+                    setPreviewIndex((i) =>
+                      i >= previewImages.length - 1 ? 0 : i + 1
+                    )
+                  }
+                >
+                  <MaterialIcons
+                    name="chevron-left"
+                    size={28}
+                    color={colors.white}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : null}
+            <TouchableOpacity
+              style={styles.previewClose}
+              onPress={() => setPreviewImages(null)}
+            >
+              <MaterialIcons name="close" size={22} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
       {/* Menu Modal */}
       <Modal visible={showMenu} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setShowMenu(false)}>
@@ -1153,6 +1255,19 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   if (isIncome || isExpense) {
                     const amountStr = `${isIncome ? '+' : '-'}${currencySymbols[globalCurrency]}${formatAmount((item as any).amount)}`;
                     const metaStr = `${item.date}${supplierName ? ` \u2022 ${supplierName}` : ''}`;
+                    const isoTs = (item as any).date || '';
+                    let timeStr = '';
+                    if (isoTs && typeof isoTs === 'string' && isoTs.includes('T')) {
+                      const d = new Date(isoTs);
+                      if (!isNaN(d.getTime())) {
+                        timeStr = d.toLocaleTimeString('he-IL', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        });
+                      }
+                    }
+                    const dateTimeStr = timeStr ? `${item.date} \u2022 ${timeStr}` : item.date;
+                    const itemImgs: string[] = (item as any).receiptImages || [];
                     return (
                       <TransactionRow
                         key={item.id}
@@ -1162,6 +1277,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         meta={metaStr}
                         amount={amountStr}
                         isIncome={isIncome}
+                        supplier={supplierName || undefined}
+                        dateTime={dateTimeStr}
+                        typeLabel={isIncome ? 'הכנסה' : 'הוצאה'}
+                        typeColor={isIncome ? colors.success : colors.error}
+                        attachmentCount={itemImgs.length}
+                        firstAttachmentUri={itemImgs[0]}
+                        onAttachmentPress={() => openImagePreview(itemImgs, 0)}
                         onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, item.id)}
                       />
                     );
@@ -1198,9 +1320,27 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         <Text style={styles.activityTitle} numberOfLines={1}>
                           {isImageOnly ? 'תמונה' : item.title}
                         </Text>
+                        {supplierName ? (
+                          <Text style={styles.activitySupplier} numberOfLines={1}>
+                            {supplierName}
+                          </Text>
+                        ) : null}
                         <Text style={styles.activityMeta}>
-                          {item.date}
-                          {supplierName ? ` \u2022 ${supplierName}` : ''}
+                          {(() => {
+                            const isoTs = (item as any).date || '';
+                            if (isoTs && typeof isoTs === 'string' && isoTs.includes('T')) {
+                              const d = new Date(isoTs);
+                              if (!isNaN(d.getTime())) {
+                                const time = d.toLocaleTimeString('he-IL', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                });
+                                const dateOnly = d.toLocaleDateString('he-IL');
+                                return `${dateOnly} \u2022 ${time}`;
+                              }
+                            }
+                            return item.date;
+                          })()}
                         </Text>
                         {isImageOnly && itemImages.length > 1 && (
                           <Text style={styles.activityMoreImages}>
@@ -1756,6 +1896,63 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     fontSize: 13,
     color: colors.textPrimary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewInner: {
+    width: '90%',
+    maxWidth: 640,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: 520,
+    borderRadius: 16,
+  },
+  previewNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 24,
+    marginTop: 20,
+  },
+  previewNavBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewCounter: {
+    color: colors.white,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
+  previewClose: {
+    position: 'absolute',
+    top: -16,
+    right: -16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activitySupplier: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginTop: 3,
     writingDirection: 'rtl',
     textAlign: 'right',
   },

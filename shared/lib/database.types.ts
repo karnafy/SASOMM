@@ -110,6 +110,8 @@ export type Database = {
           icon: string | null
           id: string
           includes_vat: boolean | null
+          original_amount: number | null
+          original_currency: string | null
           payment_method: string | null
           project_id: string
           receipt_images: string[] | null
@@ -128,6 +130,8 @@ export type Database = {
           icon?: string | null
           id?: string
           includes_vat?: boolean | null
+          original_amount?: number | null
+          original_currency?: string | null
           payment_method?: string | null
           project_id: string
           receipt_images?: string[] | null
@@ -146,6 +150,8 @@ export type Database = {
           icon?: string | null
           id?: string
           includes_vat?: boolean | null
+          original_amount?: number | null
+          original_currency?: string | null
           payment_method?: string | null
           project_id?: string
           receipt_images?: string[] | null
@@ -189,6 +195,8 @@ export type Database = {
           icon: string | null
           id: string
           includes_vat: boolean | null
+          original_amount: number | null
+          original_currency: string | null
           payment_method: string | null
           project_id: string
           receipt_images: string[] | null
@@ -207,6 +215,8 @@ export type Database = {
           icon?: string | null
           id?: string
           includes_vat?: boolean | null
+          original_amount?: number | null
+          original_currency?: string | null
           payment_method?: string | null
           project_id: string
           receipt_images?: string[] | null
@@ -225,6 +235,8 @@ export type Database = {
           icon?: string | null
           id?: string
           includes_vat?: boolean | null
+          original_amount?: number | null
+          original_currency?: string | null
           payment_method?: string | null
           project_id?: string
           receipt_images?: string[] | null

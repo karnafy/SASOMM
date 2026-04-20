@@ -13,6 +13,11 @@ export * from './lib/dataTransformers';
 // Hooks
 export { useProjects, useSuppliers, useProfile, useDebts } from './hooks/useSupabaseData';
 export { useMutations } from './hooks/useMutations';
+export { useExchangeRates } from './hooks/useExchangeRates';
 
 // Auth context
 export { AuthProvider, useAuth } from './context/AuthContext';
+
+// Data export/import
+export { exportUserData, importUserData } from './lib/dataExport';
+export type { ExportBundle } from './lib/dataExport';

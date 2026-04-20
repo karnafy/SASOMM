@@ -23,8 +23,11 @@ export enum AppScreen {
 
 export type ReminderInterval = 'daily' | '2days' | '3days' | 'weekly' | 'biweekly' | 'monthly' | 'none';
 
+export type DebtDirection = 'owed_to_me' | 'i_owe';
+
 export interface Debt {
   id: string;
+  direction: DebtDirection;
   personName: string;
   personPhone?: string;
   amount: number;
@@ -33,6 +36,7 @@ export interface Debt {
   projectName?: string;
   notes?: string;
   reminderInterval: ReminderInterval;
+  dueDate?: string;
   lastReminderDate?: string;
   nextReminderDate?: string;
   createdAt: string;
@@ -68,6 +72,8 @@ export interface Expense {
   date: string;
   amount: number;
   currency: Currency;
+  originalAmount?: number;
+  originalCurrency?: Currency;
   color: string;
   supplierId?: string;
   type?: 'expense' | 'income';
@@ -86,6 +92,8 @@ export interface Income {
   date: string;
   amount: number;
   currency: Currency;
+  originalAmount?: number;
+  originalCurrency?: Currency;
   color: string;
   supplierId?: string;
   type?: 'expense' | 'income';

@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SASOMM — ניהול שיפוץ בלי בלאגן</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@400;700;800&family=Rubik:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Backgrounds — deep plum, warm black */
+    --bg-lowest: #0D0B1A;
+    --bg-base:   #130827;
+    --bg-surface: #180D2C;
+    --bg-low:    #211635;
+    --bg-mid:    #251A39;
+    --bg-high:   #2F2444;
+    --bg-highest: #3A2F50;
+
+    /* Brand — cyan from real app, purple from mobile gradient */
+    --cyan:      #00D9D9;
+    --cyan-dim:  #0891B2;
+    --mint:      #00E88F;
+    --coral:     #FF4D6A;
+    --purple:    #6B2FA0;
+    --purple-dim: #4A1D7A;
+
+    /* Text — soft, not max contrast */
+    --text-primary: #EBDCFF;
+    --text-secondary: #A0A0B8;
+    --text-tertiary: #6B6B82;
+    --text-ghost: rgba(235, 220, 255, 0.06);
+
+    /* Glass */
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg-lowest);
+    color: var(--text-primary);
+    font-family: 'Assistant', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+  }
+
+  .display { font-family: 'Plus Jakarta Sans', 'Rubik', sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+  .mono { font-family: 'Plus Jakarta Sans', monospace; font-variant-numeric: tabular-nums; }
+
+  /* ========== NAV ========== */
+  nav {
+    position: fixed;
+    top: 0;
+    inset-inline: 0;
+    z-index: 100;
+    padding: 6px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(19, 8, 39, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+  nav .logo { height: 144px; opacity: 0.95; margin: -50px 0; }
+  nav ul {
+    display: flex;
+    list-style: none;
+    gap: 40px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  nav ul a { color: inherit; text-decoration: none; transition: color .2s; }
+  nav ul a:hover { color: var(--text-primary); }
+  nav .cta-nav {
+    background: var(--cyan);
+    color: var(--bg-base);
+    padding: 10px 24px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    transition: transform .2s;
+  }
+  nav .cta-nav:hover { transform: scale(1.04); }
+
+  /* ========== HERO ========== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    padding: 160px 48px 80px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 48px;
+    align-items: center;
+    overflow: hidden;
+  }
+  /* Big ghost watermark logo — sits behind headline text, ~full width */
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    width: 95%;
+    height: 38%;
+    transform: translate(-50%, -50%);
+    background-image: url('../../LOGO/LOGO SASOMM-04.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.11;
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* Signature radial gradient behind hero */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 30%, rgba(0, 217, 217, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 80%, rgba(107, 47, 160, 0.18) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .hero-content { position: relative; z-index: 2; }
+  .eyebrow {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--cyan);
+    margin-bottom: 32px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    margin-inline-end: 8px;
+    box-shadow: 0 0 12px var(--cyan);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .headline {
+    font-size: clamp(40px, 5.5vw, 76px);
+    line-height: 1.05;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+  }
+  .headline .accent {
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--mint) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .headline .inline-logo {
+    display: block;
+    height: 3.3em;
+    width: auto;
+    margin: -0.8em 0 -0.85em;
+    line-height: 0;
+  }
+  .subheadline {
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    max-width: 540px;
+    margin-bottom: 40px;
+  }
+  .cta-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 28px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all .2s;
+    font-family: 'Assistant', sans-serif;
+  }
+  .cta-primary {
+    background: var(--cyan);
+    color: var(--bg-base);
+    box-shadow: 0 0 32px rgba(0, 217, 217, 0.25);
+  }
+  .cta-primary:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 48px rgba(0, 217, 217, 0.4);
+  }
+  .cta-secondary {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+  }
+  .cta-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+  .cta-icon { font-size: 20px; }
+
+  /* ========== PHONE MOCKUP (drawn in CSS) ========== */
+  .mockup-wrap {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+  }
+  .phone {
+    width: 320px;
+    background: var(--bg-lowest);
+    border-radius: 44px;
+    border: 2px solid var(--bg-highest);
+    box-shadow:
+      0 0 0 6px var(--bg-base),
+      0 40px 120px rgba(0, 217, 217, 0.15),
+      0 20px 60px rgba(107, 47, 160, 0.25);
+    overflow: hidden;
+    position: relative;
+    transform: rotate(-2deg);
+    transition: transform .4s;
+    aspect-ratio: 9/19.5;
+  }
+  .phone:hover { transform: rotate(0deg) scale(1.02); }
+  .phone img.phone-screen {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .phone-header {
+    padding: 40px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg, var(--purple) 0%, var(--purple-dim) 80%, transparent 100%);
+  }
+  .phone-logo {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 900;
+    color: #fff;
+    font-size: 18px;
+  }
+  .phone-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    color: #fff;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+  }
+  .phone-body { padding: 20px; position: relative; }
+  .project-title {
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 4px;
+    font-family: 'Plus Jakarta Sans', 'Rubik', sans-serif;
+  }
+  .project-tags {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 11px;
+  }
+  .project-tags .tag { color: var(--text-secondary); }
+  .project-tags .tag.ok { color: var(--mint); }
+  .budget-card {
+    background: var(--bg-mid);
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .budget-label { font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 6px; }
+  .budget-value {
+    font-size: 30px;
+    font-weight: 900;
+    text-align: center;
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', monospace;
+    margin-bottom: 14px;
+  }
+  .budget-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 12px;
+  }
+  .budget-row .label { color: var(--text-secondary); }
+  .budget-row .val.red { color: var(--coral); font-weight: 700; }
+  .budget-row .val.green { color: var(--mint); font-weight: 700; }
+  .budget-row .val.cyan { color: var(--cyan); font-weight: 700; }
+  .progress {
+    margin-top: 12px;
+    height: 4px;
+    background: var(--bg-high);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress > div {
+    width: 8%;
+    height: 100%;
+    background: var(--mint);
+    border-radius: 2px;
+  }
+  .progress-label { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; }
+  .action-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .action-btn {
+    background: var(--bg-mid);
+    border-radius: 14px;
+    padding: 14px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .action-btn .dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .action-btn.income .dot { background: var(--mint); color: var(--bg-base); }
+  .action-btn.expense .dot { background: var(--coral); }
+
+  /* Bottom nav */
+  .phone-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px 18px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(13, 11, 26, 0.9);
+    backdrop-filter: blur(10px);
+  }
+  .phone-nav .item { font-size: 9px; color: var(--text-tertiary); text-align: center; }
+  .phone-nav .item.active { color: var(--cyan); }
+  .phone-nav .fab {
+    width: 52px; height: 52px;
+    background: var(--cyan);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-base);
+    font-size: 24px;
+    font-weight: 900;
+    margin-top: -24px;
+    box-shadow: 0 0 24px var(--cyan);
+  }
+
+  /* ========== FEATURES ========== */
+  .section {
+    position: relative;
+    padding: 120px 48px;
+    z-index: 2;
+  }
+  .section.alt { background: var(--bg-surface); }
+  .section-head {
+    text-align: center;
+    margin-bottom: 72px;
+  }
+  .section-label {
+    font-size: 13px;
+    color: var(--cyan);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+  .section-title {
+    font-size: clamp(32px, 4vw, 52px);
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .section-sub {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    overflow: hidden;
+  }
+  .feature-card {
+    background: var(--bg-low);
+    border-radius: 24px;
+    padding: 36px 32px;
+    transition: transform .3s, background .3s;
+    overflow: hidden;
+  }
+  .feature-mini {
+    width: 65%;
+    max-width: 200px;
+    margin: 0 auto 28px;
+    background: var(--bg-lowest);
+    border-radius: 28px;
+    border: 2px solid var(--bg-highest);
+    padding: 4px;
+    box-shadow:
+      0 0 0 3px var(--bg-base),
+      0 24px 60px rgba(0, 0, 0, 0.5),
+      0 12px 40px rgba(107, 47, 160, 0.2);
+    overflow: hidden;
+    aspect-ratio: 9 / 19.5;
+  }
+  .feature-mini img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 24px;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    background: var(--bg-mid);
+  }
+  /* Phone mockup inside feature cards — held-phone look */
+  .phone-mini {
+    width: 78%;
+    max-width: 240px;
+    margin: 0 auto 32px;
+    background: var(--bg-lowest);
+    border-radius: 32px;
+    border: 2px solid var(--bg-highest);
+    padding: 5px;
+    box-shadow:
+      0 0 0 4px var(--bg-base),
+      0 30px 80px rgba(0, 217, 217, 0.10),
+      0 16px 50px rgba(107, 47, 160, 0.22);
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 9/19.5;
+    transform: rotate(-1.5deg);
+    transition: transform .4s ease;
+  }
+  .feature-card:nth-child(2) .phone-mini { transform: rotate(0deg); }
+  .feature-card:nth-child(3) .phone-mini { transform: rotate(1.5deg); }
+  .feature-card:hover .phone-mini { transform: rotate(0deg) scale(1.02); }
+  .phone-mini img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 26px;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .feature-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    font-family: 'Plus Jakarta Sans', 'Rubik', sans-serif;
+  }
+  .feature-desc {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  /* ========== MOMENTS STRIP (real photo bento) ========== */
+  .moments {
+    max-width: 1280px;
+    margin: 0 auto 0;
+    padding: 0 48px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 280px 280px;
+    gap: 16px;
+  }
+  .moment {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    transition: transform .4s;
+  }
+  .moment:hover { transform: scale(1.015); }
+  .moment::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(13, 11, 26, 0.85) 100%);
+  }
+  .moment .caption {
+    position: absolute;
+    bottom: 24px;
+    inset-inline-start: 24px;
+    inset-inline-end: 24px;
+    z-index: 2;
+    color: #fff;
+  }
+  .moment .caption .label {
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .moment .caption .title {
+    font-family: 'Plus Jakarta Sans', 'Rubik', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .moment.large {
+    grid-row: span 2;
+    background-image: url('../assets/images/cash-handoff-exterior.jpg');
+  }
+  .moment.tm {
+    background-image: url('../assets/images/cash-closeup.jpg');
+  }
+  .moment.tr {
+    background-image: url('../assets/images/cash-handoff-interior.jpg');
+  }
+  .moment.bm {
+    background-image: url('../assets/images/proud-couple-evening.jpg');
+  }
+  .moment.br {
+    background-image: url('../assets/images/new-kitchen.jpg');
+  }
+
+  /* ========== LIFESTYLE SECTION ========== */
+  .lifestyle {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .lifestyle-photo {
+    aspect-ratio: 4/5;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    background-image: url('../assets/images/proud-couple-home.jpg'); /* server: images/lifestyle/proud-couple-home.jpg */
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 40px 100px rgba(107, 47, 160, 0.3),
+      0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+  .lifestyle-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(13, 11, 26, 0.4) 100%);
+    pointer-events: none;
+  }
+  .lifestyle-photo::before {
+    content: '"הבית שחלמנו עליו. בלי הפתעות בחשבון."';
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    z-index: 2;
+    color: #fff;
+    font-family: 'Plus Jakarta Sans', 'Rubik', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+  }
+  .lifestyle-brand {
+    display: block;
+    width: 100%;
+    max-width: 640px;
+    height: auto;
+    margin-bottom: 40px;
+    opacity: 0.95;
+  }
+  .lifestyle-copy h3 {
+    font-size: clamp(32px, 3.5vw, 48px);
+    line-height: 1.15;
+    margin-bottom: 24px;
+    font-family: 'Plus Jakarta Sans', 'Rubik', sans-serif;
+    font-weight: 800;
+  }
+  .lifestyle-copy p {
+    color: var(--text-secondary);
+    font-size: 18px;
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  /* ========== DOWNLOAD SECTION ========== */
+  .download-section {
+    text-align: center;
+    padding: 120px 48px;
+    position: relative;
+    z-index: 2;
+  }
+  .download-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0, 217, 217, 0.08) 0%, transparent 60%);
+  }
+  .download-section > * { position: relative; z-index: 1; }
+  .download-title {
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+  .download-sub {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+  }
+  .store-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .store-badge {
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 14px 28px;
+    border-radius: 14px;
+    color: #fff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 700;
+    min-width: 260px;
+    transition: all .2s;
+    direction: ltr;
+  }
+  .store-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  }
+  .store-badge .badge-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+  .store-badge .badge-text { line-height: 1.15; }
+  .store-badge .small {
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    display: block;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .store-badge .big {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    background: var(--bg-base);
+    padding: 72px 48px 32px;
+    position: relative;
+    z-index: 2;
+  }
+  .footer-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 64px;
+    margin-bottom: 48px;
+  }
+  .footer-brand { display: flex; flex-direction: column; align-items: flex-end; text-align: end; }
+  .footer-brand .brand-logo { height: 76px; margin-bottom: 24px; opacity: 0.95; }
+  .footer-brand p { color: var(--text-secondary); font-size: 14px; max-width: 360px; margin-bottom: 32px; }
+  .karnaf-mark {
+    display: inline-block;
+    text-decoration: none;
+    opacity: 0.85;
+    transition: opacity .2s;
+  }
+  .karnaf-mark:hover { opacity: 1; }
+  .karnaf-mark img { display: block; height: 56px; width: auto; }
+  .footer-col h4 {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  .footer-col a {
+    display: block;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 8px 0;
+    font-size: 14px;
+    transition: color .2s;
+  }
+  .footer-col a:hover { color: var(--cyan); }
+  .footer-bottom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    color: var(--text-tertiary);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 900px) {
+    nav { padding: 16px 20px; }
+    nav ul { display: none; }
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 120px 20px 60px;
+      text-align: center;
+    }
+    .mockup-wrap { margin-top: 40px; }
+    .section, footer { padding-left: 20px; padding-right: 20px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .moments {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(5, 200px);
+      padding: 0 20px;
+    }
+    .moment.large { grid-row: span 1; }
+    .lifestyle { grid-template-columns: 1fr; gap: 40px; }
+    .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+    .cta-row { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<nav>
+  <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="logo">
+  <ul>
+    <li><a href="#features">פיצ'רים</a></li>
+    <li><a href="#about">אודות</a></li>
+    <li><a href="#contact">צור קשר</a></li>
+  </ul>
+  <a href="#download" class="cta-nav">הורד עכשיו</a>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="eyebrow">מיועד לשיפוצי בית ופרויקטים אישיים</span>
+    <h1 class="display headline">
+      ניהול שיפוץ<br>
+      זה <span class="accent">בלאגן.</span><br>
+      <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="inline-logo">
+      עושה את זה פשוט.
+    </h1>
+    <p class="subheadline">
+      עקוב אחרי כל תשלום, הכנסה, ספק וחוב בפרויקט שלך —
+      במקום אחד, בעברית, בלי גיליונות אקסל.
+    </p>
+    <div class="cta-row">
+      <a href="#download" class="cta cta-primary">
+        <span class="cta-icon">⬇</span>
+        הורד חינם
+      </a>
+      <a href="#features" class="cta cta-secondary">
+        <span class="cta-icon">▶</span>
+        ראה איך זה עובד
+      </a>
+    </div>
+  </div>
+
+  <!-- Phone mockup — real app screen -->
+  <div class="mockup-wrap">
+    <div class="phone">
+      <img src="../assets/images/app-home.jpg" alt="SASOMM app home screen" class="phone-screen">
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES ========== -->
+<section class="section alt" id="features">
+  <div class="section-head">
+    <div class="section-label">— מה SA$OMM עושה —</div>
+    <h2 class="display section-title">שלוש יכולות. אפס בלבול.</h2>
+    <p class="section-sub">כל מה שצריך כדי לנהל פרויקט, בלי להסתבך באפליקציות מורכבות או באקסל אינסופי.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-mini"><img src="../assets/images/app-projects.jpg" alt="מסך פרויקטים"></div>
+      <h3 class="feature-title">הכל ביד אחת</h3>
+      <p class="feature-desc">יתרה, הוצאות, הכנסות וקטגוריות במסך אחד. תחליף בין שקל, דולר ויורו בלחיצה.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-mini"><img src="../assets/images/app-insights.jpg" alt="מסך תובנות"></div>
+      <h3 class="feature-title">להבין לאן הולך הכסף</h3>
+      <p class="feature-desc">גרפים חודשיים, ממוצעים, וחלוקת הוצאות לפי קטגוריה. תובנות אמיתיות, לא רק מספרים.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-mini"><img src="../assets/images/app-debts.jpg" alt="מסך חייבים"></div>
+      <h3 class="feature-title">לא לשכוח מי חייב למי</h3>
+      <p class="feature-desc">רשימת חייבים, תזכורות מתוזמנות, ושליחת WhatsApp ישירות מהאפליקציה. אפס תשלומים שנופלים.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== MOMENTS — real-life bento ========== -->
+<section class="section" style="padding-top: 0; padding-bottom: 80px;">
+  <div class="section-head" style="margin-bottom: 56px;">
+    <div class="section-label">— החיים האמיתיים —</div>
+    <h2 class="display section-title">הסיפור שמאחורי המספרים</h2>
+    <p class="section-sub">קבלן, בעל דירה, ועשרות תשלומים שעוברים מיד ליד. SASOMM נכנס בדיוק לשם.</p>
+  </div>
+  <div class="moments">
+    <div class="moment large">
+      <div class="caption">
+        <span class="label">— תשלום באתר</span>
+        <div class="title">קבלן מקבל.<br>בעל הבית מתעד.</div>
+      </div>
+    </div>
+    <div class="moment tm">
+      <div class="caption">
+        <span class="label">— שטרות, שקלים</span>
+        <div class="title">כל אגורה במקום</div>
+      </div>
+    </div>
+    <div class="moment tr">
+      <div class="caption">
+        <span class="label">— לחיצת יד</span>
+        <div class="title">סגירה נקייה</div>
+      </div>
+    </div>
+    <div class="moment bm">
+      <div class="caption">
+        <span class="label">— הסוף המתוק</span>
+        <div class="title">בית. מוכן. שלהם.</div>
+      </div>
+    </div>
+    <div class="moment br">
+      <div class="caption">
+        <span class="label">— מטבח חדש</span>
+        <div class="title">בלי הפתעות בתקציב</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== LIFESTYLE ========== -->
+<section class="section" id="about">
+  <div class="lifestyle">
+    <div class="lifestyle-photo"></div>
+    <div class="lifestyle-copy">
+      <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="lifestyle-brand">
+      <h3>זה לא רק אפליקציה.<br>זה שקט נפשי באמצע הכאוס.</h3>
+      <p>
+        שיפוץ בית זה עשרות ספקים, מאות תשלומים, ועשרות פעמים ש״שכחת להעביר לדני את ה-1,900 שקל״.
+      </p>
+      <p>
+        SA$OMM בנוי לקבלנים ובעלי דירות ישראלים שמנהלים פרויקט אמיתי — לא למחלקת חשבונאות. הכל בעברית, בלי הפתעות, בלי קורסים.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== DOWNLOAD ========== -->
+<section class="download-section" id="download">
+  <h2 class="display download-title">מוכן לשים<br>סדר בפרויקט?</h2>
+  <p class="download-sub">חינם להורדה. בעברית. עובד גם אופליין.</p>
+  <div class="store-badges">
+    <a href="#" class="store-badge" aria-label="Download on the App Store">
+      <svg class="badge-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path fill="#FFFFFF" d="M40.6 31.7c-.05-5.2 4.25-7.7 4.45-7.82-2.43-3.55-6.21-4.04-7.55-4.09-3.21-.33-6.27 1.89-7.9 1.89-1.63 0-4.14-1.85-6.81-1.8-3.5.05-6.74 2.04-8.54 5.17-3.65 6.32-.93 15.66 2.62 20.78 1.74 2.51 3.81 5.32 6.51 5.22 2.62-.1 3.61-1.69 6.78-1.69 3.17 0 4.07 1.69 6.84 1.63 2.83-.05 4.62-2.55 6.34-5.07 2-2.91 2.82-5.74 2.86-5.88-.06-.03-5.49-2.11-5.6-8.34zM35.6 16.2c1.44-1.75 2.41-4.18 2.15-6.6-2.07.09-4.59 1.39-6.07 3.13-1.33 1.55-2.49 4.02-2.18 6.4 2.31.18 4.66-1.18 6.1-2.93z"/>
+      </svg>
+      <div class="badge-text">
+        <span class="small">Download on the</span>
+        <span class="big">App Store</span>
+      </div>
+    </a>
+    <a href="#" class="store-badge" aria-label="Get it on Google Play">
+      <svg class="badge-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="gp1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#00C3FF"/>
+            <stop offset="1" stop-color="#00E2A0"/>
+          </linearGradient>
+          <linearGradient id="gp2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFD500"/>
+            <stop offset="1" stop-color="#FF9100"/>
+          </linearGradient>
+          <linearGradient id="gp3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FF3A44"/>
+            <stop offset="1" stop-color="#C31162"/>
+          </linearGradient>
+        </defs>
+        <path d="M14 8 L40 30 L14 52 Z" fill="url(#gp1)"/>
+        <path d="M14 8 L40 30 L30 40 Z" fill="url(#gp3)"/>
+        <path d="M14 52 L40 30 L30 20 Z" fill="url(#gp2)"/>
+        <path d="M40 30 L48 25 L48 35 Z" fill="#FFC107"/>
+      </svg>
+      <div class="badge-text">
+        <span class="small">GET IT ON</span>
+        <span class="big">Google Play</span>
+      </div>
+    </a>
+    <a href="#" class="store-badge" aria-label="Download from Microsoft Store">
+      <svg class="badge-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="6"  y="6"  width="22" height="22" fill="#F25022"/>
+        <rect x="32" y="6"  width="22" height="22" fill="#7FBA00"/>
+        <rect x="6"  y="32" width="22" height="22" fill="#00A4EF"/>
+        <rect x="32" y="32" width="22" height="22" fill="#FFB900"/>
+      </svg>
+      <div class="badge-text">
+        <span class="small">Download from</span>
+        <span class="big">Microsoft Store</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer id="contact">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="brand-logo">
+      <p>ניהול פיננסי לפרויקטים אישיים ולקבלני שיפוצים — פשוט, בעברית, בלי מורכבות.</p>
+      <a href="https://karnafstudio.co.il/" class="karnaf-mark" aria-label="Studio Karnaf">
+        <img src="../logo_karnaf_new-02.png" alt="Studio Karnaf" style="display:block; height:56px; width:auto;">
+      </a>
+    </div>
+    <div class="footer-col">
+      <h4>אפליקציה</h4>
+      <a href="#features">פיצ'רים</a>
+      <a href="#download">הורדה</a>
+      <a href="#about">אודות</a>
+    </div>
+    <div class="footer-col">
+      <h4>משפטי</h4>
+      <a href="privacy.html">מדיניות פרטיות</a>
+      <a href="terms.html">תנאי שימוש</a>
+      <a href="mailto:support@sasomm.com">צור קשר</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    © 2026 SA$OMM. כל הזכויות שמורות.
+  </div>
+</footer>
+
+</body>
+</html>

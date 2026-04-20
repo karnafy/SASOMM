@@ -288,6 +288,7 @@ export function useDebts(userId: string | undefined): UseDebtsResult {
 
       const transformedDebts: Debt[] = ((data as any[]) || []).map((row: any) => ({
         id: row.id,
+        direction: (row.direction || 'owed_to_me') as Debt['direction'],
         personName: row.person_name,
         personPhone: row.person_phone || undefined,
         amount: row.amount,
@@ -296,6 +297,7 @@ export function useDebts(userId: string | undefined): UseDebtsResult {
         projectName: row.project_name || undefined,
         notes: row.notes || undefined,
         reminderInterval: (row.reminder_interval || 'none') as ReminderInterval,
+        dueDate: row.due_date || undefined,
         lastReminderDate: row.last_reminder_date || undefined,
         nextReminderDate: row.next_reminder_date || undefined,
         createdAt: row.created_at || new Date().toISOString(),
@@ -317,6 +319,7 @@ export function useDebts(userId: string | undefined): UseDebtsResult {
 
     const dbData = {
       user_id: userId,
+      direction: debt.direction || 'owed_to_me',
       person_name: debt.personName,
       person_phone: debt.personPhone || null,
       amount: debt.amount,
@@ -325,6 +328,7 @@ export function useDebts(userId: string | undefined): UseDebtsResult {
       project_name: debt.projectName || null,
       notes: debt.notes || null,
       reminder_interval: debt.reminderInterval,
+      due_date: debt.dueDate || null,
       last_reminder_date: debt.lastReminderDate || null,
       next_reminder_date: debt.nextReminderDate || null,
       is_paid: debt.isPaid || false,

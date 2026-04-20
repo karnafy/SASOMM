@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SASOMM — מדיניות פרטיות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-lowest: #0D0B1A;
+    --bg-base:   #130827;
+    --bg-surface: #180D2C;
+    --bg-low:    #211635;
+    --cyan:      #00D9D9;
+    --text-primary: #EBDCFF;
+    --text-secondary: #A0A0B8;
+    --text-tertiary: #6B6B82;
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg-lowest);
+    color: var(--text-primary);
+    font-family: 'Assistant', sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(19, 8, 39, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  nav .logo { height: 48px; opacity: 0.95; }
+  nav a.back {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    transition: all .2s;
+  }
+  nav a.back:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
+
+  .doc {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 80px 48px 120px;
+  }
+  .eyebrow {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .updated {
+    color: var(--text-tertiary);
+    font-size: 14px;
+    margin-bottom: 56px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 48px;
+    margin-bottom: 16px;
+  }
+  p, li {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  ul, ol {
+    padding-inline-start: 24px;
+    margin-bottom: 16px;
+  }
+  li { margin-bottom: 8px; }
+  strong { color: var(--text-primary); font-weight: 700; }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  footer {
+    background: var(--bg-base);
+    padding: 32px 48px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  @media (max-width: 700px) {
+    nav { padding: 16px 20px; }
+    .doc { padding: 48px 20px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="hero-v1.html"><img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="logo"></a>
+  <a href="hero-v1.html" class="back">חזרה לדף הבית →</a>
+</nav>
+
+<main class="doc">
+  <span class="eyebrow">— מסמך משפטי —</span>
+  <h1>מדיניות פרטיות</h1>
+  <p class="updated">עודכן לאחרונה: 6 באפריל 2026</p>
+
+  <p>
+    SA$OMM ("האפליקציה", "אנחנו") מכבדת את פרטיות המשתמשים שלה ומחויבת להגן על המידע האישי שלך.
+    מסמך זה מסביר אילו נתונים אנחנו אוספים, איך אנחנו משתמשים בהם, ומה הזכויות שלך.
+  </p>
+
+  <h2>1. איזה מידע אנחנו אוספים</h2>
+  <p>SA$OMM אוספת את הסוגים הבאים של מידע:</p>
+  <ul>
+    <li><strong>פרטי חשבון:</strong> כתובת אימייל וסיסמה מוצפנת לצורך הזדהות.</li>
+    <li><strong>נתוני אפליקציה:</strong> פרויקטים, הוצאות, הכנסות, ספקים, חובות, וקבלות שאתה מזין באופן יזום.</li>
+    <li><strong>קבלות מצולמות:</strong> תמונות שאתה מעלה כצירוף לעסקאות, נשמרות בצורה מאובטחת בענן.</li>
+    <li><strong>נתוני שימוש בסיסיים:</strong> זמני התחברות וכשלונות גישה — לצורך אבטחה בלבד.</li>
+  </ul>
+  <p>
+    <strong>מה אנחנו לא אוספים:</strong> אנחנו לא קוראים את אנשי הקשר שלך, לא ניגשים לגלריית התמונות שלך
+    מעבר לתמונות שאתה מעלה במפורש, ולא עוקבים אחר מיקום ה-GPS שלך.
+  </p>
+
+  <h2>2. איך אנחנו משתמשים במידע</h2>
+  <ul>
+    <li>לספק לך את שירות ניהול הפרויקטים והכספים.</li>
+    <li>לסנכרן את הנתונים שלך בין מכשירים.</li>
+    <li>לשפר את האפליקציה ולתקן באגים.</li>
+    <li>לשלוח התראות תפעוליות (תזכורות חוב, אישורי שמירה) — לא דיוור שיווקי.</li>
+  </ul>
+
+  <h2>3. שמירה ואבטחה</h2>
+  <p>
+    כל הנתונים שלך נשמרים על שרתי <strong>Supabase</strong> (בנויים על PostgreSQL) עם הצפנה במנוחה ובמעבר.
+    הגישה למידע שלך מוגנת ב-Row Level Security — כלומר אף משתמש אחר, ואף עובד שלנו, לא יכול לראות את הנתונים שלך
+    אלא אם תאשר זאת במפורש.
+  </p>
+
+  <h2>4. שיתוף עם צדדים שלישיים</h2>
+  <p>
+    <strong>אנחנו לא מוכרים את המידע שלך.</strong> אנחנו לא משתפים אותו עם מפרסמים, ברוקרים של נתונים, או כל גוף שלישי
+    למטרות שיווקיות. שיתוף מוגבל לספקי תשתית הכרחיים בלבד:
+  </p>
+  <ul>
+    <li><strong>Supabase</strong> — מסד הנתונים והאימות.</li>
+    <li><strong>Expo / Apple / Google</strong> — לצורך התקנת האפליקציה והפצתה דרך החנויות הרשמיות.</li>
+  </ul>
+
+  <h2>5. הזכויות שלך</h2>
+  <p>בכל זמן, אתה יכול:</p>
+  <ul>
+    <li>לראות את כל המידע שאנחנו מחזיקים עליך — דרך מסכי האפליקציה.</li>
+    <li>לערוך או למחוק רישומים בודדים.</li>
+    <li>למחוק את החשבון שלך כולו, כולל כל הנתונים, דרך הגדרות → אזור אישי → מחיקת חשבון.</li>
+    <li>לבקש העתק מלא של הנתונים שלך בפורמט JSON, על ידי שליחת מייל ל-support@sasomm.com.</li>
+  </ul>
+
+  <h2>6. עוגיות ומעקב</h2>
+  <p>
+    האפליקציה הניידת לא משתמשת בעוגיות. אתר האינטרנט הזה משתמש רק בעוגיות חיוניות (session) ולא בעוגיות מעקב או פרסום.
+  </p>
+
+  <h2>7. ילדים מתחת לגיל 13</h2>
+  <p>
+    SA$OMM אינה מיועדת למשתמשים מתחת לגיל 13. אנחנו לא אוספים ביודעין מידע מילדים. אם נודע לנו שילד נרשם בטעות,
+    נמחק את החשבון מיידית.
+  </p>
+
+  <h2>8. שינויים במדיניות</h2>
+  <p>
+    אם נעדכן את מדיניות הפרטיות, נודיע לך באפליקציה לפני שהשינויים נכנסים לתוקף. תאריך העדכון האחרון מופיע בראש המסמך.
+  </p>
+
+  <h2>9. צור קשר</h2>
+  <p>
+    שאלות על מדיניות הפרטיות? כתוב לנו: <a href="mailto:support@sasomm.com">support@sasomm.com</a>
+  </p>
+</main>
+
+<footer>
+  © 2026 SA$OMM. כל הזכויות שמורות. &nbsp;·&nbsp;
+  <a href="terms.html" style="color: var(--text-tertiary);">תנאי שימוש</a>
+</footer>
+
+</body>
+</html>
