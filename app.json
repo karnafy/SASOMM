@@ -1,28 +1,28 @@
 {
   "expo": {
     "name": "SASOMM",
-    "slug": "monny",
+    "slug": "sasomm",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo-monny.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/logo-sasomm.png",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "backgroundColor": "#E8EEF5"
+      "backgroundColor": "#0D0B1A"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.monny.app"
+      "bundleIdentifier": "com.karnafstudio.sasomm"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E8EEF5"
+        "backgroundColor": "#0D0B1A"
       },
-      "package": "com.monny.app"
+      "package": "com.karnafstudio.sasomm"
     },
     "extra": {
       "eas": {
-        "projectId": "d8bbca95-9c0e-4cd4-a345-52d3076b39ec"
+        "projectId": "d4062d5e-5dde-4356-9815-e66731bdfaf5"
       }
     },
     "owner": "karnafstudio",
