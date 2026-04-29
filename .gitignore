@@ -25,8 +25,9 @@ Thumbs.db
 # Claude Code local
 .claude/settings.local.json
 
-# Generated backups
+# Generated backups (contain user PII — keep local only)
 sasomm_backup_*.json
+backups/
 
 # Temp / archives
 stitch.zip

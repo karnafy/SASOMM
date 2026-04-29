@@ -375,7 +375,7 @@ function AppContent() {
       budget: convertAmount(totalBudget),
       income: convertAmount(totalIncome),
       expenses: convertAmount(totalExpenses),
-      net: convertAmount(totalBudget - totalExpenses),
+      net: convertAmount(totalIncome - totalExpenses),
     };
   }, [projects, convertAmount]);
 
@@ -419,11 +419,12 @@ function AppContent() {
       case AppScreen.EDIT_ACTIVITY:
         return <AddExpense {...commonProps} projects={projects} suppliers={suppliers} onSave={handleTransactionSave} editActivity={activeActivity as any} />;
       case AppScreen.ADD_PROJECT:
-        return <AddProject {...commonProps} onSave={handleCreateProject} preselectedMainCategory={selectedCategory || undefined} />;
+        return <AddProject {...commonProps} projects={projects} onSave={handleCreateProject} preselectedMainCategory={selectedCategory || undefined} />;
       case AppScreen.EDIT_PROJECT:
         return (
           <AddProject
             {...commonProps}
+            projects={projects}
             project={activeProject}
             onSave={async (name, budget, cat, mainCat) => {
               const budgetInILS = budget / CONVERSION_RATES[globalCurrency];
