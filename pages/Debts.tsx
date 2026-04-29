@@ -25,7 +25,7 @@ const openExternalURL = (url: string) => {
 };
 import * as ImagePicker from 'expo-image-picker';
 import * as Contacts from 'expo-contacts';
-import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection } from '@monn/shared';
+import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -144,7 +144,27 @@ const Debts: React.FC<DebtsProps> = ({
 
   const handlePickContact = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('לא זמין', 'בחירת איש קשר זמינה רק בנייד');
+      // Web Contacts API is only available on mobile Chrome over HTTPS.
+      // Try it as a best-effort; otherwise tell the user to type manually.
+      const navAny = (typeof navigator !== 'undefined' ? (navigator as any) : null);
+      if (navAny?.contacts?.select) {
+        try {
+          const props = ['name', 'tel'];
+          const opts = { multiple: false };
+          const picked: any[] = await navAny.contacts.select(props, opts);
+          const c = picked?.[0];
+          if (c) {
+            const name = Array.isArray(c.name) ? c.name[0] : c.name;
+            const tel = Array.isArray(c.tel) ? c.tel[0] : c.tel;
+            if (name) setPersonName(String(name));
+            if (tel) setPersonPhone(String(tel));
+          }
+        } catch {
+          // user cancelled or unsupported
+        }
+        return;
+      }
+      Alert.alert('לא זמין', 'בחירת איש קשר זמינה רק בנייד (או ב-Chrome נייד עם HTTPS).');
       return;
     }
     try {
@@ -153,12 +173,33 @@ const Debts: React.FC<DebtsProps> = ({
         Alert.alert('שגיאה', 'נדרשת הרשאת גישה לאנשי קשר');
         return;
       }
-      const contact = await Contacts.presentContactPickerAsync();
+      const contact: any = await Contacts.presentContactPickerAsync();
       if (!contact) return;
-      if (contact.name) setPersonName(contact.name);
-      const phone = contact.phoneNumbers?.[0]?.number;
-      if (phone) setPersonPhone(phone);
+
+      // Build display name with fallbacks: name → firstName lastName → phone label
+      const fullName = [contact.firstName, contact.middleName, contact.lastName]
+        .filter((p) => typeof p === 'string' && p.trim().length > 0)
+        .join(' ')
+        .trim();
+      const resolvedName: string =
+        (typeof contact.name === 'string' && contact.name.trim().length > 0
+          ? contact.name.trim()
+          : fullName) || '';
+
+      const phoneEntry = Array.isArray(contact.phoneNumbers) ? contact.phoneNumbers[0] : undefined;
+      const resolvedPhone: string =
+        (phoneEntry && (phoneEntry.number || phoneEntry.digits)) || '';
+
+      if (resolvedName) setPersonName(resolvedName);
+      if (resolvedPhone) setPersonPhone(resolvedPhone);
+
+      if (!resolvedName && !resolvedPhone) {
+        // Surface raw fields so we can fix any unexpected shape.
+        console.warn('[handlePickContact] contact returned with no usable fields', contact);
+        Alert.alert('שים לב', 'לא הצלחנו לקרוא את פרטי איש הקשר. נסה ידנית.');
+      }
     } catch (err) {
+      console.error('[handlePickContact] error', err);
       Alert.alert('שגיאה', 'שגיאה בבחירת איש קשר');
     }
   };
@@ -231,19 +272,14 @@ const Debts: React.FC<DebtsProps> = ({
     resetForm();
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert(
-      'מחיקת חוב',
-      'האם אתה בטוח שברצונך למחוק חוב זה?',
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק',
-          style: 'destructive',
-          onPress: () => onDeleteDebt(id),
-        },
-      ]
-    );
+  const handleDelete = async (id: string) => {
+    const ok = await confirmDialog({
+      title: 'מחיקת חוב',
+      message: 'האם אתה בטוח שברצונך למחוק חוב זה?',
+      confirmText: 'מחק',
+      destructive: true,
+    });
+    if (ok) onDeleteDebt(id);
   };
 
   const handleMarkPaid = (debt: Debt) => {
@@ -291,54 +327,55 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
     ? projects.find((p) => p.id === selectedProjectId)?.name || ''
     : '';
 
+  const projectPickerModal = (
+    <Modal visible={showProjectPicker} transparent animationType="fade">
+      <Pressable
+        style={styles.pickerOverlay}
+        onPress={() => setShowProjectPicker(false)}
+      >
+        <View style={styles.pickerCard}>
+          <Text style={styles.pickerTitle}>{'בחר פרויקט'}</Text>
+          <TouchableOpacity
+            style={[
+              styles.pickerItem,
+              !selectedProjectId && styles.pickerItemActive,
+            ]}
+            onPress={() => {
+              setSelectedProjectId('');
+              setShowProjectPicker(false);
+            }}
+          >
+            <Text style={styles.pickerItemText}>{'ללא שיוך'}</Text>
+          </TouchableOpacity>
+          <ScrollView style={{ maxHeight: 300 }}>
+            {projects.map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[
+                  styles.pickerItem,
+                  selectedProjectId === p.id && styles.pickerItemActive,
+                ]}
+                onPress={() => {
+                  setSelectedProjectId(p.id);
+                  setShowProjectPicker(false);
+                }}
+              >
+                <Text style={styles.pickerItemText}>{p.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+
   return (
     <View style={styles.container}>
-      {/* Project Picker Modal */}
-      <Modal visible={showProjectPicker} transparent animationType="fade">
-        <Pressable
-          style={styles.pickerOverlay}
-          onPress={() => setShowProjectPicker(false)}
-        >
-          <View style={styles.pickerCard}>
-            <Text style={styles.pickerTitle}>{'בחר פרויקט'}</Text>
-            <TouchableOpacity
-              style={[
-                styles.pickerItem,
-                !selectedProjectId && styles.pickerItemActive,
-              ]}
-              onPress={() => {
-                setSelectedProjectId('');
-                setShowProjectPicker(false);
-              }}
-            >
-              <Text style={styles.pickerItemText}>{'ללא שיוך'}</Text>
-            </TouchableOpacity>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {projects.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[
-                    styles.pickerItem,
-                    selectedProjectId === p.id && styles.pickerItemActive,
-                  ]}
-                  onPress={() => {
-                    setSelectedProjectId(p.id);
-                    setShowProjectPicker(false);
-                  }}
-                >
-                  <Text style={styles.pickerItemText}>{p.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </Pressable>
-      </Modal>
-
       {/* Add/Edit Modal */}
       <Modal visible={showAddModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <Pressable
-            style={StyleSheet.absoluteFill}
+            style={styles.modalBackdrop}
             onPress={() => {
               setShowAddModal(false);
               resetForm();
@@ -427,7 +464,8 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
                 />
-                {Platform.OS !== 'web' && (
+                {(Platform.OS !== 'web' ||
+                  (typeof navigator !== 'undefined' && (navigator as any)?.contacts?.select)) && (
                   <TouchableOpacity
                     style={styles.contactPickerBtn}
                     onPress={handlePickContact}
@@ -574,7 +612,10 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                     color: colors.textPrimary,
                     fontFamily: fonts.semibold,
                     width: '100%',
+                    boxSizing: 'border-box',
                     outline: 'none',
+                    direction: 'ltr',
+                    textAlign: 'left',
                   } as any}
                 />
               ) : (
@@ -635,6 +676,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
               </View>
             </ScrollView>
           </View>
+          {projectPickerModal}
         </View>
       </Modal>
 
@@ -1230,6 +1272,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    flex: 1,
   },
   modalCard: {
     backgroundColor: colors.bgSecondary,

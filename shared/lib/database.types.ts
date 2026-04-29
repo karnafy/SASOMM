@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
   public: {
     Tables: {
       audit_log: {
@@ -100,6 +105,74 @@ export type Database = {
           },
         ]
       }
+      debts: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          direction: string
+          due_date: string | null
+          id: string
+          image_url: string | null
+          is_paid: boolean | null
+          last_reminder_date: string | null
+          next_reminder_date: string | null
+          notes: string | null
+          person_name: string
+          person_phone: string | null
+          project_id: string | null
+          project_name: string | null
+          reminder_interval: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          direction?: string
+          due_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_paid?: boolean | null
+          last_reminder_date?: string | null
+          next_reminder_date?: string | null
+          notes?: string | null
+          person_name: string
+          person_phone?: string | null
+          project_id?: string | null
+          project_name?: string | null
+          reminder_interval?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          direction?: string
+          due_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_paid?: boolean | null
+          last_reminder_date?: string | null
+          next_reminder_date?: string | null
+          notes?: string | null
+          person_name?: string
+          person_phone?: string | null
+          project_id?: string | null
+          project_name?: string | null
+          reminder_interval?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -115,6 +188,8 @@ export type Database = {
           payment_method: string | null
           project_id: string
           receipt_images: string[] | null
+          recurring_occurrence_index: number | null
+          recurring_template_id: string | null
           supplier_id: string | null
           tag: string | null
           title: string
@@ -135,6 +210,8 @@ export type Database = {
           payment_method?: string | null
           project_id: string
           receipt_images?: string[] | null
+          recurring_occurrence_index?: number | null
+          recurring_template_id?: string | null
           supplier_id?: string | null
           tag?: string | null
           title: string
@@ -155,6 +232,8 @@ export type Database = {
           payment_method?: string | null
           project_id?: string
           receipt_images?: string[] | null
+          recurring_occurrence_index?: number | null
+          recurring_template_id?: string | null
           supplier_id?: string | null
           tag?: string | null
           title?: string
@@ -167,6 +246,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_recurring_template_id_fkey"
+            columns: ["recurring_template_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_transactions"
             referencedColumns: ["id"]
           },
           {
@@ -200,6 +286,8 @@ export type Database = {
           payment_method: string | null
           project_id: string
           receipt_images: string[] | null
+          recurring_occurrence_index: number | null
+          recurring_template_id: string | null
           supplier_id: string | null
           tag: string | null
           title: string
@@ -220,6 +308,8 @@ export type Database = {
           payment_method?: string | null
           project_id: string
           receipt_images?: string[] | null
+          recurring_occurrence_index?: number | null
+          recurring_template_id?: string | null
           supplier_id?: string | null
           tag?: string | null
           title: string
@@ -240,6 +330,8 @@ export type Database = {
           payment_method?: string | null
           project_id?: string
           receipt_images?: string[] | null
+          recurring_occurrence_index?: number | null
+          recurring_template_id?: string | null
           supplier_id?: string | null
           tag?: string | null
           title?: string
@@ -255,6 +347,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "incomes_recurring_template_id_fkey"
+            columns: ["recurring_template_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_transactions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "incomes_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -266,6 +365,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_milestones: {
+        Row: {
+          allocation_id: string
+          created_at: string | null
+          id: string
+          is_paid: boolean | null
+          milestone_number: number
+          notes: string | null
+          paid_amount: number | null
+          paid_date: string | null
+          percentage: number
+          stage_name: string | null
+        }
+        Insert: {
+          allocation_id: string
+          created_at?: string | null
+          id?: string
+          is_paid?: boolean | null
+          milestone_number: number
+          notes?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          percentage: number
+          stage_name?: string | null
+        }
+        Update: {
+          allocation_id?: string
+          created_at?: string | null
+          id?: string
+          is_paid?: boolean | null
+          milestone_number?: number
+          notes?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          percentage?: number
+          stage_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_milestones_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "project_supplier_allocations"
             referencedColumns: ["id"]
           },
         ]
@@ -376,6 +522,57 @@ export type Database = {
           },
         ]
       }
+      project_supplier_allocations: {
+        Row: {
+          allocated_budget: number
+          created_at: string | null
+          currency: string
+          id: string
+          payment_count: number
+          project_id: string
+          supplier_id: string
+          total_paid: number
+          user_id: string
+        }
+        Insert: {
+          allocated_budget?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          payment_count?: number
+          project_id: string
+          supplier_id: string
+          total_paid?: number
+          user_id: string
+        }
+        Update: {
+          allocated_budget?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          payment_count?: number
+          project_id?: string
+          supplier_id?: string
+          total_paid?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_supplier_allocations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_supplier_allocations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget: number | null
@@ -441,6 +638,93 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_transactions: {
+        Row: {
+          amount: number
+          color: string | null
+          created_at: string
+          currency: string
+          day_of_month: number
+          end_date: string | null
+          frequency: string
+          icon: string | null
+          id: string
+          includes_vat: boolean
+          is_active: boolean
+          last_generated_until_date: string | null
+          payment_method: string | null
+          project_id: string
+          start_date: string
+          supplier_id: string | null
+          tag: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          color?: string | null
+          created_at?: string
+          currency?: string
+          day_of_month: number
+          end_date?: string | null
+          frequency?: string
+          icon?: string | null
+          id?: string
+          includes_vat?: boolean
+          is_active?: boolean
+          last_generated_until_date?: string | null
+          payment_method?: string | null
+          project_id: string
+          start_date: string
+          supplier_id?: string | null
+          tag?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          color?: string | null
+          created_at?: string
+          currency?: string
+          day_of_month?: number
+          end_date?: string | null
+          frequency?: string
+          icon?: string | null
+          id?: string
+          includes_vat?: boolean
+          is_active?: boolean
+          last_generated_until_date?: string | null
+          payment_method?: string | null
+          project_id?: string
+          start_date?: string
+          supplier_id?: string | null
+          tag?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -511,17 +795,125 @@ export type Database = {
   }
 }
 
-// Helper types for easier usage
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type TablesInsert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
-export type TablesUpdate<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-// Convenience type aliases
-export type Profile = Tables<'profiles'>
-export type Supplier = Tables<'suppliers'>
-export type Contact = Tables<'contacts'>
-export type Project = Tables<'projects'>
-export type Expense = Tables<'expenses'>
-export type Income = Tables<'incomes'>
-export type ProjectActivity = Tables<'project_activities'>
-export type AuditLog = Tables<'audit_log'>
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

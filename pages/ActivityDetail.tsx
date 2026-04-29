@@ -23,7 +23,7 @@ const openExternalURL = (url: string) => {
     Linking.openURL(url);
   }
 };
-import { AppScreen, Expense, Currency, Supplier, Project } from '@monn/shared';
+import { AppScreen, Expense, Currency, Supplier, Project, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { ScreenTopBar } from '../components/ui/ScreenTopBar';
 import { DarkCard } from '../components/ui/DarkCard';
@@ -38,6 +38,11 @@ interface ActivityDetailProps {
   suppliers: Supplier[];
   project?: Project;
   onDeleteProject?: (id: string) => void;
+  onDeleteTransaction?: (
+    type: 'expense' | 'income',
+    transactionId: string,
+    projectId: string
+  ) => Promise<void>;
   globalCurrency: Currency;
   convertAmount: (amount: number) => number;
 }
@@ -55,12 +60,15 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({
   suppliers,
   project,
   onDeleteProject,
+  onDeleteTransaction,
   globalCurrency,
   convertAmount,
 }) => {
   const [showFullImage, setShowFullImage] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const supplier = suppliers.find((s) => s.id === expense.supplierId);
 
@@ -108,7 +116,10 @@ _נשלח מאפליקציית SASOMM_`;
     const symbol = currencySymbols[globalCurrency];
     const spent = convertAmount(project.spent);
     const budget = convertAmount(project.budget);
-    const remainingVal = budget - spent;
+    const income = convertAmount(
+      (project.incomes || []).reduce((s, i) => s + i.amount, 0),
+    );
+    const remainingVal = income - spent;
     const percentUsed = budget > 0 ? Math.round((spent / budget) * 100) : 0;
 
     return `*דו"ח פרויקט: ${project.name}*
@@ -116,6 +127,7 @@ _נשלח מאפליקציית SASOMM_`;
 *סטטוס:* ${project.status === 'over' ? 'חריגה' : project.status === 'warning' ? 'אזהרה' : 'תקין'}
 *קטגוריה:* ${project.category}
 *תקציב:* ${symbol}${budget.toLocaleString()}
+*הכנסות:* ${symbol}${income.toLocaleString()}
 *שולם:* ${symbol}${spent.toLocaleString()} (${percentUsed}%)
 *יתרה:* ${symbol}${remainingVal.toLocaleString()}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
@@ -144,23 +156,36 @@ _הופק מאפליקציית SASOMM_`;
     setShowMenu(false);
   };
 
-  const handleDeleteProject = () => {
+  const handleDeleteProject = async () => {
     if (!project) return;
-    Alert.alert(
-      'מחיקת פרויקט',
-      `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק',
-          style: 'destructive',
-          onPress: () => {
-            onDeleteProject?.(project.id);
-            setShowMenu(false);
-          },
-        },
-      ]
-    );
+    const ok = await confirmDialog({
+      title: 'מחיקת פרויקט',
+      message: `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
+      confirmText: 'מחק',
+      destructive: true,
+    });
+    if (ok) {
+      onDeleteProject?.(project.id);
+      setShowMenu(false);
+    }
+  };
+
+  const performDeleteTransaction = async () => {
+    if (!onDeleteTransaction || !expense?.id || !expense?.projectId) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteTransaction(
+        (expense.type === 'income' ? 'income' : 'expense') as 'expense' | 'income',
+        expense.id,
+        expense.projectId
+      );
+      setShowDeleteConfirm(false);
+      goBack();
+    } catch {
+      // error swallowed; UI stays open for retry
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const amountColor =
@@ -295,6 +320,39 @@ _הופק מאפליקציית SASOMM_`;
               </TouchableOpacity>
             )}
           </View>
+        </Pressable>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal visible={showDeleteConfirm} transparent animationType="fade">
+        <Pressable
+          style={styles.menuOverlay}
+          onPress={() => !isDeleting && setShowDeleteConfirm(false)}
+        >
+          <Pressable style={styles.confirmCard}>
+            <Text style={styles.confirmTitle}>{'מחיקת תנועה'}</Text>
+            <Text style={styles.confirmText}>
+              {expense?.recurringTemplateId
+                ? 'התנועה הזו היא חלק מסדרה חוזרת. המחיקה תסיר רק את המופע הזה — שאר הסדרה תישאר ללא שינוי.'
+                : `האם למחוק את התנועה "${expense?.title || ''}"?`}
+            </Text>
+            <View style={styles.confirmRow}>
+              <TouchableOpacity
+                style={[styles.confirmBtn, styles.confirmCancel]}
+                onPress={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                <Text style={styles.confirmCancelText}>{'ביטול'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, styles.confirmDanger]}
+                onPress={performDeleteTransaction}
+                disabled={isDeleting}
+              >
+                <Text style={styles.confirmDangerText}>{isDeleting ? 'מוחק…' : 'מחק'}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
         </Pressable>
       </Modal>
 
@@ -602,7 +660,7 @@ _הופק מאפליקציית SASOMM_`;
           <GradientButton
             label="מחק"
             variant="danger"
-            onPress={handleDeleteProject}
+            onPress={() => setShowDeleteConfirm(true)}
             style={styles.actionBtn}
           />
         </View>
@@ -1141,6 +1199,63 @@ const styles = StyleSheet.create({
     backgroundColor: colors.subtleBorder,
     marginVertical: 4,
     marginHorizontal: spacing.sm,
+  },
+
+  // Delete confirmation modal
+  confirmCard: {
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    padding: spacing.xl,
+    width: '100%',
+    maxWidth: 340,
+    gap: spacing.md,
+  },
+  confirmTitle: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    color: colors.textPrimary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  confirmText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+  confirmRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  confirmCancel: {
+    backgroundColor: colors.bgTertiary,
+    borderColor: colors.subtleBorder,
+  },
+  confirmCancelText: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
+  },
+  confirmDanger: {
+    backgroundColor: 'rgba(255,77,106,0.10)',
+    borderColor: 'rgba(255,77,106,0.30)',
+  },
+  confirmDangerText: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    color: colors.error,
   },
 });
 

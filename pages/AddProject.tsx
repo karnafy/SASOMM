@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ interface AddProjectProps {
   goBack: () => void;
   onSave: (name: string, budget: number, category: string, mainCategory?: MainCategory) => Promise<void>;
   project?: Project;
+  projects?: Project[];
   preselectedMainCategory?: MainCategory;
   globalCurrency: Currency;
   convertAmount: (amount: number, from?: Currency, to?: Currency) => number;
@@ -92,10 +93,18 @@ const AddProject: React.FC<AddProjectProps> = ({
   goBack,
   onSave,
   project,
+  projects,
   preselectedMainCategory,
   globalCurrency,
   convertAmount,
 }) => {
+  const availableCategories = useMemo(() => {
+    const existing = new Set<string>();
+    (projects || []).forEach((p) => {
+      if (p.category) existing.add(p.category);
+    });
+    return Array.from(new Set([...SUB_CATEGORIES, ...Array.from(existing)]));
+  }, [projects]);
   const [name, setName] = useState(project?.name || '');
   const [budget, setBudget] = useState(
     project ? convertAmount(project.budget).toFixed(0) : ''
@@ -270,7 +279,7 @@ const AddProject: React.FC<AddProjectProps> = ({
           </Text>
           {!isAddingCategory ? (
             <View style={styles.chipsRow}>
-              {SUB_CATEGORIES.map((cat) => (
+              {availableCategories.map((cat) => (
                 <TouchableOpacity
                   key={cat}
                   style={[

@@ -1,6 +1,6 @@
 import type {
   Project, Expense, Income, Supplier, ProjectActivity, AuditEntry,
-  Currency, MainCategory
+  Currency, MainCategory, RecurringTransaction, RecurringFrequency
 } from '../types';
 import type { Tables, TablesInsert } from './database.types';
 
@@ -26,6 +26,8 @@ export function supabaseExpenseToLocal(row: Tables<'expenses'>): Expense {
     paymentMethod: row.payment_method || undefined,
     includesVat: row.includes_vat || false,
     created_at: (row as any).created_at || undefined,
+    recurringTemplateId: row.recurring_template_id || undefined,
+    recurringOccurrenceIndex: row.recurring_occurrence_index ?? undefined,
   };
 }
 
@@ -47,6 +49,8 @@ export function supabaseIncomeToLocal(row: Tables<'incomes'>): Income {
     paymentMethod: row.payment_method || undefined,
     includesVat: row.includes_vat || false,
     created_at: (row as any).created_at || undefined,
+    recurringTemplateId: row.recurring_template_id || undefined,
+    recurringOccurrenceIndex: row.recurring_occurrence_index ?? undefined,
   };
 }
 
@@ -217,6 +221,70 @@ export function localActivityToSupabase(
     supplier_id: activity.supplierId || null,
     receipt_images: activity.receiptImages || null,
     transaction_id: activity.transactionId || null,
+  };
+}
+
+// ============================================
+// Recurring Transaction Transformers
+// ============================================
+
+export function supabaseRecurringToLocal(row: Tables<'recurring_transactions'>): RecurringTransaction {
+  return {
+    id: row.id,
+    type: row.type as 'expense' | 'income',
+    projectId: row.project_id,
+    amount: row.amount,
+    currency: (row.currency as Currency) || 'ILS',
+    title: row.title,
+    tag: row.tag || undefined,
+    icon: row.icon || undefined,
+    color: row.color || undefined,
+    supplierId: row.supplier_id || undefined,
+    paymentMethod: row.payment_method || undefined,
+    includesVat: row.includes_vat,
+    frequency: (row.frequency as RecurringFrequency) || 'monthly',
+    dayOfMonth: row.day_of_month,
+    startDate: row.start_date,
+    endDate: row.end_date || undefined,
+    isActive: row.is_active,
+    lastGeneratedUntilDate: row.last_generated_until_date || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function localRecurringToSupabase(
+  template: Partial<RecurringTransaction>,
+  userId: string
+): TablesInsert<'recurring_transactions'> {
+  if (!template.projectId) throw new Error('projectId is required');
+  if (!template.title) throw new Error('title is required');
+  if (template.type !== 'expense' && template.type !== 'income') {
+    throw new Error('type must be expense or income');
+  }
+  if (template.dayOfMonth === undefined) throw new Error('dayOfMonth is required');
+  if (!template.startDate) throw new Error('startDate is required');
+
+  return {
+    id: template.id,
+    user_id: userId,
+    project_id: template.projectId,
+    type: template.type,
+    amount: template.amount ?? 0,
+    currency: template.currency || 'ILS',
+    title: template.title,
+    tag: template.tag || null,
+    icon: template.icon || null,
+    color: template.color || null,
+    supplier_id: template.supplierId || null,
+    payment_method: template.paymentMethod || null,
+    includes_vat: template.includesVat ?? false,
+    frequency: template.frequency || 'monthly',
+    day_of_month: template.dayOfMonth,
+    start_date: template.startDate,
+    end_date: template.endDate || null,
+    is_active: template.isActive ?? true,
+    last_generated_until_date: template.lastGeneratedUntilDate || null,
   };
 }
 

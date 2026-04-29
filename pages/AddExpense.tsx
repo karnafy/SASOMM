@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { AppScreen, Project, Supplier, Currency, Expense, Income } from '@monn/shared';
+import { AppScreen, Project, Supplier, Currency, Expense, Income, RecurringTransaction } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { ScreenTopBar } from '../components/ui/ScreenTopBar';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
@@ -41,6 +41,23 @@ interface AddExpenseProps {
     id?: string,
     originalType?: 'expense' | 'income'
   ) => Promise<void>;
+  onSaveRecurring?: (template: Partial<RecurringTransaction>) => Promise<void>;
+  onApplyRecurringEdit?: (
+    templateId: string,
+    type: 'expense' | 'income',
+    scope: 'this_and_future' | 'all',
+    cursorDate: string,
+    updates: {
+      title?: string;
+      tag?: string;
+      amount?: number;
+      currency?: Currency;
+      paymentMethod?: string;
+      includesVat?: boolean;
+      supplierId?: string;
+    }
+  ) => Promise<void>;
+  onPauseTemplate?: (templateId: string) => Promise<void>;
   autoCapture?: boolean;
   initialType?: 'expense' | 'income';
   preselectedSupplierId?: string | null;
@@ -80,6 +97,9 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   projects,
   suppliers,
   onSave,
+  onSaveRecurring,
+  onApplyRecurringEdit,
+  onPauseTemplate,
   autoCapture,
   initialType = 'expense',
   preselectedSupplierId,
@@ -122,6 +142,23 @@ const AddExpense: React.FC<AddExpenseProps> = ({
     editActivity?.includesVat !== undefined ? editActivity.includesVat : draft?.includesVat ?? true
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [debugStatus, setDebugStatus] = useState<string>('');
+
+  // ----- Recurring template state -----
+  const todayDate = useMemo(() => new Date(), []);
+  const editIsRecurringInstance = !!(editActivity as any)?.recurringTemplateId;
+  const initialDayOfMonth = useMemo(() => {
+    if (editActivity?.date) {
+      const [dd] = editActivity.date.split('.');
+      const n = parseInt(dd, 10);
+      if (!isNaN(n) && n >= 1 && n <= 31) return String(n);
+    }
+    return String(todayDate.getDate());
+  }, [editActivity, todayDate]);
+  const [isRecurring, setIsRecurring] = useState(editIsRecurringInstance);
+  const [dayOfMonth, setDayOfMonth] = useState<string>(initialDayOfMonth);
+  const [hasEndDate, setHasEndDate] = useState(false);
+  const [endDateInput, setEndDateInput] = useState<string>(''); // DD.MM.YYYY
 
   // Clear draft after restoring
   useEffect(() => {
@@ -134,9 +171,28 @@ const AddExpense: React.FC<AddExpenseProps> = ({
   const [projectPickerVisible, setProjectPickerVisible] = useState(false);
   const [supplierPickerVisible, setSupplierPickerVisible] = useState(false);
   const [imagePickerVisible, setImagePickerVisible] = useState(false);
+  const [recurringScopeVisible, setRecurringScopeVisible] = useState(false);
+
+  // Recurring instance detection (only meaningful when editing existing tx)
+  const editingRecurringInstance = !!(
+    editActivity && (editActivity as any).recurringTemplateId
+  );
+  const recurringTemplateId: string | undefined = (editActivity as any)?.recurringTemplateId;
 
   const isExp = transactionType === 'expense';
-  const activeCategories = isExp ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const activeCategories = useMemo(() => {
+    const defaults = isExp ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+    const existing = new Set<string>();
+    projects.forEach((p) => {
+      const rows = isExp ? p.expenses : (p.incomes || []);
+      rows.forEach((row: any) => {
+        if (row.tag && typeof row.tag === 'string') {
+          existing.add(row.tag);
+        }
+      });
+    });
+    return Array.from(new Set([...defaults, ...Array.from(existing)]));
+  }, [isExp, projects]);
   const typeColor = isExp ? colors.error : colors.success;
 
   useEffect(() => {
@@ -152,14 +208,12 @@ const AddExpense: React.FC<AddExpenseProps> = ({
     }
   }, [autoCapture]);
 
-  const handleSave = useCallback(async () => {
-    if (isSaving) return;
+  const performTransactionSave = useCallback(async (
+    recurringScope: 'this' | 'this_and_future' | 'all' = 'this'
+  ) => {
     const numAmount = parseFloat(amount);
     const finalCategory = isAddingCategory ? newCategory : category;
-    if (isNaN(numAmount) || numAmount <= 0) {
-      Alert.alert('שגיאה', 'אנא הזן סכום תקין');
-      return;
-    }
+    setDebugStatus('F: קורא ל‑onSave...');
     setIsSaving(true);
     try {
       await onSave(
@@ -176,15 +230,196 @@ const AddExpense: React.FC<AddExpenseProps> = ({
         editActivity?.id,
         editActivity?.type
       );
-    } catch {
+      setDebugStatus('G: onSave הצליח');
+
+      // Propagate edits across the recurring series if asked.
+      if (
+        recurringScope !== 'this' &&
+        recurringTemplateId &&
+        onApplyRecurringEdit &&
+        editActivity
+      ) {
+        // editActivity.date is DD.MM.YYYY (display format). Convert to YYYY-MM-DD.
+        const [dd, mm, yyyy] = (editActivity.date || '').split('.');
+        const cursorDateIso = yyyy && mm && dd
+          ? `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
+          : new Date().toISOString().split('T')[0];
+
+        // amount is in user-display currency; the underlying mutation already
+        // converted to ILS for the single row, so we mirror that here.
+        // We don't have CONVERSION_RATES exposed on this component; instead, pass the
+        // user-entered amount + currency so the App layer can normalize once.
+        await onApplyRecurringEdit(
+          recurringTemplateId,
+          (editActivity.type || 'expense') as 'expense' | 'income',
+          recurringScope,
+          cursorDateIso,
+          {
+            title: description,
+            tag: finalCategory,
+            amount: numAmount,
+            currency,
+            paymentMethod,
+            includesVat,
+            supplierId: selectedSupplierId || undefined,
+          }
+        );
+      }
+    } catch (err: any) {
+      setDebugStatus(`H: שגיאה — ${err?.message || String(err)}`);
       Alert.alert('שגיאה', 'שגיאה בשמירה. נסה שוב.');
     } finally {
       setIsSaving(false);
     }
   }, [
-    isSaving, amount, isAddingCategory, newCategory, category, transactionType,
+    amount, isAddingCategory, newCategory, category, transactionType,
     selectedProjectId, currency, description, selectedSupplierId, receiptImages,
     paymentMethod, includesVat, editActivity, onSave,
+    recurringTemplateId, onApplyRecurringEdit,
+  ]);
+
+  const handleSave = useCallback(async () => {
+    setDebugStatus(`A: כפתור נלחץ (amount=${amount}, project=${selectedProjectId ? 'OK' : 'MISSING'}, type=${transactionType}, isRec=${isRecurring})`);
+    if (isSaving) {
+      setDebugStatus('B: כבר שומר, נחסם');
+      return;
+    }
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      setDebugStatus('C: סכום לא תקין');
+      Alert.alert('שגיאה', 'אנא הזן סכום תקין');
+      return;
+    }
+    if (!selectedProjectId) {
+      setDebugStatus('D: לא נבחר פרויקט');
+      Alert.alert('שגיאה', 'אנא בחר פרויקט');
+      return;
+    }
+    setDebugStatus('E: עובר ל‑performTransactionSave');
+
+    // ----- EDIT MODE: handle conversions (recurring on/off) -----
+    if (editActivity) {
+      // Editing recurring instance + toggle still ON → ask scope (existing behavior)
+      if (editIsRecurringInstance && isRecurring) {
+        setRecurringScopeVisible(true);
+        return;
+      }
+      // Editing recurring instance + toggle turned OFF → save the row + pause series
+      if (editIsRecurringInstance && !isRecurring) {
+        await performTransactionSave('this');
+        if (recurringTemplateId && onPauseTemplate) {
+          try { await onPauseTemplate(recurringTemplateId); } catch { /* non-fatal */ }
+        }
+        return;
+      }
+      // Editing one-off + toggle turned ON → save the row + create a new template
+      if (!editIsRecurringInstance && isRecurring) {
+        if (!onSaveRecurring) {
+          await performTransactionSave('this');
+          return;
+        }
+        const finalCategory = isAddingCategory ? newCategory : category;
+        const dom = parseInt(dayOfMonth, 10);
+        if (isNaN(dom) || dom < 1 || dom > 31) {
+          Alert.alert('שגיאה', 'יום בחודש חייב להיות בין 1 ל‑31');
+          return;
+        }
+        let endDateIso: string | undefined;
+        if (hasEndDate) {
+          const m = endDateInput.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+          if (!m) {
+            Alert.alert('שגיאה', 'תאריך סיום חייב להיות בפורמט DD.MM.YYYY');
+            return;
+          }
+          const [, dd, mm, yyyy] = m;
+          endDateIso = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+        }
+        const startDateIso = new Date().toISOString().split('T')[0];
+        await performTransactionSave('this');
+        try {
+          await onSaveRecurring({
+            type: transactionType,
+            projectId: selectedProjectId,
+            amount: numAmount,
+            currency,
+            title: description || finalCategory,
+            tag: finalCategory,
+            supplierId: selectedSupplierId || undefined,
+            paymentMethod,
+            includesVat,
+            frequency: 'monthly',
+            dayOfMonth: dom,
+            startDate: startDateIso,
+            endDate: endDateIso,
+            isActive: true,
+          });
+        } catch {
+          Alert.alert('שגיאה', 'התנועה נשמרה אך יצירת התבנית נכשלה');
+        }
+        return;
+      }
+      // Editing one-off, toggle stays off → standard one-row save
+      await performTransactionSave('this');
+      return;
+    }
+
+    // ----- CREATE MODE: recurring template branch -----
+    if (isRecurring && !editActivity) {
+      if (!onSaveRecurring) {
+        Alert.alert('שגיאה', 'הפעולה לא זמינה');
+        return;
+      }
+      const finalCategory = isAddingCategory ? newCategory : category;
+      const dom = parseInt(dayOfMonth, 10);
+      if (isNaN(dom) || dom < 1 || dom > 31) {
+        Alert.alert('שגיאה', 'יום בחודש חייב להיות בין 1 ל‑31');
+        return;
+      }
+      let endDateIso: string | undefined;
+      if (hasEndDate) {
+        const m = endDateInput.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        if (!m) {
+          Alert.alert('שגיאה', 'תאריך סיום חייב להיות בפורמט DD.MM.YYYY');
+          return;
+        }
+        const [, dd, mm, yyyy] = m;
+        endDateIso = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+      }
+      const startDateIso = new Date().toISOString().split('T')[0];
+      setIsSaving(true);
+      try {
+        await onSaveRecurring({
+          type: transactionType,
+          projectId: selectedProjectId,
+          amount: numAmount,
+          currency,
+          title: description || finalCategory,
+          tag: finalCategory,
+          supplierId: selectedSupplierId || undefined,
+          paymentMethod,
+          includesVat,
+          frequency: 'monthly',
+          dayOfMonth: dom,
+          startDate: startDateIso,
+          endDate: endDateIso,
+          isActive: true,
+        });
+      } catch {
+        Alert.alert('שגיאה', 'שגיאה בשמירה. נסה שוב.');
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    await performTransactionSave('this');
+  }, [
+    isSaving, amount, selectedProjectId, editActivity, editingRecurringInstance,
+    editIsRecurringInstance, recurringTemplateId, onPauseTemplate,
+    isRecurring, onSaveRecurring, dayOfMonth, hasEndDate, endDateInput,
+    transactionType, currency, description, selectedSupplierId, paymentMethod,
+    includesVat, isAddingCategory, newCategory, category,
+    performTransactionSave,
   ]);
 
   const handlePickFromCamera = useCallback(async () => {
@@ -352,6 +587,72 @@ const AddExpense: React.FC<AddExpenseProps> = ({
             )}
           />
         </View>
+      </Pressable>
+    </Modal>
+  );
+
+  const renderRecurringScopePicker = () => (
+    <Modal visible={recurringScopeVisible} transparent animationType="fade">
+      <Pressable style={styles.modalOverlay} onPress={() => !isSaving && setRecurringScopeVisible(false)}>
+        <Pressable style={styles.scopeCard}>
+          <Text style={styles.scopeTitle}>{'עריכת סדרה חוזרת'}</Text>
+          <Text style={styles.scopeSubtitle}>
+            {'התנועה הזו היא חלק מסדרה חודשית. החלת השינוי על:'}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.scopeOption}
+            disabled={isSaving}
+            onPress={async () => {
+              setRecurringScopeVisible(false);
+              await performTransactionSave('this');
+            }}
+          >
+            <MaterialIcons name="event" size={22} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.scopeOptionTitle}>{'רק התנועה הזו'}</Text>
+              <Text style={styles.scopeOptionDesc}>{'שאר החודשים יישארו ללא שינוי'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.scopeOption}
+            disabled={isSaving}
+            onPress={async () => {
+              setRecurringScopeVisible(false);
+              await performTransactionSave('this_and_future');
+            }}
+          >
+            <MaterialIcons name="event-available" size={22} color={colors.warning} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.scopeOptionTitle}>{'מהתנועה הזו ואילך'}</Text>
+              <Text style={styles.scopeOptionDesc}>{'התנועות הקודמות יישארו ללא שינוי'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.scopeOption}
+            disabled={isSaving}
+            onPress={async () => {
+              setRecurringScopeVisible(false);
+              await performTransactionSave('all');
+            }}
+          >
+            <MaterialIcons name="all-inclusive" size={22} color={colors.accent} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.scopeOptionTitle}>{'כל התנועות בסדרה'}</Text>
+              <Text style={styles.scopeOptionDesc}>{'כולל עבר ועתיד'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.scopeCancel}
+            onPress={() => setRecurringScopeVisible(false)}
+            disabled={isSaving}
+          >
+            <Text style={styles.scopeCancelText}>{'ביטול'}</Text>
+          </TouchableOpacity>
+        </Pressable>
       </Pressable>
     </Modal>
   );
@@ -621,6 +922,59 @@ const AddExpense: React.FC<AddExpenseProps> = ({
           )}
         </View>
 
+        {/* Recurring section — visible always */}
+        {true && (
+          <View style={styles.card}>
+            <View style={styles.vatCardInner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabelLeft}>{isExp ? 'הוצאה קבועה (חודשית)' : 'הכנסה קבועה (חודשית)'}</Text>
+                <Text style={styles.recurringHint}>
+                  {editActivity
+                    ? (editIsRecurringInstance
+                        ? 'מצב נוכחי: חלק מסדרה. כיבוי יעצור את הסדרה (מופעים עתידיים לא ייווצרו).'
+                        : 'הפעלה תיצור סדרה חוזרת חדשה על בסיס הערכים בטופס.')
+                    : 'תיווצר בכל חודש אוטומטית — אפשר לעצור בכל רגע במסך הניהול.'}
+                </Text>
+              </View>
+              <ToggleSwitch value={isRecurring} onToggle={() => setIsRecurring((v) => !v)} />
+            </View>
+
+            {isRecurring && (
+              <View style={styles.recurringFields}>
+                <View style={styles.recurringRow}>
+                  <Text style={styles.recurringLabel}>{'יום בחודש'}</Text>
+                  <TextInput
+                    style={styles.recurringInputSmall}
+                    value={dayOfMonth}
+                    onChangeText={setDayOfMonth}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    textAlign="center"
+                  />
+                </View>
+                <Text style={styles.recurringHint}>
+                  {'אם החודש קצר מהיום שבחרת — החיוב ביום האחרון של החודש.'}
+                </Text>
+
+                <View style={[styles.recurringRow, { marginTop: spacing.md }]}>
+                  <Text style={styles.recurringLabel}>{'תאריך סיום (אופציונלי)'}</Text>
+                  <ToggleSwitch value={hasEndDate} onToggle={() => setHasEndDate((v) => !v)} />
+                </View>
+                {hasEndDate && (
+                  <TextInput
+                    style={[styles.textInput, { marginTop: spacing.sm }]}
+                    placeholder="DD.MM.YYYY"
+                    placeholderTextColor={colors.textTertiary}
+                    value={endDateInput}
+                    onChangeText={setEndDateInput}
+                    textAlign="left"
+                  />
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Receipt Images */}
         <View style={styles.card}>
           <Text style={styles.cardLabelLeft}>{'תיעוד'}</Text>
@@ -649,6 +1003,9 @@ const AddExpense: React.FC<AddExpenseProps> = ({
 
       {/* Save Button - Fixed Footer */}
       <View style={styles.footer}>
+        {debugStatus ? (
+          <Text style={styles.debugStatusText}>{debugStatus}</Text>
+        ) : null}
         <GradientButton
           label={
             isSaving
@@ -666,6 +1023,7 @@ const AddExpense: React.FC<AddExpenseProps> = ({
       {/* Modals */}
       {renderProjectPicker()}
       {renderSupplierPicker()}
+      {renderRecurringScopePicker()}
 
       {/* Image Source Picker Modal (native only, web uses file picker directly) */}
       <Modal visible={imagePickerVisible} transparent animationType="fade">
@@ -840,6 +1198,46 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     writingDirection: 'rtl',
   },
+  vatCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  recurringFields: {
+    marginTop: spacing.lg,
+  },
+  recurringRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  recurringLabel: {
+    fontSize: 13,
+    fontFamily: fonts.semibold,
+    color: colors.textSecondary,
+    writingDirection: 'rtl',
+  },
+  recurringInputSmall: {
+    width: 60,
+    height: 40,
+    borderRadius: radii.md,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontFamily: fonts.bold,
+  },
+  recurringHint: {
+    fontSize: 11,
+    fontFamily: fonts.regular,
+    color: colors.textTertiary,
+    writingDirection: 'rtl',
+    marginTop: 6,
+    lineHeight: 16,
+  },
 
   // Chips (payment methods, categories)
   chipsRow: {
@@ -1009,6 +1407,17 @@ const styles = StyleSheet.create({
   saveButton: {
     width: '100%',
   },
+  debugStatusText: {
+    fontSize: 11,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    backgroundColor: colors.bgTertiary,
+    padding: spacing.sm,
+    borderRadius: radii.sm,
+    marginBottom: spacing.sm,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
 
   // Modal
   modalOverlay: {
@@ -1062,6 +1471,69 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   pickerItemPlaceholder: {
+    color: colors.textTertiary,
+  },
+
+  // Recurring scope picker
+  scopeCard: {
+    backgroundColor: colors.bgSecondary,
+    borderTopLeftRadius: radii['3xl'],
+    borderTopRightRadius: radii['3xl'],
+    borderTopWidth: 1,
+    borderColor: colors.subtleBorder,
+    padding: spacing.xl,
+    paddingBottom: 40,
+    gap: spacing.md,
+  },
+  scopeTitle: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    color: colors.textPrimary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  scopeSubtitle: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+    marginBottom: spacing.sm,
+  },
+  scopeOption: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  scopeOptionTitle: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
+    color: colors.textPrimary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  scopeOptionDesc: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.textTertiary,
+    writingDirection: 'rtl',
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  scopeCancel: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  scopeCancelText: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
     color: colors.textTertiary,
   },
 

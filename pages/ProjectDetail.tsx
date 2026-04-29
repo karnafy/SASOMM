@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { AppScreen, Project, Currency, Supplier, MainCategory, MAIN_CATEGORIES } from '@monn/shared';
+import { AppScreen, Project, Currency, Supplier, MainCategory, MAIN_CATEGORIES, confirmDialog } from '@monn/shared';
 import { Paths, File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
@@ -88,9 +88,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   const totalIncome = (project.incomes || []).reduce((sum, i) => sum + i.amount, 0);
   const totalExpenses = project.spent;
-  const remaining = project.budget - totalExpenses;
-  const percentUsed =
-    project.budget > 0 ? Math.round((totalExpenses / project.budget) * 100) : 0;
+  const remaining = totalIncome - totalExpenses;
+  // Percent of budget covered by the current balance.
+  // Positive = how close to budget (green from left).
+  // Negative = how far below zero (red from right).
+  // > 100 = surplus past budget (capped to 100 in the bar; still shown numerically).
+  const percentUsed = project.budget > 0
+    ? Math.round((remaining / project.budget) * 100)
+    : 0;
 
   useEffect(() => {
     setTempBudget(convertAmount(project.budget).toFixed(0));
@@ -264,10 +269,10 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       csv += `תאריך הפקה: ${new Date().toLocaleDateString('he-IL')}\n\n`;
 
       csv += `=== סיכום כללי ===\n`;
-      csv += `תקציב,${project.budget}\n`;
+      csv += `תקציב משוער / הצעת מחיר,${project.budget}\n`;
+      csv += `סה"כ הכנסות / הון עצמי,${totalIncome}\n`;
       csv += `סה"כ הוצאות,${project.spent}\n`;
-      csv += `סה"כ הכנסות,${totalIncome}\n`;
-      csv += `יתרה,${remaining}\n`;
+      csv += `יתרה / רווח,${remaining}\n`;
       csv += `אחוז ניצול,${percentUsed}%\n\n`;
 
       csv += `=== הוצאות לפי ספק ===\n`;
@@ -408,29 +413,29 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
             <div class="summary">
               <div class="summary-card budget">
-                <label>תקציב</label>
+                <label>תקציב משוער / הצעת מחיר</label>
                 <div class="value">${currencySymbols[globalCurrency]}${convertAmount(project.budget).toLocaleString()}</div>
+              </div>
+              <div class="summary-card income">
+                <label>הכנסות / הון עצמי</label>
+                <div class="value">${currencySymbols[globalCurrency]}${convertAmount(totalIncome).toLocaleString()}</div>
               </div>
               <div class="summary-card expense">
                 <label>הוצאות</label>
                 <div class="value">${currencySymbols[globalCurrency]}${convertAmount(project.spent).toLocaleString()}</div>
               </div>
-              <div class="summary-card income">
-                <label>הכנסות</label>
-                <div class="value">${currencySymbols[globalCurrency]}${convertAmount(totalIncome).toLocaleString()}</div>
-              </div>
               <div class="summary-card balance">
-                <label>יתרה</label>
+                <label>יתרה / רווח</label>
                 <div class="value">${remaining < 0 ? '-' : ''}${currencySymbols[globalCurrency]}${convertAmount(Math.abs(remaining)).toLocaleString()}</div>
               </div>
             </div>
 
             <div class="section">
-              <h2>התקדמות תקציב</h2>
+              <h2>יחס יתרה להכנסות</h2>
               <div class="progress-container">
-                <div class="progress-bar" style="width: ${Math.min(100, percentUsed)}%">${percentUsed}%</div>
+                <div class="progress-bar" style="width: ${Math.max(0, Math.min(100, percentUsed))}%">${percentUsed}%</div>
               </div>
-              <p style="font-size: 13px; color: #666;">נוצלו ${percentUsed}% מהתקציב</p>
+              <p style="font-size: 13px; color: #666;">${percentUsed}% מההכנסות נותרו כיתרה</p>
             </div>
 
             ${
@@ -613,19 +618,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'מחיקה',
-      `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק',
-          style: 'destructive',
-          onPress: () => onDeleteProject?.(project.id),
-        },
-      ]
-    );
+  const handleDelete = async () => {
+    const ok = await confirmDialog({
+      title: 'מחיקה',
+      message: `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
+      confirmText: 'מחק',
+      destructive: true,
+    });
+    if (ok) onDeleteProject?.(project.id);
   };
 
   const handleChangeCategory = (newCategory: MainCategory) => {
@@ -649,7 +649,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   };
 
   const getProgressStatus = (): 'ok' | 'warning' | 'over' => {
-    return getProjectStatus();
+    if (remaining < 0) return 'over';
+    if (totalIncome > 0 && totalExpenses / totalIncome >= 0.9) return 'warning';
+    return 'ok';
   };
 
   // --- Menu items ---
@@ -980,7 +982,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             {/* Budget row */}
             <View style={styles.budgetSection}>
               <View style={styles.budgetLabelRow}>
-                <Text style={styles.budgetLabel}>תקציב</Text>
+                <Text style={styles.budgetLabel}>תקציב משוער / הצעת מחיר</Text>
                 <TouchableOpacity
                   onPress={() => setIsEditingBudget(true)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -1011,6 +1013,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
             {/* Stats */}
             <View style={styles.statRow}>
+              <Text style={styles.statLabel}>הכנסות / הון עצמי</Text>
+              <Text style={[styles.statValue, { color: colors.success }]}>
+                +{currencySymbols[globalCurrency]}
+                {formatAmount(totalIncome)}
+              </Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statRow}>
               <Text style={styles.statLabel}>הוצאות</Text>
               <Text style={[styles.statValue, { color: colors.error }]}>
                 -{currencySymbols[globalCurrency]}
@@ -1019,15 +1029,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>הכנסות</Text>
-              <Text style={[styles.statValue, { color: colors.success }]}>
-                +{currencySymbols[globalCurrency]}
-                {formatAmount(totalIncome)}
-              </Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>יתרה</Text>
+              <Text style={styles.statLabel}>יתרה / רווח</Text>
               <Text
                 style={[
                   styles.statValue,
@@ -1040,14 +1042,21 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </Text>
             </View>
 
-            {/* Progress Bar */}
+            {/* Progress Bar — signed: green from left when on track, red from right when in deficit */}
             <View style={styles.progressWrap}>
               <ProgressBar
                 percentage={percentUsed}
-                status={getProgressStatus()}
+                signed
                 style={styles.progressBar}
               />
-              <Text style={styles.progressText}>{percentUsed}% נוצל</Text>
+              <Text
+                style={[
+                  styles.progressText,
+                  { color: percentUsed < 0 ? colors.error : colors.success },
+                ]}
+              >
+                {percentUsed > 0 ? '+' : ''}{percentUsed}%
+              </Text>
             </View>
           </GlassCard>
         </GradientHeader>
@@ -1285,6 +1294,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         firstAttachmentUri={itemImgs[0]}
                         onAttachmentPress={() => openImagePreview(itemImgs, 0)}
                         onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, item.id)}
+                        isRecurring={Boolean((item as any).recurringTemplateId)}
                       />
                     );
                   }
@@ -1320,6 +1330,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         <Text style={styles.activityTitle} numberOfLines={1}>
                           {isImageOnly ? 'תמונה' : item.title}
                         </Text>
+                        {(item as any).oldValue && (item as any).newValue ? (
+                          <Text style={styles.activitySupplier} numberOfLines={1}>
+                            {`${(item as any).oldValue} \u2190 ${(item as any).newValue}`}
+                          </Text>
+                        ) : null}
                         {supplierName ? (
                           <Text style={styles.activitySupplier} numberOfLines={1}>
                             {supplierName}

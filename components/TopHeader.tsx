@@ -23,6 +23,7 @@ const menuItems: { label: string; icon: IconName; screen: AppScreen }[] = [
   { label: 'איזור אישי', icon: 'person', screen: AppScreen.PERSONAL_AREA },
   { label: 'כל הפרויקטים', icon: 'folder-special', screen: AppScreen.PROJECTS },
   { label: 'ספקים ואנשי קשר', icon: 'people', screen: AppScreen.SUPPLIERS },
+  { label: 'תבניות קבועות', icon: 'event-repeat', screen: AppScreen.RECURRING_TEMPLATES },
   { label: 'מרכז הדו"חות', icon: 'analytics', screen: AppScreen.REPORTS_CENTER },
   { label: 'הגדרות', icon: 'settings', screen: AppScreen.SETTINGS },
 ];

@@ -105,7 +105,7 @@ const Projects: React.FC<ProjectsProps> = ({
       budget: totalBudget,
       spent: totalSpent,
       income: totalIncome,
-      remaining: totalBudget - totalSpent,
+      remaining: totalIncome - totalSpent,
     };
   }, [projects]);
 
@@ -222,7 +222,7 @@ const Projects: React.FC<ProjectsProps> = ({
               project.budget > 0
                 ? Math.round((project.spent / project.budget) * 100)
                 : 0;
-            const remaining = project.budget - project.spent;
+            const remaining = projectIncome - project.spent;
             const statusColors = getStatusColors(project.status);
             const percentColors = getPercentColors(percent);
 

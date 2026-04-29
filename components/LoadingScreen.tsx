@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons } from '@expo/vector-icons';
-import { colors, fonts, glowButton } from '../theme';
+import { View, Text, ActivityIndicator, StyleSheet, Animated, Image } from 'react-native';
+import { colors, fonts } from '../theme';
 
 export default function LoadingScreen() {
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -48,17 +46,12 @@ export default function LoadingScreen() {
             { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
           ]}
         >
-          <LinearGradient
-            colors={[colors.primary, colors.primaryDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.logoBox, glowButton]}
-          >
-            <MaterialIcons name="account-balance" size={36} color={colors.white} />
-          </LinearGradient>
+          <Image
+            source={require('../assets/logo-sasomm.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </Animated.View>
-
-        <Text style={styles.title}>SASOMM</Text>
 
         <ActivityIndicator size="large" color={colors.primary} style={styles.spinner} />
         <Text style={styles.loadingText}>{'טוען נתונים...'}</Text>
@@ -78,20 +71,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBoxWrapper: {
-    marginBottom: 20,
-  },
-  logoBox: {
-    width: 76,
-    height: 76,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 30,
-    fontFamily: fonts.bold,
-    color: colors.white,
     marginBottom: 24,
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
   },
   spinner: {
     marginBottom: 16,

@@ -97,12 +97,14 @@ _הופק על ידי SASOMM_`;
       text = `*דו"ח פרויקטים - SASOMM*
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 ${projects
-        .map(
-          (p) => `*${p.name}*
+        .map((p) => {
+          const pIncome = (p.incomes || []).reduce((s, i) => s + i.amount, 0);
+          return `*${p.name}*
 תקציב: ${symbol}${convertAmount(p.budget).toLocaleString()}
+הכנסות: ${symbol}${convertAmount(pIncome).toLocaleString()}
 הוצאות: ${symbol}${convertAmount(p.spent).toLocaleString()}
-יתרה: ${symbol}${convertAmount(p.budget - p.spent).toLocaleString()}`
-        )
+יתרה: ${symbol}${convertAmount(pIncome - p.spent).toLocaleString()}`;
+        })
         .join('\n\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\n')}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 _הופק על ידי SASOMM_`;

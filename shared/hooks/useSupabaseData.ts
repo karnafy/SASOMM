@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Project, Supplier, Debt, ReminderInterval } from '../types';
+import type { Project, Supplier, Debt, ReminderInterval, RecurringTransaction } from '../types';
 import {
   supabaseProjectToLocal,
   supabaseSupplierToLocal,
+  supabaseRecurringToLocal,
 } from '../lib/dataTransformers';
 
 // ============================================
@@ -377,5 +378,61 @@ export function useDebts(userId: string | undefined): UseDebtsResult {
     refetch: fetchDebts,
     saveDebt,
     deleteDebt,
+  };
+}
+
+// ============================================
+// useRecurringTransactions Hook
+// ============================================
+
+interface UseRecurringTransactionsResult {
+  templates: RecurringTransaction[];
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+}
+
+export function useRecurringTransactions(userId: string | undefined): UseRecurringTransactionsResult {
+  const [templates, setTemplates] = useState<RecurringTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchTemplates = useCallback(async () => {
+    if (!userId) {
+      setTemplates([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('recurring_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      setTemplates((data || []).map(supabaseRecurringToLocal));
+    } catch (err) {
+      console.error('Error fetching recurring templates:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch recurring templates'));
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  return {
+    templates,
+    loading,
+    error,
+    refetch: fetchTemplates,
   };
 }

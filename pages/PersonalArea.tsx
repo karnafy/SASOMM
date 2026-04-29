@@ -13,7 +13,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { AppScreen, Currency } from '@monn/shared';
+import { AppScreen, Currency, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -414,22 +414,17 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         {/* Logout */}
         <TouchableOpacity
           style={styles.logoutBtn}
-          onPress={() => {
-            Alert.alert(
-              'התנתקות',
-              'האם אתה בטוח שברצונך להתנתק?',
-              [
-                { text: 'ביטול', style: 'cancel' },
-                {
-                  text: 'התנתק',
-                  style: 'destructive',
-                  onPress: () => {
-                    Alert.alert('התנתקת בהצלחה');
-                    goBack();
-                  },
-                },
-              ]
-            );
+          onPress={async () => {
+            const ok = await confirmDialog({
+              title: 'התנתקות',
+              message: 'האם אתה בטוח שברצונך להתנתק?',
+              confirmText: 'התנתק',
+              destructive: true,
+            });
+            if (ok) {
+              Alert.alert('התנתקת בהצלחה');
+              goBack();
+            }
           }}
         >
           <MaterialIcons name="logout" size={20} color={colors.error} />
