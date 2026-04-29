@@ -33,7 +33,6 @@ import { DarkCard } from '../components/ui/DarkCard';
 import { CurrencyToggle } from '../components/ui/CurrencyToggle';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { TransactionRow } from '../components/ui/TransactionRow';
-import { StatusBadge } from '../components/ui/StatusBadge';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { AvatarCircle } from '../components/ui/AvatarCircle';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -112,7 +111,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const allActivities = useMemo(() => {
     return projects
       .flatMap((p) => {
-        const remaining = p.budget - p.spent;
+        const pIncome = (p.incomes || []).reduce((s, i) => s + i.amount, 0);
+        const remaining = pIncome - p.spent;
         return [
           ...p.expenses.map((e) => ({
             ...e,
@@ -180,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         (sum, p) => sum + (p.incomes || []).reduce((s, i) => s + i.amount, 0),
         0,
       );
-      const remaining = totalBudget - totalSpent;
+      const remaining = totalIncome - totalSpent;
       return {
         category: cat,
         name: MAIN_CATEGORIES[cat],
@@ -360,7 +360,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <Text style={styles.categoryCardAmount}>
                     {cat.remaining < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(cat.remaining)))}
                   </Text>
-                  <StatusBadge status={status} size="sm" />
                   <ProgressBar
                     percentage={percentSpent}
                     status={status}
@@ -458,7 +457,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               contentContainerStyle={styles.projectsScroll}
             >
               {recentProjects.map((project) => {
-                const remaining = project.budget - project.spent;
+                const pIncome = (project.incomes || []).reduce((s, i) => s + i.amount, 0);
+                const remaining = pIncome - project.spent;
                 const percentUsed =
                   project.budget > 0
                     ? Math.round((project.spent / project.budget) * 100)

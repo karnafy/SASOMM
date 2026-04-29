@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -143,15 +144,11 @@ export default function Auth() {
         >
           {/* Logo / Header */}
           <View style={styles.logoSection}>
-            <LinearGradient
-              colors={[colors.primary, colors.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.logoGradient, glowButton]}
-            >
-              <MaterialIcons name="account-balance" size={36} color={colors.white} />
-            </LinearGradient>
-            <Text style={styles.logoText}>SASOMM</Text>
+            <Image
+              source={require('../assets/logo-sasomm.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={styles.subtitle}>{'ניהול פיננסי חכם'}</Text>
           </View>
 
@@ -370,12 +367,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
-  logoGradient: {
-    width: 76,
-    height: 76,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoImage: {
+    width: 96,
+    height: 96,
     marginBottom: spacing.md,
   },
   logoText: {
