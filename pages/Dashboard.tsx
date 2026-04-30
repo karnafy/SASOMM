@@ -181,6 +181,20 @@ const Dashboard: React.FC<DashboardProps> = ({
         0,
       );
       const remaining = totalIncome - totalSpent;
+
+      // Last activity timestamp across all transactions in this category
+      let lastActivity = 0;
+      catProjects.forEach((p) => {
+        (p.expenses || []).forEach((e: any) => {
+          const t = new Date(e.created_at || 0).getTime();
+          if (!Number.isNaN(t) && t > lastActivity) lastActivity = t;
+        });
+        (p.incomes || []).forEach((i: any) => {
+          const t = new Date(i.created_at || 0).getTime();
+          if (!Number.isNaN(t) && t > lastActivity) lastActivity = t;
+        });
+      });
+
       return {
         category: cat,
         name: MAIN_CATEGORIES[cat],
@@ -189,9 +203,36 @@ const Dashboard: React.FC<DashboardProps> = ({
         income: totalIncome,
         remaining,
         projectCount: catProjects.length,
+        lastActivity, // ms timestamp; 0 if no activity
       };
     });
   }, [projects]);
+
+  const overallLastActivity = useMemo(() => {
+    let latest = 0;
+    projects.forEach((p) => {
+      (p.expenses || []).forEach((e: any) => {
+        const t = new Date(e.created_at || 0).getTime();
+        if (!Number.isNaN(t) && t > latest) latest = t;
+      });
+      (p.incomes || []).forEach((i: any) => {
+        const t = new Date(i.created_at || 0).getTime();
+        if (!Number.isNaN(t) && t > latest) latest = t;
+      });
+    });
+    return latest;
+  }, [projects]);
+
+  const formatLastActivity = (ts: number): string => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mn = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mn} ${dd}.${mm}.${yyyy}`;
+  };
 
   // ---------------------------------------------------------------------------
   // Analytics data
@@ -268,6 +309,16 @@ const Dashboard: React.FC<DashboardProps> = ({
           </Text>
         </View>
 
+        {/* System message banner — last activity */}
+        {overallLastActivity > 0 && (
+          <View style={styles.systemBanner}>
+            <MaterialIcons name="schedule" size={14} color="rgba(255,255,255,0.65)" />
+            <Text style={styles.systemBannerText}>
+              {`פעילות אחרונה בוצעה ב-${formatLastActivity(overallLastActivity)}`}
+            </Text>
+          </View>
+        )}
+
         {/* Summary GlassCard */}
         <GlassCard style={styles.summaryCard}>
           {/* Balance label + big amount */}
@@ -301,38 +352,24 @@ const Dashboard: React.FC<DashboardProps> = ({
           </View>
         </GlassCard>
 
-        {/* Quick Action Buttons */}
-        <View style={styles.quickActionRow}>
+        {/* Big Action Buttons — full-width income/expense buttons (per design) */}
+        <View style={styles.bigActionRow}>
           <TouchableOpacity
-            style={styles.quickActionBtn}
+            style={[styles.bigActionBtn, styles.bigActionExpense]}
             onPress={() => onNavigate(AppScreen.ADD_EXPENSE)}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <GlassCard style={styles.quickActionCard}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(255,77,106,0.18)' }]}>
-                <MaterialIcons name="remove-circle" size={26} color={colors.error} />
-              </View>
-              <View style={styles.quickActionTextWrap}>
-                <Text style={styles.quickActionSmall}>{'הוספת'}</Text>
-                <Text style={[styles.quickActionBig, { color: colors.error }]}>{'הוצאה'}</Text>
-              </View>
-            </GlassCard>
+            <Text style={styles.bigActionLabel}>{'הוצאה'}</Text>
+            <MaterialIcons name="remove-circle-outline" size={28} color={colors.white} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.quickActionBtn}
+            style={[styles.bigActionBtn, styles.bigActionIncome]}
             onPress={() => onNavigate(AppScreen.ADD_INCOME)}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <GlassCard style={styles.quickActionCard}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0,232,143,0.18)' }]}>
-                <MaterialIcons name="add-circle" size={26} color={colors.success} />
-              </View>
-              <View style={styles.quickActionTextWrap}>
-                <Text style={styles.quickActionSmall}>{'הוספת'}</Text>
-                <Text style={[styles.quickActionBig, { color: colors.success }]}>{'הכנסה'}</Text>
-              </View>
-            </GlassCard>
+            <Text style={styles.bigActionLabel}>{'הכנסה'}</Text>
+            <MaterialIcons name="add-circle-outline" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
       </GradientHeader>
@@ -342,7 +379,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Categories – 3 cards in a row ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'קטגוריות'} />
+          <SectionHeader title={'פרויקטים'} />
           <View style={styles.categoryRow}>
             {categoryTotals.map((cat) => {
               // Bar shows balance vs budget: positive = how close to budget (green from left),
@@ -375,6 +412,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                       {sym}{formatNumber(convertAmount(cat.budget))}
                     </Text>
                   </View>
+                  {cat.lastActivity > 0 && (
+                    <Text style={styles.categoryCardLastActivity} numberOfLines={1}>
+                      {`פעילות אחרונה: ${formatLastActivity(cat.lastActivity)}`}
+                    </Text>
+                  )}
                 </DarkCard>
               );
             })}
@@ -394,7 +436,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <DarkCard style={styles.quickAccessIconCard}>
                   <MaterialIcons
                     name={action.icon}
-                    size={24}
+                    size={34}
                     color={action.id === 'debt' ? colors.warning : colors.primary}
                   />
                 </DarkCard>
@@ -405,7 +447,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Send reminder */}
             <TouchableOpacity style={styles.quickAccessItem} onPress={sendReminder}>
               <DarkCard style={styles.quickAccessIconCard}>
-                <MaterialIcons name="notifications-active" size={24} color={colors.primary} />
+                <MaterialIcons name="notifications-active" size={34} color={colors.primary} />
               </DarkCard>
               <Text style={styles.quickAccessLabel}>{'שלח תזכורת'}</Text>
             </TouchableOpacity>
@@ -676,8 +718,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     paddingTop: spacing.md,
+  },
+  systemBanner: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing['2xl'],
+    paddingHorizontal: spacing.sm,
+  },
+  systemBannerText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.65)',
+    fontFamily: fonts.medium,
+    writingDirection: 'rtl',
   },
   greeting: {
     fontSize: 20,
@@ -745,6 +800,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
+
+  /* ---- Big income/expense buttons (per design) ---- */
+  bigActionRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  bigActionBtn: {
+    flex: 1,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    paddingVertical: 22,
+    borderRadius: radii['2xl'],
+    borderWidth: 1.5,
+  },
+  bigActionIncome: {
+    backgroundColor: 'rgba(0,232,143,0.85)',
+    borderColor: 'rgba(0,232,143,0.95)',
+    shadowColor: '#00E88F',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  bigActionExpense: {
+    backgroundColor: 'rgba(255,77,106,0.85)',
+    borderColor: 'rgba(255,77,106,0.95)',
+    shadowColor: '#FF4D6A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  bigActionLabel: {
+    fontSize: 22,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    writingDirection: 'rtl',
+  },
   quickActionIconWrap: {
     width: 48,
     height: 48,
@@ -787,12 +883,13 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   categoryCardName: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontFamily: fonts.semibold,
+    fontSize: 17,
+    color: colors.white,
+    fontFamily: fonts.bold,
     marginBottom: spacing.sm,
     writingDirection: 'rtl',
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   categoryCardAmount: {
     fontSize: 16,
@@ -822,31 +919,51 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontFamily: fonts.regular,
   },
+  categoryCardLastActivity: {
+    fontSize: 9,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
+    marginTop: 6,
+    writingDirection: 'rtl',
+    textAlign: 'center',
+    alignSelf: 'stretch',
+  },
 
   /* ---- Quick Access ---- */
   quickAccessRow: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-around',
     alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   quickAccessItem: {
     alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
   },
+  // Bigger semi-transparent icon card with primary glow (per design)
   quickAccessIconCard: {
-    width: 54,
-    height: 54,
+    width: 76,
+    height: 76,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.xl,
+    backgroundColor: 'rgba(0,217,217,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,217,217,0.30)',
+    shadowColor: '#00D9D9',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 6,
   },
   quickAccessLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: fonts.semibold,
     color: colors.textSecondary,
     writingDirection: 'rtl',
     textAlign: 'center',
-    maxWidth: 64,
+    maxWidth: 84,
   },
 
   /* ---- Activity ---- */

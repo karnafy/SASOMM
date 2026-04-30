@@ -7,10 +7,16 @@ import {
   StyleSheet,
   Modal,
   Pressable,
+  Platform,
+  Share,
+  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppScreen } from '@monn/shared';
 import { colors, radii, spacing, fonts } from '../theme';
+
+const SHARE_URL = 'https://sasomm.com';
+const SHARE_MESSAGE = 'תכיר את SASOMM — אפליקציית ניהול פיננסי לפרויקטים. נסה אותה כאן: ';
 
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
@@ -30,6 +36,46 @@ const menuItems: { label: string; icon: IconName; screen: AppScreen }[] = [
 
 export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleShareApp = async () => {
+    setIsMenuOpen(false);
+    const fullMessage = `${SHARE_MESSAGE}${SHARE_URL}`;
+
+    if (Platform.OS === 'web') {
+      const navAny = (typeof navigator !== 'undefined' ? (navigator as any) : null);
+      // Mobile Chrome / Safari supports Web Share; desktop falls back to clipboard
+      if (navAny?.share) {
+        try {
+          await navAny.share({ title: 'SASOMM', text: SHARE_MESSAGE, url: SHARE_URL });
+          return;
+        } catch {
+          // user cancelled — silently ignore
+          return;
+        }
+      }
+      if (navAny?.clipboard?.writeText) {
+        try {
+          await navAny.clipboard.writeText(fullMessage);
+          if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+            window.alert('הקישור הועתק ללוח. אפשר להדביק עכשיו לאן שתרצה.');
+          }
+          return;
+        } catch {
+          // fall through
+        }
+      }
+      if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+        window.prompt('העתק את הקישור:', fullMessage);
+      }
+      return;
+    }
+
+    try {
+      await Share.share({ message: fullMessage, url: SHARE_URL, title: 'SASOMM' });
+    } catch (err: any) {
+      Alert.alert('שגיאה', 'לא הצלחנו לפתוח את חלון השיתוף');
+    }
+  };
 
   return (
     <>
@@ -51,6 +97,18 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
                   <Text style={styles.menuRowLabel}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
+
+              <View style={styles.menuDivider} />
+
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={handleShareApp}
+              >
+                <MaterialIcons name="share" size={20} color={colors.primary} />
+                <Text style={styles.menuRowLabel}>
+                  {'שלח קישור לאפליקציה'}
+                </Text>
+              </TouchableOpacity>
 
               <View style={styles.menuDivider} />
 
