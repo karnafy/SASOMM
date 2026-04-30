@@ -25,8 +25,9 @@ Thumbs.db
 # Claude Code local
 .claude/settings.local.json
 
-# Generated backups
+# Generated backups (contain user PII — keep local only)
 sasomm_backup_*.json
+backups/
 
 # Temp / archives
 stitch.zip
@@ -35,7 +36,9 @@ stitch/
 *.tmp
 
 # Designer references (72MB EPS etc — not source)
-UI/
+# Leading slash anchors to repo root only, so case-insensitive Windows Git
+# doesn't accidentally also ignore `components/ui/` etc.
+/UI/
 *.eps
 
 # Build artifacts
