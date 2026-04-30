@@ -48,7 +48,7 @@ export interface Debt {
 export type MainCategory = 'projects' | 'personal' | 'other';
 
 export const MAIN_CATEGORIES: Record<MainCategory, string> = {
-  projects: 'פרויקטים',
+  projects: 'עבודה',
   personal: 'אישי',
   other: 'שונות'
 };

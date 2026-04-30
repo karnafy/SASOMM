@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { AppScreen, Project, Currency } from '@monn/shared';
+import { AppScreen, Project, Currency, MAIN_CATEGORIES, MainCategory } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -72,22 +72,43 @@ const Projects: React.FC<ProjectsProps> = ({
   const [filter, setFilter] = useState('הכל');
 
   const filterCategories = useMemo(() => {
-    const projectCategories = Array.from(new Set(projects.map((p) => p.category)));
-    const hasPersonal = projects.some((p) => p.mainCategory === 'personal');
-    const hasOther = projects.some((p) => p.mainCategory === 'other');
-
-    const filters = ['הכל', ...projectCategories];
-    if (hasPersonal && !filters.includes('אישי')) filters.push('אישי');
-    if (hasOther && !filters.includes('שונות')) filters.push('שונות');
-
+    const filters = ['הכל'];
+    const presentMains = new Set(projects.map((p) => p.mainCategory));
+    (['projects', 'personal', 'other'] as MainCategory[]).forEach((cat) => {
+      if (presentMains.has(cat)) filters.push(MAIN_CATEGORIES[cat]);
+    });
     return filters;
   }, [projects]);
 
+  const lastActivityAt = (p: Project): number => {
+    const dates: number[] = [];
+    const pushDate = (raw: string | undefined): void => {
+      if (!raw) return;
+      const t = new Date(raw).getTime();
+      if (!Number.isNaN(t)) dates.push(t);
+    };
+    pushDate((p as any).updated_at);
+    pushDate((p as any).created_at);
+    (p.expenses || []).forEach((e: any) => pushDate(e.created_at));
+    (p.incomes || []).forEach((i: any) => pushDate(i.created_at));
+    (p.history || []).forEach((a: any) => pushDate(a.date));
+    return dates.length > 0 ? Math.max(...dates) : 0;
+  };
+
   const filteredProjects = useMemo(() => {
-    if (filter === 'הכל') return projects;
-    if (filter === 'אישי') return projects.filter((p) => p.mainCategory === 'personal');
-    if (filter === 'שונות') return projects.filter((p) => p.mainCategory === 'other');
-    return projects.filter((p) => p.category === filter);
+    let list: Project[];
+    if (filter === 'הכל') {
+      list = projects;
+    } else if (filter === MAIN_CATEGORIES.personal) {
+      list = projects.filter((p) => p.mainCategory === 'personal');
+    } else if (filter === MAIN_CATEGORIES.other) {
+      list = projects.filter((p) => p.mainCategory === 'other');
+    } else if (filter === MAIN_CATEGORIES.projects) {
+      list = projects.filter((p) => p.mainCategory === 'projects');
+    } else {
+      list = projects;
+    }
+    return [...list].sort((a, b) => lastActivityAt(b) - lastActivityAt(a));
   }, [projects, filter]);
 
   const formatAmount = (amount: number): string => {
@@ -107,6 +128,29 @@ const Projects: React.FC<ProjectsProps> = ({
       income: totalIncome,
       remaining: totalIncome - totalSpent,
     };
+  }, [projects]);
+
+  const categoryTotals = useMemo(() => {
+    const categories: MainCategory[] = ['projects', 'personal', 'other'];
+    return categories.map((cat) => {
+      const catProjects = projects.filter((p) => p.mainCategory === cat);
+      const totalBudget = catProjects.reduce((sum, p) => sum + p.budget, 0);
+      const totalSpent = catProjects.reduce((sum, p) => sum + p.spent, 0);
+      const totalIncome = catProjects.reduce(
+        (sum, p) => sum + (p.incomes || []).reduce((s, i) => s + i.amount, 0),
+        0,
+      );
+      const remaining = totalIncome - totalSpent;
+      return {
+        category: cat,
+        name: MAIN_CATEGORIES[cat],
+        budget: totalBudget,
+        spent: totalSpent,
+        income: totalIncome,
+        remaining,
+        projectCount: catProjects.length,
+      };
+    });
   }, [projects]);
 
   const getStatusColors = (status: Project['status']) => {
@@ -192,12 +236,50 @@ const Projects: React.FC<ProjectsProps> = ({
         </View>
       </GradientHeader>
 
-      {/* Dark Zone - Project Cards */}
+      {/* Dark Zone - Category Cards + Project Cards */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* 3 main category summary cards (matches Dashboard) */}
+        <View style={styles.categoryRow}>
+          {categoryTotals.map((cat) => {
+            const percentOfBudget =
+              cat.budget > 0 ? Math.round((cat.remaining / cat.budget) * 100) : 0;
+            const isDeficit = percentOfBudget < 0;
+            const pctColor = isDeficit ? colors.error : colors.success;
+            return (
+              <DarkCard
+                key={cat.category}
+                style={styles.categoryCard}
+                onPress={() => onNavigate(AppScreen.CATEGORY_PROJECTS, cat.category)}
+              >
+                <Text style={styles.categoryCardName} numberOfLines={1}>{cat.name}</Text>
+                <Text style={styles.categoryCardCount} numberOfLines={1}>
+                  {cat.projectCount} {cat.projectCount === 1 ? 'פרויקט' : 'פרויקטים'}
+                </Text>
+                <Text style={styles.categoryCardAmount}>
+                  {cat.remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(cat.remaining))}
+                </Text>
+                <ProgressBar
+                  percentage={percentOfBudget}
+                  signed
+                  style={styles.categoryProgressBar}
+                />
+                <View style={styles.categoryCardFooter}>
+                  <Text style={[styles.categoryCardFooterPct, { color: pctColor }]}>
+                    {percentOfBudget > 0 ? '+' : ''}{percentOfBudget}%
+                  </Text>
+                  <Text style={styles.categoryCardFooterTotal}>
+                    {sym}{formatAmount(cat.budget)}
+                  </Text>
+                </View>
+              </DarkCard>
+            );
+          })}
+        </View>
+
         {filteredProjects.length === 0 ? (
           <DarkCard style={styles.emptyCard}>
             <View style={styles.emptyIconContainer}>
@@ -415,6 +497,63 @@ const styles = StyleSheet.create({
   // Filter Row
   filterRow: {
     marginBottom: spacing.sm,
+  },
+
+  // Category cards (3 main categories — same look as Dashboard)
+  categoryRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  categoryCard: {
+    flex: 1,
+    padding: spacing.lg,
+    alignItems: 'center',
+    minHeight: 150,
+  },
+  categoryCardName: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: fonts.semibold,
+    marginBottom: 2,
+    writingDirection: 'rtl',
+    textAlign: 'center',
+  },
+  categoryCardCount: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
+    marginBottom: spacing.sm,
+    writingDirection: 'rtl',
+    textAlign: 'center',
+  },
+  categoryCardAmount: {
+    fontSize: 16,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    marginBottom: spacing.sm,
+    writingDirection: 'rtl',
+    textAlign: 'center',
+  },
+  categoryProgressBar: {
+    alignSelf: 'stretch',
+    marginVertical: spacing.xs,
+  },
+  categoryCardFooter: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    marginTop: 2,
+  },
+  categoryCardFooterPct: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    fontFamily: fonts.semibold,
+  },
+  categoryCardFooterTotal: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
   },
 
   // Scroll
