@@ -11,11 +11,23 @@ import {
   Platform,
   ScrollView,
   Image,
+  Linking,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@monn/shared';
 import { colors, fonts, glowButton, radii, spacing } from '../theme';
+
+const PRIVACY_URL = 'https://sasomm.com/privacy.html';
+const TERMS_URL = 'https://sasomm.com/terms.html';
+
+function openLegal(url: string): void {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else {
+    Linking.openURL(url).catch(() => undefined);
+  }
+}
 
 export default function Auth() {
   const { signIn, signUp, signInWithGoogle } = useAuth();
@@ -336,6 +348,19 @@ export default function Auth() {
                   : 'יש לך חשבון? התחבר'}
               </Text>
             </TouchableOpacity>
+
+            {/* Legal consent — required for App Store, Google Play, GDPR */}
+            <Text style={styles.consentText}>
+              {isLogin ? 'המשך השימוש מהווה הסכמה ל' : 'בהרשמה אני מסכים ל'}
+              <Text style={styles.consentLink} onPress={() => openLegal(TERMS_URL)}>
+                {'תנאי השימוש'}
+              </Text>
+              {' ול'}
+              <Text style={styles.consentLink} onPress={() => openLegal(PRIVACY_URL)}>
+                {'מדיניות הפרטיות'}
+              </Text>
+              {'.'}
+            </Text>
           </View>
 
           {/* Footer */}
@@ -564,6 +589,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.medium,
     writingDirection: 'rtl',
+  },
+
+  /* Legal consent (privacy + terms) */
+  consentText: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    lineHeight: 18,
+    writingDirection: 'rtl',
+  },
+  consentLink: {
+    color: colors.primary,
+    fontFamily: fonts.semibold,
+    textDecorationLine: 'underline',
   },
 
   /* Footer */
