@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { AppScreen, Project, Currency, MAIN_CATEGORIES, MainCategory } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
@@ -69,16 +70,18 @@ const Projects: React.FC<ProjectsProps> = ({
   globalCurrency,
   convertAmount,
 }) => {
-  const [filter, setFilter] = useState('הכל');
+  const { t } = useTranslation();
+  const ALL = t('projects_page.filter_all');
+  const [filter, setFilter] = useState(ALL);
 
   const filterCategories = useMemo(() => {
-    const filters = ['הכל'];
+    const filters = [ALL];
     const presentMains = new Set(projects.map((p) => p.mainCategory));
     (['projects', 'personal', 'other'] as MainCategory[]).forEach((cat) => {
-      if (presentMains.has(cat)) filters.push(MAIN_CATEGORIES[cat]);
+      if (presentMains.has(cat)) filters.push(t(`main_categories.${cat}`));
     });
     return filters;
-  }, [projects]);
+  }, [projects, t, ALL]);
 
   const lastActivityAt = (p: Project): number => {
     const dates: number[] = [];
@@ -97,19 +100,19 @@ const Projects: React.FC<ProjectsProps> = ({
 
   const filteredProjects = useMemo(() => {
     let list: Project[];
-    if (filter === 'הכל') {
+    if (filter === ALL) {
       list = projects;
-    } else if (filter === MAIN_CATEGORIES.personal) {
+    } else if (filter === t('main_categories.personal')) {
       list = projects.filter((p) => p.mainCategory === 'personal');
-    } else if (filter === MAIN_CATEGORIES.other) {
+    } else if (filter === t('main_categories.other')) {
       list = projects.filter((p) => p.mainCategory === 'other');
-    } else if (filter === MAIN_CATEGORIES.projects) {
+    } else if (filter === t('main_categories.projects')) {
       list = projects.filter((p) => p.mainCategory === 'projects');
     } else {
       list = projects;
     }
     return [...list].sort((a, b) => lastActivityAt(b) - lastActivityAt(a));
-  }, [projects, filter]);
+  }, [projects, filter, t, ALL]);
 
   const formatAmount = (amount: number): string => {
     return convertAmount(amount).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -185,7 +188,7 @@ const Projects: React.FC<ProjectsProps> = ({
           >
             <MaterialIcons name="arrow-forward" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>פרויקטים</Text>
+          <Text style={styles.headerTitle}>{t('projects_page.page_title')}</Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => onNavigate(AppScreen.ADD_PROJECT)}
@@ -197,28 +200,28 @@ const Projects: React.FC<ProjectsProps> = ({
 
         {/* Summary Card - same layout as Dashboard */}
         <GlassCard style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>{'יתרה'}</Text>
+          <Text style={styles.summaryLabel}>{t('projects_page.card_balance')}</Text>
           <Text style={[styles.summaryAmount, { color: totals.remaining >= 0 ? colors.success : colors.error }]}>
             {totals.remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(totals.remaining))}
           </Text>
 
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'תקציב'}</Text>
+              <Text style={styles.subCardLabel}>{t('projects_page.card_budget')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.white }]}>
                 {sym}{formatAmount(totals.budget)}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
+              <Text style={styles.subCardLabel}>{t('projects_page.card_income')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.success }]}>
                 {sym}{formatAmount(totals.income)}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
+              <Text style={styles.subCardLabel}>{t('projects_page.card_expenses')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.error }]}>
                 {sym}{formatAmount(totals.spent)}
               </Text>
@@ -257,7 +260,7 @@ const Projects: React.FC<ProjectsProps> = ({
               >
                 <Text style={styles.categoryCardName} numberOfLines={1}>{cat.name}</Text>
                 <Text style={styles.categoryCardCount} numberOfLines={1}>
-                  {cat.projectCount} {cat.projectCount === 1 ? 'פרויקט' : 'פרויקטים'}
+                  {t(cat.projectCount === 1 ? 'category.project_count_one' : 'category.project_count_other', { count: cat.projectCount })}
                 </Text>
                 <Text style={styles.categoryCardAmount}>
                   {cat.remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(cat.remaining))}
@@ -285,13 +288,13 @@ const Projects: React.FC<ProjectsProps> = ({
             <View style={styles.emptyIconContainer}>
               <MaterialIcons name="folder-off" size={36} color={colors.textTertiary} />
             </View>
-            <Text style={styles.emptyText}>אין פרויקטים להצגה</Text>
+            <Text style={styles.emptyText}>{t('projects_page.no_projects')}</Text>
             <TouchableOpacity
               style={styles.emptyAddButton}
               onPress={() => onNavigate(AppScreen.ADD_PROJECT)}
               activeOpacity={0.7}
             >
-              <Text style={styles.emptyAddButtonText}>צור פרויקט חדש</Text>
+              <Text style={styles.emptyAddButtonText}>{t('projects_page.create_new')}</Text>
             </TouchableOpacity>
           </DarkCard>
         ) : (
@@ -346,25 +349,25 @@ const Projects: React.FC<ProjectsProps> = ({
                 {/* Amounts Row */}
                 <View style={styles.amountsRow}>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>תקציב</Text>
+                    <Text style={styles.amountLabel}>{t('projects_page.card_budget')}</Text>
                     <Text style={[styles.amountValue, { color: colors.textSecondary }]}>
                       {sym}{formatAmount(project.budget)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>הכנסות</Text>
+                    <Text style={styles.amountLabel}>{t('projects_page.card_income')}</Text>
                     <Text style={[styles.amountValue, { color: colors.success }]}>
                       {sym}{formatAmount(projectIncome)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>הוצאות</Text>
+                    <Text style={styles.amountLabel}>{t('projects_page.card_expenses')}</Text>
                     <Text style={[styles.amountValue, { color: colors.error }]}>
                       {sym}{formatAmount(project.spent)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>יתרה</Text>
+                    <Text style={styles.amountLabel}>{t('projects_page.card_balance')}</Text>
                     <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.success : colors.error }]}>
                       {remaining < 0 ? '-' : ''}{sym}{formatAmount(Math.abs(remaining))}
                     </Text>

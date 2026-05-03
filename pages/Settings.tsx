@@ -15,6 +15,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppScreen, Currency, useAuth, useProfile, exportUserData, importUserData, confirmDialog } from '@monn/shared';
+import { LanguagePicker } from '../components/ui/LanguagePicker';
 import type { ExportBundle } from '@monn/shared';
 import { supabase } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
@@ -382,12 +383,12 @@ const Settings: React.FC<SettingsProps> = ({
         </View>
 
         {/* Language */}
-        <View style={[styles.settingItem, styles.settingItemBorder]}>
+        <View style={[styles.settingItem, styles.settingItemBorder, styles.languageItem]}>
           <View style={styles.settingLeft}>
             <MaterialIcons name="language" size={20} color={colors.primary} />
             <Text style={styles.settingLabel}>{'שפה'}</Text>
           </View>
-          <Text style={styles.settingValue}>{'עברית'}</Text>
+          <LanguagePicker variant="inline" />
         </View>
 
         {/* Notifications */}
@@ -896,6 +897,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingVertical: 15,
+  },
+  languageItem: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
   },
   settingItemBorder: {
     borderBottomWidth: 1,

@@ -16,6 +16,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@monn/shared';
+import { LanguagePicker } from '../components/ui/LanguagePicker';
 import { colors, fonts, glowButton, radii, spacing } from '../theme';
 
 const PRIVACY_URL = 'https://sasomm.com/privacy.html';
@@ -363,6 +364,12 @@ export default function Auth() {
             </Text>
           </View>
 
+          {/* Language picker — placed under the auth card so visitors can switch
+              before signing in (required for App Store / Google Play submission). */}
+          <View style={styles.languageWrap}>
+            <LanguagePicker variant="inline" />
+          </View>
+
           {/* Footer */}
           <Text style={styles.footer}>
             {'\© 2026 SASOMM. כל הזכויות שמורות.'}
@@ -605,6 +612,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontFamily: fonts.semibold,
     textDecorationLine: 'underline',
+  },
+
+  languageWrap: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
   },
 
   /* Footer */

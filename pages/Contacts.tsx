@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { AppScreen, Supplier, Currency } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
@@ -31,12 +32,7 @@ const currencySymbols: Record<Currency, string> = {
   EUR: '\€',
 };
 
-const tabs: { id: TabId; label: string }[] = [
-  { id: 'all', label: 'הכל' },
-  { id: 'credit', label: 'חייבים לי' },
-  { id: 'debt', label: 'אני חייב' },
-  { id: 'settled', label: 'מאופס' },
-];
+const tabIds: TabId[] = ['all', 'credit', 'debt', 'settled'];
 
 const Contacts: React.FC<ContactsProps> = ({
   onNavigate,
@@ -45,8 +41,14 @@ const Contacts: React.FC<ContactsProps> = ({
   globalCurrency,
   convertAmount,
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const tabs: { id: TabId; label: string }[] = tabIds.map((id) => ({
+    id,
+    label: t(`contacts.tab_${id}`),
+  }));
 
   const filteredContacts = useMemo(() => {
     return suppliers.filter((c) => {
@@ -140,7 +142,7 @@ const Contacts: React.FC<ContactsProps> = ({
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>
-            {'ספקים ואנשי קשר'}
+            {t('contacts.page_title')}
           </Text>
 
           <TouchableOpacity
@@ -158,7 +160,7 @@ const Contacts: React.FC<ContactsProps> = ({
           <TextInput
             style={styles.searchInput}
             placeholder={
-              'חיפוש לפי שם או תחום...'
+              t('contacts.search_placeholder')
             }
             placeholderTextColor={colors.textTertiary}
             value={searchQuery}

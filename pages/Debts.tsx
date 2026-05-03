@@ -25,6 +25,7 @@ const openExternalURL = (url: string) => {
 };
 import * as ImagePicker from 'expo-image-picker';
 import * as Contacts from 'expo-contacts';
+import { useTranslation } from 'react-i18next';
 import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
@@ -72,6 +73,7 @@ const Debts: React.FC<DebtsProps> = ({
   onDeleteDebt,
   autoOpenAdd,
 }) => {
+  const { t } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeDirection, setActiveDirection] = useState<DebtDirection>('owed_to_me');
 
@@ -319,9 +321,9 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
   const paidDebts = directionDebts.filter((d) => d.isPaid);
 
   const isOwedToMe = activeDirection === 'owed_to_me';
-  const summaryLabel = isOwedToMe ? 'סה"כ חייבים לי' : 'סה"כ אני חייב';
-  const emptyLabel = isOwedToMe ? 'אין חובות פעילים' : 'אין תזכורות תשלום';
-  const personLabel = 'שם *';
+  const summaryLabel = isOwedToMe ? t('debts.total_owed_to_me') : t('debts.total_i_owe');
+  const emptyLabel = t('debts.empty_active');
+  const personLabel = t('debts.name_label');
   const summaryColor = isOwedToMe ? colors.error : colors.warning;
   const selectedProjectName = selectedProjectId
     ? projects.find((p) => p.id === selectedProjectId)?.name || ''
@@ -686,7 +688,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
           <TouchableOpacity style={styles.addFab} onPress={openAddModal}>
             <MaterialIcons name="add" size={22} color={colors.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{'חובות'}</Text>
+          <Text style={styles.headerTitle}>{t('debts.page_title')}</Text>
           <View style={{ width: 44 }} />
         </View>
 
@@ -710,7 +712,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 activeDirection === 'owed_to_me' && styles.tabTextActive,
               ]}
             >
-              {'חייבים לי'}
+              {t('debts.owed_to_me')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -731,7 +733,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 activeDirection === 'i_owe' && styles.tabTextActive,
               ]}
             >
-              {'אני חייב'}
+              {t('debts.i_owe')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -744,7 +746,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
             {totalDebt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </Text>
           <Text style={styles.summaryCount}>
-            {activeDebts.length} {isOwedToMe ? 'חובות פעילים' : 'תזכורות תשלום'}
+            {t(activeDebts.length === 1 ? 'debts.count_one' : 'debts.count_other', { count: activeDebts.length })}
           </Text>
         </GlassCard>
       </GradientHeader>
@@ -757,7 +759,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
         {/* Active Debts */}
         {activeDebts.length > 0 ? (
           <View style={styles.debtSection}>
-            <SectionHeader title="חובות פעילים" />
+            <SectionHeader title={t('debts.active')} />
             {activeDebts.map((debt) => (
               <DarkCard key={debt.id} style={styles.debtCard}>
                 <View style={styles.debtHeader}>
@@ -841,7 +843,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                   >
                     <MaterialIcons name="check-circle" size={16} color={colors.primary} />
                     <Text style={[styles.debtActionText, { color: colors.primary }]}>
-                      {'שולם'}
+                      {t('debts.mark_paid')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -875,7 +877,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
         {/* Paid Debts */}
         {paidDebts.length > 0 && (
           <View style={styles.debtSection}>
-            <SectionHeader title="חובות ששולמו" />
+            <SectionHeader title={t('debts.paid')} />
             {paidDebts.map((debt) => (
               <DarkCard key={debt.id} style={styles.paidDebtCard}>
                 <View style={styles.paidDebtRow}>

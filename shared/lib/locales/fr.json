@@ -1,0 +1,216 @@
+{
+  "common": {
+    "app_name": "SASOMM",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "next": "Suivant",
+    "ok": "OK",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "search": "Rechercher"
+  },
+  "language": {
+    "title": "Langue",
+    "he": "עברית",
+    "en": "English",
+    "fr": "Français",
+    "change_requires_restart": "Le changement de langue nécessite le redémarrage de l'application",
+    "restart_now": "Redémarrer maintenant"
+  },
+  "main_categories": {
+    "projects": "Travail",
+    "personal": "Personnel",
+    "other": "Autre"
+  },
+  "greeting": {
+    "with_name": "Bonjour, {{name}}",
+    "no_name": "Bonjour,"
+  },
+  "system": {
+    "last_activity_at": "Dernière activité à {{when}}"
+  },
+  "summary": {
+    "balance": "Solde",
+    "budget": "Budget",
+    "income": "Revenus",
+    "expenses": "Dépenses"
+  },
+  "actions": {
+    "income": "Revenu",
+    "expense": "Dépense",
+    "add_income": "Ajouter un revenu",
+    "add_expense": "Ajouter une dépense"
+  },
+  "sections": {
+    "projects": "Projets",
+    "quick_access": "Accès rapide",
+    "recent_activity": "Activité récente",
+    "recent_projects": "Projets récents",
+    "suppliers": "Fournisseurs",
+    "templates": "Modèles",
+    "insights": "Statistiques",
+    "expense_breakdown": "Répartition des dépenses"
+  },
+  "category": {
+    "last_activity": "Dernière activité : {{when}}",
+    "project_count_one": "{{count}} projet",
+    "project_count_other": "{{count}} projets"
+  },
+  "quick": {
+    "new_project": "Nouveau projet",
+    "new_supplier": "Nouveau fournisseur",
+    "new_debt": "Nouvelle dette",
+    "contacts": "Contacts",
+    "send_reminder": "Envoyer un rappel"
+  },
+  "menu": {
+    "title": "Menu de gestion",
+    "personal_area": "Espace personnel",
+    "all_projects": "Tous les projets",
+    "suppliers_contacts": "Fournisseurs et contacts",
+    "recurring_templates": "Modèles récurrents",
+    "reports_center": "Centre des rapports",
+    "settings": "Paramètres",
+    "share_app": "Partager le lien",
+    "logout": "Déconnexion",
+    "share_message": "Découvrez SASOMM — une application de gestion financière pour vos projets. Essayez-la ici : ",
+    "share_copied": "Lien copié dans le presse-papiers. Collez-le où vous voulez.",
+    "share_error": "Impossible d'ouvrir le partage"
+  },
+  "nav": {
+    "home": "Accueil",
+    "suppliers": "Fournisseurs",
+    "projects": "Projets",
+    "debts": "Dettes"
+  },
+  "kpi": {
+    "avg_monthly_expenses": "Dépenses mensuelles moyennes",
+    "avg_monthly_income": "Revenus mensuels moyens",
+    "monthly_savings": "Épargne mensuelle",
+    "income_expense_ratio": "Ratio revenus/dépenses",
+    "total_transactions": "Total des transactions"
+  },
+  "chart": {
+    "income_vs_expenses": "Revenus vs dépenses",
+    "income": "Revenus",
+    "expenses": "Dépenses",
+    "expense_breakdown": "Répartition des dépenses",
+    "income_breakdown": "Répartition des revenus",
+    "total": "Total"
+  },
+  "months_full": [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+  ],
+  "insights": {
+    "title": "Statistiques",
+    "estimated_vat": "TVA estimée",
+    "total_transactions": "Total transactions",
+    "expensive_month": "Mois le plus cher",
+    "no_vat": "Hors TVA"
+  },
+  "budget_health": {
+    "title": "Santé du budget",
+    "over_budget": "Budget dépassé",
+    "near_limit": "Proche de la limite",
+    "healthy": "Budget sain",
+    "projects_over": "Projets hors budget"
+  },
+  "payment": {
+    "distribution_title": "Modes de paiement"
+  },
+  "suppliers": {
+    "top_title": "Principaux fournisseurs"
+  },
+  "empty": {
+    "no_data": "Aucune donnée à afficher"
+  },
+  "projects_page": {
+    "page_title": "Projets",
+    "filter_all": "Tous",
+    "card_balance": "Solde",
+    "card_income": "Revenus",
+    "card_expenses": "Dépenses",
+    "card_budget": "Budget",
+    "no_projects": "Aucun projet à afficher",
+    "create_new": "Créer un nouveau projet",
+    "section_recent": "Projets récents",
+    "section_suppliers": "Fournisseurs"
+  },
+  "debts": {
+    "page_title": "Dettes",
+    "owed_to_me": "On me doit",
+    "i_owe": "Je dois",
+    "total_owed_to_me": "Total dû",
+    "total_i_owe": "Total à payer",
+    "active": "Dettes actives",
+    "paid": "Dettes payées",
+    "count_one": "1 dette active",
+    "count_other": "{{count}} dettes actives",
+    "mark_paid": "Payée",
+    "mark_unpaid": "Marquer impayée",
+    "add_new": "Nouvelle dette",
+    "edit_title": "Modifier la dette",
+    "type_label": "Type de dette *",
+    "name_label": "Nom *",
+    "name_placeholder": "Nom complet",
+    "phone_label": "Téléphone (rappels)",
+    "amount_label": "Montant *",
+    "project_label": "Lier à un projet (optionnel)",
+    "project_none": "Non lié",
+    "notes_label": "Notes",
+    "notes_placeholder": "Notes supplémentaires...",
+    "image_label": "Image / Reçu",
+    "image_add": "Ajouter une image",
+    "image_replace": "Remplacer l'image",
+    "image_uploading": "Téléversement...",
+    "due_date_label": "Date de retour prévue",
+    "due_date_label_i_owe": "Date de paiement",
+    "reminder_label": "Rappel",
+    "send_whatsapp": "Envoyer WhatsApp",
+    "empty_active": "Aucune dette active"
+  },
+  "common_extra": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "yes": "Oui",
+    "no": "Non",
+    "all": "Tous"
+  },
+  "contacts": {
+    "page_title": "Fournisseurs et contacts",
+    "search_placeholder": "Recherche par nom ou catégorie...",
+    "tab_all": "Tous",
+    "tab_credit": "On me doit",
+    "tab_debt": "Je dois",
+    "tab_settled": "Réglé",
+    "no_suppliers": "Aucun fournisseur à afficher",
+    "add_supplier": "Ajouter un fournisseur"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "switch_to_login": "Déjà inscrit ? Se connecter",
+    "switch_to_register": "Pas de compte ? S'inscrire",
+    "submit_login": "Se connecter",
+    "submit_register": "S'inscrire",
+    "processing": "Traitement...",
+    "or": "ou",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "full_name": "Nom complet *",
+    "full_name_placeholder": "Prénom et nom",
+    "phone": "Téléphone (optionnel)",
+    "consent_login": "Poursuivre l'utilisation vaut acceptation des ",
+    "consent_register": "En m'inscrivant j'accepte les ",
+    "consent_terms": "Conditions d'utilisation",
+    "consent_and": " et la ",
+    "consent_privacy": "Politique de confidentialité",
+    "consent_dot": "."
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { colors, fonts, spacing, radii } from '../../theme';
 import { DarkCard } from '../ui/DarkCard';
 
@@ -89,6 +90,7 @@ export function KpiCards({
   sym,
   convertAmount,
 }: KpiCardsProps) {
+  const { t } = useTranslation();
   const cards: readonly KpiCardData[] = useMemo(() => {
     const convertedExpenses = convertAmount(avgExpenses);
     const convertedIncome = convertAmount(avgIncome);
@@ -96,7 +98,7 @@ export function KpiCards({
 
     return [
       {
-        label: 'ממוצע הוצאות חודשי',
+        label: t('kpi.avg_monthly_expenses'),
         value: convertedExpenses,
         color: colors.error,
         sym,
@@ -104,7 +106,7 @@ export function KpiCards({
         invertTrend: true,
       },
       {
-        label: 'ממוצע הכנסות חודשי',
+        label: t('kpi.avg_monthly_income'),
         value: convertedIncome,
         color: colors.success,
         sym,
@@ -112,13 +114,13 @@ export function KpiCards({
         invertTrend: false,
       },
       {
-        label: 'חיסכון חודשי',
+        label: t('kpi.monthly_savings'),
         value: convertedSavings,
         color: colors.primary,
         sym,
       },
       {
-        label: 'יחס הכנסות/הוצאות',
+        label: t('kpi.income_expense_ratio'),
         value: ratio,
         color: colors.info,
         sym,
@@ -126,6 +128,7 @@ export function KpiCards({
       },
     ] as const;
   }, [
+    t,
     avgExpenses,
     avgIncome,
     avgSavings,

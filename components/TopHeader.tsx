@@ -12,11 +12,12 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { AppScreen } from '@monn/shared';
+import { useTranslation } from 'react-i18next';
+import { AppScreen, getCurrentLocale } from '@monn/shared';
+import { LanguagePicker } from './ui/LanguagePicker';
 import { colors, radii, spacing, fonts } from '../theme';
 
 const SHARE_URL = 'https://sasomm.com';
-const SHARE_MESSAGE = 'תכיר את SASOMM — אפליקציית ניהול פיננסי לפרויקטים. נסה אותה כאן: ';
 
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
@@ -25,20 +26,24 @@ interface TopHeaderProps {
   onLogout: () => void;
 }
 
-const menuItems: { label: string; icon: IconName; screen: AppScreen }[] = [
-  { label: 'איזור אישי', icon: 'person', screen: AppScreen.PERSONAL_AREA },
-  { label: 'כל הפרויקטים', icon: 'folder-special', screen: AppScreen.PROJECTS },
-  { label: 'ספקים ואנשי קשר', icon: 'people', screen: AppScreen.SUPPLIERS },
-  { label: 'תבניות קבועות', icon: 'event-repeat', screen: AppScreen.RECURRING_TEMPLATES },
-  { label: 'מרכז הדו"חות', icon: 'analytics', screen: AppScreen.REPORTS_CENTER },
-  { label: 'הגדרות', icon: 'settings', screen: AppScreen.SETTINGS },
+const menuItemsConfig: { tKey: string; icon: IconName; screen: AppScreen }[] = [
+  { tKey: 'menu.personal_area', icon: 'person', screen: AppScreen.PERSONAL_AREA },
+  { tKey: 'menu.all_projects', icon: 'folder-special', screen: AppScreen.PROJECTS },
+  { tKey: 'menu.suppliers_contacts', icon: 'people', screen: AppScreen.SUPPLIERS },
+  { tKey: 'menu.recurring_templates', icon: 'event-repeat', screen: AppScreen.RECURRING_TEMPLATES },
+  { tKey: 'menu.reports_center', icon: 'analytics', screen: AppScreen.REPORTS_CENTER },
+  { tKey: 'menu.settings', icon: 'settings', screen: AppScreen.SETTINGS },
 ];
 
 export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const currentLocale = getCurrentLocale();
 
   const handleShareApp = async () => {
     setIsMenuOpen(false);
+    const SHARE_MESSAGE = t('menu.share_message');
     const fullMessage = `${SHARE_MESSAGE}${SHARE_URL}`;
 
     if (Platform.OS === 'web') {
@@ -57,7 +62,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
         try {
           await navAny.clipboard.writeText(fullMessage);
           if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-            window.alert('הקישור הועתק ללוח. אפשר להדביק עכשיו לאן שתרצה.');
+            window.alert(t('menu.share_copied'));
           }
           return;
         } catch {
@@ -65,7 +70,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
         }
       }
       if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
-        window.prompt('העתק את הקישור:', fullMessage);
+        window.prompt(`${t('common.ok')}:`, fullMessage);
       }
       return;
     }
@@ -73,7 +78,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
     try {
       await Share.share({ message: fullMessage, url: SHARE_URL, title: 'SASOMM' });
     } catch (err: any) {
-      Alert.alert('שגיאה', 'לא הצלחנו לפתוח את חלון השיתוף');
+      Alert.alert(t('common.error'), t('menu.share_error'));
     }
   };
 
@@ -83,8 +88,8 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
         <Pressable style={styles.overlay} onPress={() => setIsMenuOpen(false)}>
           <View style={styles.menuCardWrapper}>
             <View style={styles.menuCard}>
-              <Text style={styles.menuTitle}>{'תפריט ניהול'}</Text>
-              {menuItems.map((item, i) => (
+              <Text style={styles.menuTitle}>{t('menu.title')}</Text>
+              {menuItemsConfig.map((item, i) => (
                 <TouchableOpacity
                   key={i}
                   style={styles.menuRow}
@@ -94,7 +99,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
                   }}
                 >
                   <MaterialIcons name={item.icon} size={20} color={colors.primary} />
-                  <Text style={styles.menuRowLabel}>{item.label}</Text>
+                  <Text style={styles.menuRowLabel}>{t(item.tKey)}</Text>
                 </TouchableOpacity>
               ))}
 
@@ -106,7 +111,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
               >
                 <MaterialIcons name="share" size={20} color={colors.primary} />
                 <Text style={styles.menuRowLabel}>
-                  {'שלח קישור לאפליקציה'}
+                  {t('menu.share_app')}
                 </Text>
               </TouchableOpacity>
 
@@ -121,7 +126,7 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
               >
                 <MaterialIcons name="logout" size={20} color={colors.error} />
                 <Text style={[styles.menuRowLabel, { color: colors.error }]}>
-                  {'התנתקות'}
+                  {t('menu.logout')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -129,13 +134,36 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
         </Pressable>
       </Modal>
 
+      {/* Language quick-switcher modal */}
+      <Modal visible={isLangOpen} transparent animationType="fade">
+        <Pressable style={styles.overlay} onPress={() => setIsLangOpen(false)}>
+          <View style={styles.langCardWrapper}>
+            <Pressable style={styles.langCard}>
+              <Text style={styles.menuTitle}>{t('language.title')}</Text>
+              <LanguagePicker variant="inline" />
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.hamburger}
-          onPress={() => setIsMenuOpen(true)}
-        >
-          <MaterialIcons name="menu" size={22} color={colors.white} />
-        </TouchableOpacity>
+        <View style={styles.headerLeftCluster}>
+          <TouchableOpacity
+            style={styles.langButton}
+            onPress={() => setIsLangOpen(true)}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="language" size={20} color={colors.white} />
+            <Text style={styles.langButtonText}>{currentLocale.toUpperCase()}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.hamburger}
+            onPress={() => setIsMenuOpen(true)}
+          >
+            <MaterialIcons name="menu" size={22} color={colors.white} />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.logoTouchable}
@@ -226,5 +254,43 @@ const styles = StyleSheet.create({
     borderColor: colors.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerLeftCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  langButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    height: 44,
+    borderRadius: radii.full,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  langButtonText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  langCardWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  langCard: {
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii.xl,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    minWidth: 280,
+    alignItems: 'center',
+    gap: spacing.md,
   },
 });

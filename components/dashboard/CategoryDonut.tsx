@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { DarkCard } from '../ui/DarkCard';
 import { colors, fonts, spacing, radii } from '../../theme';
 
@@ -34,6 +35,7 @@ function describeArc(cx: number, cy: number, r: number, startAngle: number, endA
 }
 
 export function CategoryDonut({ data, title, sym, convertAmount }: CategoryDonutProps) {
+  const { t } = useTranslation();
   const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
   const convertedTotal = convertAmount(total);
 
@@ -59,7 +61,7 @@ export function CategoryDonut({ data, title, sym, convertAmount }: CategoryDonut
     return (
       <DarkCard style={styles.card}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.emptyText}>אין נתונים להצגה</Text>
+        <Text style={styles.emptyText}>{t('empty.no_data')}</Text>
       </DarkCard>
     );
   }
@@ -94,7 +96,7 @@ export function CategoryDonut({ data, title, sym, convertAmount }: CategoryDonut
           <Text style={styles.centerAmount}>
             {sym}{formatNumber(convertedTotal)}
           </Text>
-          <Text style={styles.centerSubtext}>סה״כ</Text>
+          <Text style={styles.centerSubtext}>{t('chart.total')}</Text>
         </View>
       </View>
 

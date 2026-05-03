@@ -29,6 +29,7 @@ export function SectionHeader({ title, linkText, onLinkPress }: SectionHeaderPro
 const styles = StyleSheet.create({
   wrap: {
     marginBottom: 14,
+    alignItems: 'flex-start',
   },
   linkRow: {
     alignItems: 'flex-start',
@@ -38,8 +39,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontFamily: fonts.bold,
     fontSize: 16,
-    writingDirection: 'rtl',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   link: {
     paddingVertical: 2,

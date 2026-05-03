@@ -1,0 +1,216 @@
+{
+  "common": {
+    "app_name": "SASOMM",
+    "save": "שמור",
+    "cancel": "ביטול",
+    "delete": "מחק",
+    "edit": "עריכה",
+    "back": "חזרה",
+    "next": "הבא",
+    "ok": "אישור",
+    "loading": "טוען...",
+    "error": "שגיאה",
+    "success": "הצלחה",
+    "search": "חיפוש"
+  },
+  "language": {
+    "title": "שפה",
+    "he": "עברית",
+    "en": "English",
+    "fr": "Français",
+    "change_requires_restart": "החלפת שפה דורשת הפעלה מחדש של האפליקציה",
+    "restart_now": "הפעל מחדש"
+  },
+  "main_categories": {
+    "projects": "עבודה",
+    "personal": "אישי",
+    "other": "שונות"
+  },
+  "greeting": {
+    "with_name": "שלום, {{name}}",
+    "no_name": "שלום,"
+  },
+  "system": {
+    "last_activity_at": "פעילות אחרונה בוצעה ב-{{when}}"
+  },
+  "summary": {
+    "balance": "יתרה",
+    "budget": "תקציב",
+    "income": "הכנסות",
+    "expenses": "הוצאות"
+  },
+  "actions": {
+    "income": "הכנסה",
+    "expense": "הוצאה",
+    "add_income": "הוסף הכנסה",
+    "add_expense": "הוסף הוצאה"
+  },
+  "sections": {
+    "projects": "פרויקטים",
+    "quick_access": "גישה מהירה",
+    "recent_activity": "פעילות אחרונה",
+    "recent_projects": "פרויקטים אחרונים",
+    "suppliers": "ספקים",
+    "templates": "תבניות",
+    "insights": "תובנות",
+    "expense_breakdown": "פילוח הוצאות"
+  },
+  "category": {
+    "last_activity": "פעילות אחרונה: {{when}}",
+    "project_count_one": "{{count}} פרויקט",
+    "project_count_other": "{{count}} פרויקטים"
+  },
+  "quick": {
+    "new_project": "פרויקט חדש",
+    "new_supplier": "ספק חדש",
+    "new_debt": "חוב חדש",
+    "contacts": "אנשי קשר",
+    "send_reminder": "שלח תזכורת"
+  },
+  "menu": {
+    "title": "תפריט ניהול",
+    "personal_area": "איזור אישי",
+    "all_projects": "כל הפרויקטים",
+    "suppliers_contacts": "ספקים ואנשי קשר",
+    "recurring_templates": "תבניות קבועות",
+    "reports_center": "מרכז הדו\"חות",
+    "settings": "הגדרות",
+    "share_app": "שלח קישור לאפליקציה",
+    "logout": "התנתקות",
+    "share_message": "תכיר את SASOMM — אפליקציית ניהול פיננסי לפרויקטים. נסה אותה כאן: ",
+    "share_copied": "הקישור הועתק ללוח. אפשר להדביק עכשיו לאן שתרצה.",
+    "share_error": "לא הצלחנו לפתוח את חלון השיתוף"
+  },
+  "nav": {
+    "home": "בית",
+    "suppliers": "ספקים",
+    "projects": "פרויקטים",
+    "debts": "חייבים"
+  },
+  "kpi": {
+    "avg_monthly_expenses": "ממוצע הוצאות חודשי",
+    "avg_monthly_income": "ממוצע הכנסות חודשי",
+    "monthly_savings": "חיסכון חודשי",
+    "income_expense_ratio": "יחס הכנסות/הוצאות",
+    "total_transactions": "סה\"כ עסקאות"
+  },
+  "chart": {
+    "income_vs_expenses": "הכנסות מול הוצאות",
+    "income": "הכנסות",
+    "expenses": "הוצאות",
+    "expense_breakdown": "פילוח הוצאות",
+    "income_breakdown": "פילוח הכנסות",
+    "total": "סה\"כ"
+  },
+  "months_full": [
+    "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
+    "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
+  ],
+  "insights": {
+    "title": "תובנות",
+    "estimated_vat": "מע\"מ משוער",
+    "total_transactions": "סה\"כ עסקאות",
+    "expensive_month": "חודש יקר",
+    "no_vat": "ללא מע\"מ"
+  },
+  "budget_health": {
+    "title": "בריאות תקציב",
+    "over_budget": "חריגה מתקציב",
+    "near_limit": "קרוב לתקציב",
+    "healthy": "תקציב בריא",
+    "projects_over": "פרויקטים שחרגו מתקציב"
+  },
+  "payment": {
+    "distribution_title": "התפלגות אמצעי תשלום"
+  },
+  "suppliers": {
+    "top_title": "ספקים מובילים"
+  },
+  "empty": {
+    "no_data": "אין נתונים להצגה"
+  },
+  "projects_page": {
+    "page_title": "פרויקטים",
+    "filter_all": "הכל",
+    "card_balance": "יתרה",
+    "card_income": "הכנסות",
+    "card_expenses": "הוצאות",
+    "card_budget": "תקציב",
+    "no_projects": "אין פרויקטים להצגה",
+    "create_new": "צור פרויקט חדש",
+    "section_recent": "פרויקטים אחרונים",
+    "section_suppliers": "ספקים"
+  },
+  "debts": {
+    "page_title": "חובות",
+    "owed_to_me": "חייבים לי",
+    "i_owe": "אני חייב",
+    "total_owed_to_me": "סה\"כ חייבים לי",
+    "total_i_owe": "סה\"כ אני חייב",
+    "active": "חובות פעילים",
+    "paid": "חובות ששולמו",
+    "count_one": "חוב פעיל אחד",
+    "count_other": "{{count}} חובות פעילים",
+    "mark_paid": "שולם",
+    "mark_unpaid": "החזר לפעיל",
+    "add_new": "חוב חדש",
+    "edit_title": "עריכת חוב",
+    "type_label": "סוג החוב *",
+    "name_label": "שם *",
+    "name_placeholder": "שם מלא",
+    "phone_label": "טלפון (לשליחת תזכורות)",
+    "amount_label": "סכום *",
+    "project_label": "שיוך לפרויקט (אופציונלי)",
+    "project_none": "ללא שיוך",
+    "notes_label": "הערות",
+    "notes_placeholder": "הערות נוספות...",
+    "image_label": "תמונה / קבלה",
+    "image_add": "הוסף תמונה",
+    "image_replace": "החלף תמונה",
+    "image_uploading": "מעלה תמונה...",
+    "due_date_label": "תאריך החזרה צפוי",
+    "due_date_label_i_owe": "תאריך תשלום",
+    "reminder_label": "תזכורת",
+    "send_whatsapp": "שלח וואטסאפ",
+    "empty_active": "אין חובות פעילים"
+  },
+  "auth": {
+    "login": "התחברות",
+    "register": "הרשמה",
+    "switch_to_login": "יש לך חשבון? התחבר",
+    "switch_to_register": "אין לך חשבון? הירשם",
+    "submit_login": "התחבר",
+    "submit_register": "הירשם",
+    "processing": "מעבד...",
+    "or": "או",
+    "email": "אימייל",
+    "password": "סיסמה",
+    "confirm_password": "אימות סיסמה",
+    "full_name": "שם מלא *",
+    "full_name_placeholder": "שם פרטי ומשפחה",
+    "phone": "טלפון (אופציונלי)",
+    "consent_login": "המשך השימוש מהווה הסכמה ל",
+    "consent_register": "בהרשמה אני מסכים ל",
+    "consent_terms": "תנאי השימוש",
+    "consent_and": " ול",
+    "consent_privacy": "מדיניות הפרטיות",
+    "consent_dot": "."
+  },
+  "common_extra": {
+    "active": "פעיל",
+    "inactive": "לא פעיל",
+    "yes": "כן",
+    "no": "לא",
+    "all": "הכל"
+  },
+  "contacts": {
+    "page_title": "ספקים ואנשי קשר",
+    "search_placeholder": "חיפוש לפי שם או תחום...",
+    "tab_all": "הכל",
+    "tab_credit": "חייבים לי",
+    "tab_debt": "אני חייב",
+    "tab_settled": "מאופס",
+    "no_suppliers": "אין ספקים להצגה",
+    "add_supplier": "הוסף ספק"
+  }
+}

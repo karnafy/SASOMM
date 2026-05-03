@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { DarkCard } from '../ui/DarkCard';
 import { colors, fonts, spacing, radii } from '../../theme';
 
@@ -42,6 +43,7 @@ function describeSector(cx: number, cy: number, r: number, startAngle: number, e
 }
 
 export function PaymentPieChart({ data, sym, convertAmount }: PaymentPieChartProps) {
+  const { t } = useTranslation();
   const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
   const sectors = useMemo(() => {
@@ -65,15 +67,15 @@ export function PaymentPieChart({ data, sym, convertAmount }: PaymentPieChartPro
   if (data.length === 0) {
     return (
       <DarkCard style={styles.card}>
-        <Text style={styles.title}>התפלגות אמצעי תשלום</Text>
-        <Text style={styles.emptyText}>אין נתונים להצגה</Text>
+        <Text style={styles.title}>{t('payment.distribution_title')}</Text>
+        <Text style={styles.emptyText}>{t('empty.no_data')}</Text>
       </DarkCard>
     );
   }
 
   return (
     <DarkCard style={styles.card}>
-      <Text style={styles.title}>התפלגות אמצעי תשלום</Text>
+      <Text style={styles.title}>{t('payment.distribution_title')}</Text>
 
       <View style={styles.chartContainer}>
         <Svg width={CHART_SIZE} height={CHART_SIZE}>

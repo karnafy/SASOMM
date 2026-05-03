@@ -1,0 +1,216 @@
+{
+  "common": {
+    "app_name": "SASOMM",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "ok": "OK",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "search": "Search"
+  },
+  "language": {
+    "title": "Language",
+    "he": "עברית",
+    "en": "English",
+    "fr": "Français",
+    "change_requires_restart": "Changing the language requires restarting the app",
+    "restart_now": "Restart now"
+  },
+  "main_categories": {
+    "projects": "Work",
+    "personal": "Personal",
+    "other": "Other"
+  },
+  "greeting": {
+    "with_name": "Hello, {{name}}",
+    "no_name": "Hello,"
+  },
+  "system": {
+    "last_activity_at": "Last activity at {{when}}"
+  },
+  "summary": {
+    "balance": "Balance",
+    "budget": "Budget",
+    "income": "Income",
+    "expenses": "Expenses"
+  },
+  "actions": {
+    "income": "Income",
+    "expense": "Expense",
+    "add_income": "Add income",
+    "add_expense": "Add expense"
+  },
+  "sections": {
+    "projects": "Projects",
+    "quick_access": "Quick access",
+    "recent_activity": "Recent activity",
+    "recent_projects": "Recent projects",
+    "suppliers": "Suppliers",
+    "templates": "Templates",
+    "insights": "Insights",
+    "expense_breakdown": "Expense breakdown"
+  },
+  "category": {
+    "last_activity": "Last activity: {{when}}",
+    "project_count_one": "{{count}} project",
+    "project_count_other": "{{count}} projects"
+  },
+  "quick": {
+    "new_project": "New project",
+    "new_supplier": "New supplier",
+    "new_debt": "New debt",
+    "contacts": "Contacts",
+    "send_reminder": "Send reminder"
+  },
+  "menu": {
+    "title": "Management menu",
+    "personal_area": "Personal area",
+    "all_projects": "All projects",
+    "suppliers_contacts": "Suppliers & contacts",
+    "recurring_templates": "Recurring templates",
+    "reports_center": "Reports center",
+    "settings": "Settings",
+    "share_app": "Share app link",
+    "logout": "Log out",
+    "share_message": "Meet SASOMM — a financial management app for projects. Try it here: ",
+    "share_copied": "Link copied to clipboard. Paste it wherever you need.",
+    "share_error": "Could not open the share sheet"
+  },
+  "nav": {
+    "home": "Home",
+    "suppliers": "Suppliers",
+    "projects": "Projects",
+    "debts": "Debts"
+  },
+  "kpi": {
+    "avg_monthly_expenses": "Avg. monthly expenses",
+    "avg_monthly_income": "Avg. monthly income",
+    "monthly_savings": "Monthly savings",
+    "income_expense_ratio": "Income / expense ratio",
+    "total_transactions": "Total transactions"
+  },
+  "chart": {
+    "income_vs_expenses": "Income vs expenses",
+    "income": "Income",
+    "expenses": "Expenses",
+    "expense_breakdown": "Expense breakdown",
+    "income_breakdown": "Income breakdown",
+    "total": "Total"
+  },
+  "months_full": [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ],
+  "insights": {
+    "title": "Insights",
+    "estimated_vat": "Estimated VAT",
+    "total_transactions": "Total transactions",
+    "expensive_month": "Most expensive month",
+    "no_vat": "Without VAT"
+  },
+  "budget_health": {
+    "title": "Budget health",
+    "over_budget": "Over budget",
+    "near_limit": "Near limit",
+    "healthy": "Healthy budget",
+    "projects_over": "Projects over budget"
+  },
+  "payment": {
+    "distribution_title": "Payment methods"
+  },
+  "suppliers": {
+    "top_title": "Top suppliers"
+  },
+  "empty": {
+    "no_data": "No data to display"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Sign up",
+    "switch_to_login": "Already have an account? Log in",
+    "switch_to_register": "No account? Sign up",
+    "submit_login": "Log in",
+    "submit_register": "Register",
+    "processing": "Processing...",
+    "or": "or",
+    "email": "Email",
+    "password": "Password",
+    "confirm_password": "Confirm password",
+    "full_name": "Full name *",
+    "full_name_placeholder": "First and last name",
+    "phone": "Phone (optional)",
+    "consent_login": "Continued use indicates agreement to ",
+    "consent_register": "By signing up I agree to ",
+    "consent_terms": "Terms of Service",
+    "consent_and": " and ",
+    "consent_privacy": "Privacy Policy",
+    "consent_dot": "."
+  },
+  "projects_page": {
+    "page_title": "Projects",
+    "filter_all": "All",
+    "card_balance": "Balance",
+    "card_income": "Income",
+    "card_expenses": "Expenses",
+    "card_budget": "Budget",
+    "no_projects": "No projects to display",
+    "create_new": "Create new project",
+    "section_recent": "Recent projects",
+    "section_suppliers": "Suppliers"
+  },
+  "debts": {
+    "page_title": "Debts",
+    "owed_to_me": "Owed to me",
+    "i_owe": "I owe",
+    "total_owed_to_me": "Total owed to me",
+    "total_i_owe": "Total I owe",
+    "active": "Active debts",
+    "paid": "Paid debts",
+    "count_one": "1 active debt",
+    "count_other": "{{count}} active debts",
+    "mark_paid": "Paid",
+    "mark_unpaid": "Mark unpaid",
+    "add_new": "New debt",
+    "edit_title": "Edit debt",
+    "type_label": "Debt type *",
+    "name_label": "Name *",
+    "name_placeholder": "Full name",
+    "phone_label": "Phone (for reminders)",
+    "amount_label": "Amount *",
+    "project_label": "Link to project (optional)",
+    "project_none": "Not linked",
+    "notes_label": "Notes",
+    "notes_placeholder": "Additional notes...",
+    "image_label": "Image / Receipt",
+    "image_add": "Add image",
+    "image_replace": "Replace image",
+    "image_uploading": "Uploading image...",
+    "due_date_label": "Expected return date",
+    "due_date_label_i_owe": "Payment date",
+    "reminder_label": "Reminder",
+    "send_whatsapp": "Send WhatsApp",
+    "empty_active": "No active debts"
+  },
+  "common_extra": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All"
+  },
+  "contacts": {
+    "page_title": "Suppliers & Contacts",
+    "search_placeholder": "Search by name or category...",
+    "tab_all": "All",
+    "tab_credit": "Owed to me",
+    "tab_debt": "I owe",
+    "tab_settled": "Settled",
+    "no_suppliers": "No suppliers to display",
+    "add_supplier": "Add supplier"
+  }
+}

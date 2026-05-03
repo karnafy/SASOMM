@@ -27,3 +27,14 @@ export { generateMissingRecurringOccurrences } from './lib/generateRecurringOccu
 
 // UI helpers
 export { confirmDialog } from './lib/confirmDialog';
+
+// Internationalization (i18next)
+export {
+  default as i18n,
+  initI18n,
+  setLocale,
+  getCurrentLocale,
+  isRTL,
+  SUPPORTED_LOCALES,
+} from './lib/i18n';
+export type { Locale } from './lib/i18n';

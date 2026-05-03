@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, fonts, spacing, radii } from '../../theme';
 import { DarkCard } from '../ui/DarkCard';
 
@@ -17,6 +18,7 @@ export function TopSuppliersChart({
   sym,
   convertAmount,
 }: TopSuppliersChartProps) {
+  const { t } = useTranslation();
   const topSuppliers = useMemo(() => {
     const sorted = [...suppliers].sort((a, b) => b.total - a.total);
     return sorted.slice(0, MAX_BARS);
@@ -30,15 +32,15 @@ export function TopSuppliersChart({
   if (topSuppliers.length === 0) {
     return (
       <DarkCard style={styles.card}>
-        <Text style={styles.title}>ספקים מובילים</Text>
-        <Text style={styles.emptyText}>אין נתונים להצגה</Text>
+        <Text style={styles.title}>{t('suppliers.top_title')}</Text>
+        <Text style={styles.emptyText}>{t('empty.no_data')}</Text>
       </DarkCard>
     );
   }
 
   return (
     <DarkCard style={styles.card}>
-      <Text style={styles.title}>ספקים מובילים</Text>
+      <Text style={styles.title}>{t('suppliers.top_title')}</Text>
       <View style={styles.chartContainer}>
         {topSuppliers.map((supplier, index) => {
           const converted = convertAmount(supplier.total);

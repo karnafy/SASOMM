@@ -11,6 +11,7 @@ import {
 } from '@expo-google-fonts/open-sans';
 import {
   initSupabase,
+  initI18n,
   AuthProvider,
   useAuth,
   useProjects,
@@ -630,8 +631,13 @@ export default function App() {
     OpenSans_700Bold,
     OpenSans_800ExtraBold,
   });
+  const [i18nReady, setI18nReady] = useState(false);
 
-  if (!fontsLoaded) return <LoadingScreen />;
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true)).catch(() => setI18nReady(true));
+  }, []);
+
+  if (!fontsLoaded || !i18nReady) return <LoadingScreen />;
 
   return (
     <SafeAreaProvider>

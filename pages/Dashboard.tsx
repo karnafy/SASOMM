@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import * as Linking from 'expo-linking';
+import { useTranslation } from 'react-i18next';
 
 const openExternalURL = (url: string) => {
   if (Platform.OS === 'web') {
@@ -102,6 +103,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onLogout,
   userName,
 }) => {
+  const { t } = useTranslation();
   const sym = currencySymbols[globalCurrency];
 
   // ---------------------------------------------------------------------------
@@ -238,7 +240,18 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Analytics data
   // ---------------------------------------------------------------------------
 
-  const monthlyBreakdown = useMemo(() => getMonthlyBreakdown(projects), [projects]);
+  const monthlyBreakdown = useMemo(() => {
+    // getMonthlyBreakdown returns Hebrew month names by default.
+    // Re-map them to the active locale via the months_full array.
+    const raw = getMonthlyBreakdown(projects);
+    const localized = (t('months_full', { returnObjects: true }) as string[]) || [];
+    return raw.map((row) => {
+      const [, mm] = row.monthKey.split('-');
+      const idx = parseInt(mm, 10) - 1;
+      const localizedMonth = localized[idx] || row.month;
+      return { ...row, month: localizedMonth };
+    });
+  }, [projects, t]);
   const monthlyAverages = useMemo(() => getMonthlyAverages(projects), [projects]);
   const monthlyTrend = useMemo(() => getMonthlyTrend(projects), [projects]);
   const expenseCategories = useMemo(() => getExpensesByCategory(projects), [projects]);
@@ -268,10 +281,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   // ---------------------------------------------------------------------------
 
   const quickAccessItems: { id: string; label: string; icon: IconName; screen: AppScreen }[] = [
-    { id: 'proj', label: 'פרויקט חדש', icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
-    { id: 'supp', label: 'ספק חדש', icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
-    { id: 'debt', label: 'חוב חדש', icon: 'receipt-long', screen: AppScreen.ADD_DEBT },
-    { id: 'contacts', label: 'אנשי קשר', icon: 'contacts', screen: AppScreen.SUPPLIERS },
+    { id: 'proj', label: t('quick.new_project'), icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
+    { id: 'supp', label: t('quick.new_supplier'), icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
+    { id: 'debt', label: t('quick.new_debt'), icon: 'receipt-long', screen: AppScreen.ADD_DEBT },
+    { id: 'contacts', label: t('quick.contacts'), icon: 'contacts', screen: AppScreen.SUPPLIERS },
   ];
 
   // ---------------------------------------------------------------------------
@@ -305,7 +318,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <View style={styles.headerRow}>
           <CurrencyToggle selected={globalCurrency} onSelect={setGlobalCurrency} />
           <Text style={styles.greeting}>
-            {userName ? `שלום, ${userName}` : 'שלום,'}
+            {userName ? t('greeting.with_name', { name: userName }) : t('greeting.no_name')}
           </Text>
         </View>
 
@@ -314,7 +327,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <View style={styles.systemBanner}>
             <MaterialIcons name="schedule" size={14} color="rgba(255,255,255,0.65)" />
             <Text style={styles.systemBannerText}>
-              {`פעילות אחרונה בוצעה ב-${formatLastActivity(overallLastActivity)}`}
+              {t('system.last_activity_at', { when: formatLastActivity(overallLastActivity) })}
             </Text>
           </View>
         )}
@@ -322,7 +335,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Summary GlassCard */}
         <GlassCard style={styles.summaryCard}>
           {/* Balance label + big amount */}
-          <Text style={styles.summaryLabel}>{'יתרה'}</Text>
+          <Text style={styles.summaryLabel}>{t('summary.balance')}</Text>
           <Text style={[styles.summaryAmount, { color: totals.net >= 0 ? colors.success : colors.error }]}>
             {totals.net < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(totals.net)))}
           </Text>
@@ -330,21 +343,21 @@ const Dashboard: React.FC<DashboardProps> = ({
           {/* Sub-cards row: budget + income + expenses */}
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'תקציב'}</Text>
+              <Text style={styles.subCardLabel}>{t('summary.budget')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.white }]}>
                 {sym}{formatNumber(convertAmount(totals.budget))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
+              <Text style={styles.subCardLabel}>{t('summary.income')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.success }]}>
                 {sym}{formatNumber(convertAmount(totals.income))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
+              <Text style={styles.subCardLabel}>{t('summary.expenses')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.error }]}>
                 {sym}{formatNumber(convertAmount(totals.expenses))}
               </Text>
@@ -359,7 +372,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             onPress={() => onNavigate(AppScreen.ADD_EXPENSE)}
             activeOpacity={0.8}
           >
-            <Text style={styles.bigActionLabel}>{'הוצאה'}</Text>
+            <Text style={styles.bigActionLabel}>{t('actions.expense')}</Text>
             <MaterialIcons name="remove-circle-outline" size={28} color={colors.white} />
           </TouchableOpacity>
 
@@ -368,7 +381,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             onPress={() => onNavigate(AppScreen.ADD_INCOME)}
             activeOpacity={0.8}
           >
-            <Text style={styles.bigActionLabel}>{'הכנסה'}</Text>
+            <Text style={styles.bigActionLabel}>{t('actions.income')}</Text>
             <MaterialIcons name="add-circle-outline" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
@@ -379,7 +392,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Categories – 3 cards in a row ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'פרויקטים'} />
+          <SectionHeader title={t('sections.projects')} />
           <View style={styles.categoryRow}>
             {categoryTotals.map((cat) => {
               // Bar shows balance vs budget: positive = how close to budget (green from left),
@@ -395,7 +408,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   style={styles.categoryCard}
                   onPress={() => onNavigate(AppScreen.CATEGORY_PROJECTS, cat.category)}
                 >
-                  <Text style={styles.categoryCardName} numberOfLines={1}>{cat.name}</Text>
+                  <Text style={styles.categoryCardName} numberOfLines={1}>{t(`main_categories.${cat.category}`)}</Text>
                   <Text style={styles.categoryCardAmount}>
                     {cat.remaining < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(cat.remaining)))}
                   </Text>
@@ -414,7 +427,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </View>
                   {cat.lastActivity > 0 && (
                     <Text style={styles.categoryCardLastActivity} numberOfLines={1}>
-                      {`פעילות אחרונה: ${formatLastActivity(cat.lastActivity)}`}
+                      {t('category.last_activity', { when: formatLastActivity(cat.lastActivity) })}
                     </Text>
                   )}
                 </DarkCard>
@@ -425,7 +438,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Quick Access ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'גישה מהירה'} />
+          <SectionHeader title={t('sections.quick_access')} />
           <View style={styles.quickAccessRow}>
             {quickAccessItems.map((action) => (
               <TouchableOpacity
@@ -449,14 +462,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               <DarkCard style={styles.quickAccessIconCard}>
                 <MaterialIcons name="notifications-active" size={34} color={colors.primary} />
               </DarkCard>
-              <Text style={styles.quickAccessLabel}>{'שלח תזכורת'}</Text>
+              <Text style={styles.quickAccessLabel}>{t('quick.send_reminder')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* ===== Recent Activity ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'פעילות אחרונה'} />
+          <SectionHeader title={t('sections.recent_activity')} />
 
           {allActivities.length === 0 ? (
             <DarkCard style={styles.emptyCard}>
@@ -627,7 +640,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <View style={styles.section}>
             <CategoryDonut
               data={expenseCategories}
-              title={'פילוח הוצאות'}
+              title={t('chart.expense_breakdown')}
               sym={sym}
               convertAmount={convertForWidget}
             />
@@ -639,7 +652,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <View style={styles.section}>
             <CategoryDonut
               data={incomeCategories}
-              title={'פילוח הכנסות'}
+              title={t('chart.income_breakdown')}
               sym={sym}
               convertAmount={convertForWidget}
             />
