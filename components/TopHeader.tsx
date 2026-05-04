@@ -10,10 +10,11 @@ import {
   Platform,
   Share,
   Alert,
+  I18nManager,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { AppScreen, getCurrentLocale } from '@monn/shared';
+import { AppScreen, getCurrentLocale, isRTL } from '@monn/shared';
 import { LanguagePicker } from './ui/LanguagePicker';
 import { colors, radii, spacing, fonts } from '../theme';
 
@@ -147,7 +148,19 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
       </Modal>
 
       <View style={styles.header}>
-        <View style={styles.headerLeftCluster}>
+        <TouchableOpacity
+          style={styles.headerLogoSlot}
+          onPress={() => onNavigate(AppScreen.DASHBOARD)}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require('../assets/logo-sasomm.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <View style={styles.headerClusterSlot}>
           <TouchableOpacity
             style={styles.langButton}
             onPress={() => setIsLangOpen(true)}
@@ -164,18 +177,6 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
             <MaterialIcons name="menu" size={22} color={colors.white} />
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.logoTouchable}
-          onPress={() => onNavigate(AppScreen.DASHBOARD)}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={require('../assets/logo-sasomm.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
       </View>
     </>
   );
@@ -230,13 +231,31 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   header: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    position: 'relative',
+    height: 68,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
     backgroundColor: colors.transparent,
   },
+  // RN auto-flips left/right in RTL native — counteract so the logo
+  // stays visually on the LEFT and the cluster on the RIGHT in both
+  // Hebrew (RTL) and English/French (LTR).
+  headerLogoSlot: {
+    position: 'absolute',
+    [I18nManager.isRTL ? 'right' : 'left']: spacing.xl,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  } as any,
+  headerClusterSlot: {
+    position: 'absolute',
+    [I18nManager.isRTL ? 'left' : 'right']: spacing.xl,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  } as any,
   logoTouchable: {
     flexDirection: 'row',
     alignItems: 'center',

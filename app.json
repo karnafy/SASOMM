@@ -3,6 +3,7 @@
     "name": "SASOMM",
     "slug": "sasomm",
     "version": "1.0.0",
+    "scheme": "sasomm",
     "orientation": "portrait",
     "icon": "./assets/logo-sasomm.png",
     "userInterfaceStyle": "dark",
@@ -12,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.karnafstudio.sasomm"
+      "bundleIdentifier": "com.karnafstudio.sasomm",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +32,8 @@
     "owner": "karnafstudio",
     "plugins": [
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ]
   }
 }

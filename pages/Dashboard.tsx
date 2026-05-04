@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  I18nManager,
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
@@ -314,10 +315,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     <View style={styles.root}>
       {/* ===== GRADIENT ZONE ===== */}
       <GradientHeader style={styles.gradientZone}>
-        {/* Header row: greeting + currency toggle */}
-        <View style={styles.headerRow}>
+        {/* Currency toggle row (above greeting) */}
+        <View style={styles.currencyRow}>
           <CurrencyToggle selected={globalCurrency} onSelect={setGlobalCurrency} />
-          <Text style={styles.greeting}>
+        </View>
+
+        {/* Greeting row (below currency) */}
+        <View style={styles.greetingRow}>
+          <Text style={styles.greeting} numberOfLines={1} adjustsFontSizeToFit>
             {userName ? t('greeting.with_name', { name: userName }) : t('greeting.no_name')}
           </Text>
         </View>
@@ -343,22 +348,22 @@ const Dashboard: React.FC<DashboardProps> = ({
           {/* Sub-cards row: budget + income + expenses */}
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{t('summary.budget')}</Text>
-              <Text style={[styles.subCardAmount, { color: colors.white }]}>
+              <Text style={styles.subCardLabel} numberOfLines={1}>{t('summary.budget')}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.white }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {sym}{formatNumber(convertAmount(totals.budget))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{t('summary.income')}</Text>
-              <Text style={[styles.subCardAmount, { color: colors.success }]}>
+              <Text style={styles.subCardLabel} numberOfLines={1}>{t('summary.income')}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.success }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {sym}{formatNumber(convertAmount(totals.income))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{t('summary.expenses')}</Text>
-              <Text style={[styles.subCardAmount, { color: colors.error }]}>
+              <Text style={styles.subCardLabel} numberOfLines={1}>{t('summary.expenses')}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.error }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {sym}{formatNumber(convertAmount(totals.expenses))}
               </Text>
             </GlassCard>
@@ -408,8 +413,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                   style={styles.categoryCard}
                   onPress={() => onNavigate(AppScreen.CATEGORY_PROJECTS, cat.category)}
                 >
-                  <Text style={styles.categoryCardName} numberOfLines={1}>{t(`main_categories.${cat.category}`)}</Text>
-                  <Text style={styles.categoryCardAmount}>
+                  <Text style={styles.categoryCardName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t(`main_categories.${cat.category}`)}</Text>
+                  <Text style={styles.categoryCardAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.55}>
                     {cat.remaining < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(cat.remaining)))}
                   </Text>
                   <ProgressBar
@@ -449,7 +454,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <DarkCard style={styles.quickAccessIconCard}>
                   <MaterialIcons
                     name={action.icon}
-                    size={34}
+                    size={26}
                     color={action.id === 'debt' ? colors.warning : colors.primary}
                   />
                 </DarkCard>
@@ -460,7 +465,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Send reminder */}
             <TouchableOpacity style={styles.quickAccessItem} onPress={sendReminder}>
               <DarkCard style={styles.quickAccessIconCard}>
-                <MaterialIcons name="notifications-active" size={34} color={colors.primary} />
+                <MaterialIcons name="notifications-active" size={26} color={colors.primary} />
               </DarkCard>
               <Text style={styles.quickAccessLabel}>{t('quick.send_reminder')}</Text>
             </TouchableOpacity>
@@ -734,6 +739,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     paddingTop: spacing.md,
   },
+  currencyRow: {
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+    paddingTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  greetingRow: {
+    marginBottom: spacing.sm,
+  },
   systemBanner: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
@@ -751,29 +764,30 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: fonts.bold,
     color: colors.white,
-    writingDirection: 'rtl',
-    textAlign: 'right',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
 
   /* ---- Summary GlassCard ---- */
   summaryCard: {
     padding: spacing['2xl'],
     marginBottom: spacing.lg,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   summaryLabel: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.6)',
     fontFamily: fonts.medium,
     marginBottom: spacing.xs,
-    writingDirection: 'rtl',
+    // Visually right in both LTR and RTL — RN auto-flips 'left'/'right'
+    // in RTL native, so we pick the value that resolves to right.
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
   summaryAmount: {
     fontSize: 34,
     fontFamily: fonts.bold,
     color: colors.white,
     marginBottom: spacing.lg,
-    writingDirection: 'rtl',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
   subCardsRow: {
     flexDirection: 'row-reverse',
@@ -782,20 +796,21 @@ const styles = StyleSheet.create({
   },
   subCard: {
     flex: 1,
-    padding: spacing.md,
-    alignItems: 'flex-end',
+    padding: spacing.sm,
+    alignItems: 'stretch',
+    minWidth: 0,
   },
   subCardLabel: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.55)',
     fontFamily: fonts.medium,
     marginBottom: 4,
-    writingDirection: 'rtl',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
   subCardAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.bold,
-    writingDirection: 'rtl',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
 
   /* ---- Quick Action Buttons (in gradient) ---- */
@@ -954,29 +969,29 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flex: 1,
   },
-  // Bigger semi-transparent icon card with primary glow (per design)
+  // Semi-transparent icon card with primary glow (per design).
+  // Sized so 5 tiles fit on a ~360-380px wide phone without overlap.
   quickAccessIconCard: {
-    width: 76,
-    height: 76,
+    width: 56,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.xl,
+    borderRadius: radii.lg,
     backgroundColor: 'rgba(0,217,217,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(0,217,217,0.30)',
     shadowColor: '#00D9D9',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   quickAccessLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: fonts.semibold,
     color: colors.textSecondary,
-    writingDirection: 'rtl',
     textAlign: 'center',
-    maxWidth: 84,
+    maxWidth: 70,
   },
 
   /* ---- Activity ---- */

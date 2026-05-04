@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   row: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     gap: 12,
@@ -171,10 +171,10 @@ const styles = StyleSheet.create({
   },
   textBlock: {
     flex: 1,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   titleLine: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontFamily: fonts.medium,
     fontSize: 13,
-    textAlign: 'right',
+    textAlign: 'left',
     flexShrink: 1,
   },
   supplier: {
@@ -258,18 +258,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 13,
     marginTop: 3,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   meta: {
     color: colors.textTertiary,
     fontFamily: fonts.regular,
     fontSize: 10,
     marginTop: 2,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   amount: {
     fontFamily: fonts.bold,
     fontSize: 13,
-    textAlign: 'left',
+    textAlign: 'right',
   },
 });
