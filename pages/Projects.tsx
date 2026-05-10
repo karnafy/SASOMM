@@ -146,7 +146,7 @@ const Projects: React.FC<ProjectsProps> = ({
       const remaining = totalIncome - totalSpent;
       return {
         category: cat,
-        name: MAIN_CATEGORIES[cat],
+        name: t(`main_categories.${cat}`),
         budget: totalBudget,
         spent: totalSpent,
         income: totalIncome,

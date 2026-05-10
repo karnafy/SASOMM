@@ -200,7 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       return {
         category: cat,
-        name: MAIN_CATEGORIES[cat],
+        name: t(`main_categories.${cat}`),
         budget: totalBudget,
         spent: totalSpent,
         income: totalIncome,
