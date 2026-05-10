@@ -14,6 +14,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Contacts from 'expo-contacts';
+import { useTranslation } from 'react-i18next';
 import { AppScreen } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { ScreenTopBar } from '../components/ui/ScreenTopBar';
@@ -26,6 +27,8 @@ interface AddSupplierProps {
   returnTo?: AppScreen | null;
 }
 
+// Default categories — kept in Hebrew so existing supplier records keep matching.
+// UI translates labels at render time via SUPPLIER_CATEGORY_KEYS.
 const CATEGORIES = [
   'אינסטלציה',
   'חשמל',
@@ -35,12 +38,22 @@ const CATEGORIES = [
   'כללי',
 ];
 
+const SUPPLIER_CATEGORY_KEYS: Record<string, string> = {
+  'אינסטלציה': 'add_supplier.categories.plumbing',
+  'חשמל': 'add_supplier.categories.electricity',
+  'בנייה': 'add_supplier.categories.construction',
+  'ריהוט': 'add_supplier.categories.furniture',
+  'גינון': 'add_supplier.categories.gardening',
+  'כללי': 'add_supplier.categories.general',
+};
+
 const AddSupplier: React.FC<AddSupplierProps> = ({
   onNavigate,
   goBack,
   onSave,
   returnTo,
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('כללי');
   const [phone, setPhone] = useState('');
@@ -55,8 +68,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
     setIsSaving(true);
     try {
       await onSave(
-        name || 'ספק חדש',
-        finalCategory || 'כללי',
+        name || t('add_supplier.default_name'),
+        finalCategory || t('add_supplier.default_category'),
         phone,
         avatar || `https://picsum.photos/seed/${encodeURIComponent(name || 'default')}/100`
       );
@@ -69,8 +82,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(
-        'שגיאה',
-        'נדרשת הרשאה לגלריה'
+        t('common.error'),
+        t('add_supplier.err_gallery_permission')
       );
       return;
     }
@@ -87,19 +100,19 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
 
   const handleImportContact = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('', 'ייבוא אנשי קשר זמין רק באפליקציית הנייד');
+      Alert.alert('', t('add_supplier.mobile_only'));
       return;
     }
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('שגיאה', 'נדרשת הרשאה לאנשי הקשר');
+      Alert.alert(t('common.error'), t('add_supplier.err_contacts_permission'));
       return;
     }
     const { data } = await Contacts.getContactsAsync({
       fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Image],
     });
     if (!data || data.length === 0) {
-      Alert.alert('', 'לא נמצאו אנשי קשר');
+      Alert.alert('', t('add_supplier.no_contacts'));
       return;
     }
     // Show a simple list via Alert on mobile
@@ -125,7 +138,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
   return (
     <View style={styles.container}>
       <ScreenTopBar
-        title={'כרטיס ספק חדש'}
+        title={t('add_supplier.title')}
         onBack={goBack}
       />
 
@@ -148,7 +161,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <View style={styles.avatarPlaceholder}>
                 <MaterialIcons name="person-add" size={48} color={colors.textTertiary} />
                 <Text style={styles.avatarPlaceholderText}>
-                  {'לחץ להעלאה'}
+                  {t('add_supplier.upload_hint')}
                 </Text>
               </View>
             )}
@@ -165,7 +178,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           activeOpacity={0.8}
         >
           <MaterialIcons name="contact-phone" size={20} color={colors.primary} />
-          <Text style={styles.importContactText}>{'ייבוא מאנשי קשר'}</Text>
+          <Text style={styles.importContactText}>{t('add_supplier.import_contacts')}</Text>
         </TouchableOpacity>
 
         {/* Form Fields */}
@@ -174,13 +187,13 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>
-                {'שם הספק / העסק *'}
+                {t('add_supplier.name_label')}
               </Text>
               <MaterialIcons name="badge" size={16} color={colors.textTertiary} />
             </View>
             <TextInput
               style={styles.textInput}
-              placeholder={'לדוגמה: א.א אינסטלציה'}
+              placeholder={t('add_supplier.name_placeholder')}
               placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={setName}
@@ -192,7 +205,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>
-                {'מספר טלפון לזיהוי'}
+                {t('add_supplier.phone_label')}
               </Text>
               <MaterialIcons name="call" size={16} color={colors.textTertiary} />
             </View>
@@ -211,7 +224,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>
-                {'תחום התמחות עיקרי'}
+                {t('add_supplier.specialty_label')}
               </Text>
             </View>
 
@@ -235,7 +248,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
                           isSelected && styles.categoryChipTextSelected,
                         ]}
                       >
-                        {cat}
+                        {SUPPLIER_CATEGORY_KEYS[cat] ? t(SUPPLIER_CATEGORY_KEYS[cat]) : cat}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -247,7 +260,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
                 >
                   <MaterialIcons name="add" size={14} color={colors.accent} />
                   <Text style={styles.categoryChipAddText}>
-                    {'אחר'}
+                    {t('add_supplier.other')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -255,7 +268,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
               <View style={styles.newCategoryRow}>
                 <TextInput
                   style={[styles.textInput, { flex: 1 }]}
-                  placeholder={'הקלד שם תחום...'}
+                  placeholder={t('add_supplier.specialty_placeholder')}
                   placeholderTextColor={colors.textTertiary}
                   value={newCategory}
                   onChangeText={setNewCategory}
@@ -283,8 +296,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({
         <GradientButton
           label={
             isSaving
-              ? 'מעבד מערכת...'
-              : 'אשר ושמור ספק'
+              ? t('add_supplier.saving')
+              : t('add_supplier.save')
           }
           onPress={handleSave}
           disabled={!canSave}

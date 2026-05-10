@@ -23,6 +23,7 @@ const openExternalURL = (url: string) => {
     Linking.openURL(url);
   }
 };
+import { useTranslation } from 'react-i18next';
 import { AppScreen, Expense, Currency, Supplier, Project, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { ScreenTopBar } from '../components/ui/ScreenTopBar';
@@ -64,6 +65,7 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({
   globalCurrency,
   convertAmount,
 }) => {
+  const { t } = useTranslation();
   const [showFullImage, setShowFullImage] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
@@ -107,7 +109,7 @@ _נשלח מאפליקציית SASOMM_`;
         title: `פרטי תשלום - ${expense.title}`,
       });
     } catch (err) {
-      Alert.alert('שגיאה', 'לא ניתן לשתף');
+      Alert.alert(t('common.error'), t('activity_detail.err_share_failed'));
     }
   };
 
@@ -159,9 +161,9 @@ _הופק מאפליקציית SASOMM_`;
   const handleDeleteProject = async () => {
     if (!project) return;
     const ok = await confirmDialog({
-      title: 'מחיקת פרויקט',
-      message: `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
-      confirmText: 'מחק',
+      title: t('activity_detail.delete_project_title'),
+      message: `${t('activity_detail.delete_project_title')}: "${project.name}"?`,
+      confirmText: t('activity_detail.delete_project_confirm'),
       destructive: true,
     });
     if (ok) {
@@ -204,10 +206,10 @@ _הופק מאפליקציית SASOMM_`;
 
   const typeLabel =
     expense.type === 'income'
-      ? 'הכנסה מאושרת'
+      ? t('activity_detail.type_income')
       : expense.type === 'note'
-      ? 'תיעוד כללי'
-      : 'הוצאה מאושרת';
+      ? t('activity_detail.type_note')
+      : t('activity_detail.type_expense');
 
   const typeIcon: React.ComponentProps<typeof MaterialIcons>['name'] =
     expense.type === 'income'
@@ -284,7 +286,7 @@ _הופק מאפליקציית SASOMM_`;
                   }}
                 >
                   <MaterialIcons name="edit" size={20} color={colors.primary} />
-                  <Text style={styles.menuItemText}>{'עריכת התשלום'}</Text>
+                  <Text style={styles.menuItemText}>{t('activity_detail.menu_edit_payment')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
@@ -294,28 +296,28 @@ _הופק מאפליקציית SASOMM_`;
                   }}
                 >
                   <MaterialIcons name="folder" size={20} color={colors.accent} />
-                  <Text style={styles.menuItemText}>{'עריכת הפרויקט'}</Text>
+                  <Text style={styles.menuItemText}>{t('activity_detail.menu_edit_project')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem} onPress={handleExportReport}>
                   <MaterialIcons name="description" size={20} color={colors.warning} />
-                  <Text style={styles.menuItemText}>{'הוצאת דו"ח'}</Text>
+                  <Text style={styles.menuItemText}>{t('activity_detail.menu_export_report')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem} onPress={handleProjectShare}>
                   <MaterialIcons name="share" size={20} color={colors.success} />
-                  <Text style={styles.menuItemText}>{'שיתוף פרויקט'}</Text>
+                  <Text style={styles.menuItemText}>{t('activity_detail.menu_share_project')}</Text>
                 </TouchableOpacity>
                 <View style={styles.menuDivider} />
               </>
             )}
             <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
               <MaterialIcons name="ios-share" size={20} color={colors.textSecondary} />
-              <Text style={styles.menuItemText}>{'שתף עסקה'}</Text>
+              <Text style={styles.menuItemText}>{t('activity_detail.menu_share_tx')}</Text>
             </TouchableOpacity>
             {project && (
               <TouchableOpacity style={styles.menuItem} onPress={handleDeleteProject}>
                 <MaterialIcons name="delete" size={20} color={colors.error} />
                 <Text style={[styles.menuItemText, { color: colors.error }]}>
-                  {'מחיקת הפרויקט'}
+                  {t('activity_detail.menu_delete_project')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -330,11 +332,11 @@ _הופק מאפליקציית SASOMM_`;
           onPress={() => !isDeleting && setShowDeleteConfirm(false)}
         >
           <Pressable style={styles.confirmCard}>
-            <Text style={styles.confirmTitle}>{'מחיקת תנועה'}</Text>
+            <Text style={styles.confirmTitle}>{t('activity_detail.delete_title')}</Text>
             <Text style={styles.confirmText}>
               {expense?.recurringTemplateId
-                ? 'התנועה הזו היא חלק מסדרה חוזרת. המחיקה תסיר רק את המופע הזה — שאר הסדרה תישאר ללא שינוי.'
-                : `האם למחוק את התנועה "${expense?.title || ''}"?`}
+                ? t('activity_detail.delete_recurring_msg')
+                : `${t('activity_detail.delete')}: "${expense?.title || ''}"?`}
             </Text>
             <View style={styles.confirmRow}>
               <TouchableOpacity
@@ -342,14 +344,14 @@ _הופק מאפליקציית SASOMM_`;
                 onPress={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
               >
-                <Text style={styles.confirmCancelText}>{'ביטול'}</Text>
+                <Text style={styles.confirmCancelText}>{t('activity_detail.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmBtn, styles.confirmDanger]}
                 onPress={performDeleteTransaction}
                 disabled={isDeleting}
               >
-                <Text style={styles.confirmDangerText}>{isDeleting ? 'מוחק…' : 'מחק'}</Text>
+                <Text style={styles.confirmDangerText}>{isDeleting ? t('activity_detail.deleting') : t('activity_detail.delete')}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -382,7 +384,7 @@ _הופק מאפליקציית SASOMM_`;
           </View>
 
           <Text style={styles.amountLabel}>
-            {expense.type === 'note' ? 'תוכן הפעילות' : 'סכום העסקה'}
+            {expense.type === 'note' ? t('activity_detail.section_note') : t('activity_detail.section_amount')}
           </Text>
 
           {expense.amount !== undefined ? (
@@ -414,9 +416,9 @@ _הופק מאפליקציית SASOMM_`;
                 <MaterialIcons name="account-balance" size={20} color={colors.primary} />
               </View>
               <View style={styles.detailInfo}>
-                <Text style={styles.detailLabel}>{'אמצעי תשלום'}</Text>
+                <Text style={styles.detailLabel}>{t('activity_detail.payment_method')}</Text>
                 <Text style={styles.detailValue}>
-                  {expense.paymentMethod || 'דיגיטלי / העברה'}
+                  {expense.paymentMethod || t('activity_detail.default_payment')}
                 </Text>
               </View>
             </View>
@@ -435,9 +437,9 @@ _הופק מאפליקציית SASOMM_`;
                 <MaterialIcons name="folder-special" size={20} color={colors.accent} />
               </View>
               <View style={[styles.detailInfo, { flex: 1 }]}>
-                <Text style={styles.detailLabel}>{'שיוך פרויקט'}</Text>
+                <Text style={styles.detailLabel}>{t('activity_detail.project_assignment')}</Text>
                 <Text style={[styles.detailValue, { color: colors.accent }]}>
-                  {expense.projectName || 'כללי'}
+                  {expense.projectName || t('activity_detail.default_project')}
                 </Text>
               </View>
               <MaterialIcons name="chevron-left" size={20} color={colors.textTertiary} />
@@ -452,7 +454,7 @@ _הופק מאפליקציית SASOMM_`;
                     <MaterialIcons name="category" size={20} color={colors.accent} />
                   </View>
                   <View style={styles.detailInfo}>
-                    <Text style={styles.detailLabel}>{'קטגוריה'}</Text>
+                    <Text style={styles.detailLabel}>{t('activity_detail.category')}</Text>
                     <Text style={styles.detailValue}>{expense.tag}</Text>
                   </View>
                 </View>
@@ -465,8 +467,8 @@ _הופק מאפליקציית SASOMM_`;
         {supplier && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{'איש קשר לעסקה'}</Text>
-              <Text style={styles.sectionSubtitle}>{'ספק רשום'}</Text>
+              <Text style={styles.sectionTitle}>{t('activity_detail.contact_section')}</Text>
+              <Text style={styles.sectionSubtitle}>{t('activity_detail.supplier_registered')}</Text>
             </View>
 
             <DarkCard style={styles.supplierCard}>
@@ -488,7 +490,7 @@ _הופק מאפליקציית SASOMM_`;
                 <Text style={styles.supplierPhone}>{supplier.phone}</Text>
                 <View style={styles.whatsappBadge}>
                   <View style={styles.activeDot} />
-                  <Text style={styles.whatsappBadgeText}>WhatsApp {'פעיל'}</Text>
+                  <Text style={styles.whatsappBadgeText}>WhatsApp {t('activity_detail.whatsapp_active')}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -513,9 +515,9 @@ _הופק מאפליקציית SASOMM_`;
         {/* Receipt Images */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{'נספחים וקבלות'}</Text>
+            <Text style={styles.sectionTitle}>{t('activity_detail.attachments_section')}</Text>
             <Text style={styles.sectionSubtitle}>
-              {expense.receiptImages?.length || 0} {'קבצים'}
+              {expense.receiptImages?.length || 0} {t('activity_detail.files_count')}
             </Text>
           </View>
 
@@ -549,7 +551,7 @@ _הופק מאפליקציית SASOMM_`;
                   size={32}
                   color={colors.textTertiary}
                 />
-                <Text style={styles.addImageText}>{'הוסף נספח'}</Text>
+                <Text style={styles.addImageText}>{t('activity_detail.add_attachment')}</Text>
               </TouchableOpacity>
             </ScrollView>
           ) : (
@@ -558,14 +560,14 @@ _הופק מאפליקציית SASOMM_`;
                 <MaterialIcons name="no-photography" size={40} color={colors.textTertiary} />
               </View>
               <Text style={styles.noImagesText}>
-                {'לא צורף תיעוד ויזואלי'}
+                {t('activity_detail.no_visual_doc')}
               </Text>
               <TouchableOpacity
                 style={styles.addReceiptBtn}
                 onPress={() => onNavigate(AppScreen.EDIT_ACTIVITY, expense.id)}
               >
                 <MaterialIcons name="add-a-photo" size={16} color={colors.primary} />
-                <Text style={styles.addReceiptText}>{'הוסף קבלה עכשיו'}</Text>
+                <Text style={styles.addReceiptText}>{t('activity_detail.add_receipt')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -574,7 +576,7 @@ _הופק מאפליקציית SASOMM_`;
         {/* Audit Trail */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{'יומן שינויים וביקורת'}</Text>
+            <Text style={styles.sectionTitle}>{t('activity_detail.audit_section')}</Text>
             <View style={styles.auditBadge}>
               <MaterialIcons name="lock" size={12} color={colors.textTertiary} />
               <Text style={styles.auditBadgeText}>Audit Safe</Text>
@@ -587,12 +589,12 @@ _הופק מאפליקציית SASOMM_`;
               <MaterialIcons name="person" size={18} color={colors.primary} />
             </View>
             <View style={styles.auditContent}>
-              <Text style={styles.auditTitle}>{'נוצר על ידי המנהל'}</Text>
+              <Text style={styles.auditTitle}>{t('activity_detail.audit_created_by')}</Text>
               <Text style={styles.auditDate}>{expense.date} {'\•'} 10:45</Text>
               <View style={styles.auditNote}>
                 <Text style={styles.auditNoteText}>
-                  {'הפעולה נוספה למערכת ושוייכה לפרויקט '}
-                  {expense.projectName || 'המרכזי'}.
+                  {t('activity_detail.audit_added_to_project')}
+                  {expense.projectName || t('activity_detail.audit_default_project')}.
                 </Text>
               </View>
             </View>
@@ -613,7 +615,7 @@ _הופק מאפליקציית SASOMM_`;
                   <View style={styles.auditNote}>
                     {entry.oldValue && entry.newValue ? (
                       <View>
-                        <Text style={styles.changeLabel}>{'שינוי בערך:'}</Text>
+                        <Text style={styles.changeLabel}>{t('activity_detail.audit_value_change')}</Text>
                         <View style={styles.changeRow}>
                           <Text style={styles.oldValue}>{entry.oldValue}</Text>
                           <MaterialIcons
@@ -639,7 +641,7 @@ _הופק מאפליקציית SASOMM_`;
                 <MaterialIcons name="receipt-long" size={18} color={colors.primary} />
               </View>
               <View style={styles.auditContent}>
-                <Text style={styles.auditTitle}>{'תיעוד הוכחת תשלום'}</Text>
+                <Text style={styles.auditTitle}>{t('activity_detail.audit_payment_proof')}</Text>
                 <Text style={styles.auditDate}>
                   {expense.date} {'\•'} {expense.time || '10:46'}
                 </Text>

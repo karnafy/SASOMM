@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import {
   AppScreen,
   Currency,
@@ -37,16 +38,11 @@ interface RecurringTemplatesProps {
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = { ILS: '₪', USD: '$', EUR: '€' };
 
-const HEBREW_MONTHS = [
-  'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
-  'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
-];
-
-function formatDateLabel(iso?: string): string {
+function formatDateLabel(iso: string | undefined, monthsFull: string[]): string {
   if (!iso) return '—';
   const [y, m, d] = iso.split('-').map((s) => parseInt(s, 10));
   if (!y || !m || !d) return iso;
-  return `${d} ${HEBREW_MONTHS[m - 1]} ${y}`;
+  return `${d} ${monthsFull[m - 1]} ${y}`;
 }
 
 const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
@@ -58,9 +54,11 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
   onPause,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { templates, loading, refetch } = useRecurringTransactions(user?.id);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const monthsFull = t('months_full', { returnObjects: true }) as string[];
 
   const handleTogglePause = useCallback(
     async (template: RecurringTransaction) => {
@@ -69,7 +67,7 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
         await onPause(template.id, !template.isActive);
         await refetch();
       } catch (e) {
-        Alert.alert('שגיאה', 'לא ניתן לעדכן את התבנית');
+        Alert.alert(t('common.error'), t('recurring.err_update'));
       } finally {
         setPendingId(null);
       }
@@ -80,18 +78,18 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
   const handleDelete = useCallback(
     async (template: RecurringTransaction) => {
       const wantsDelete = await confirmDialog({
-        title: 'מחיקת תבנית',
-        message: `האם למחוק את התבנית "${template.title}"?`,
-        confirmText: 'מחק',
+        title: t('recurring.delete_template_title'),
+        message: t('recurring.delete_template_msg', { title: template.title, defaultValue: `${t('recurring.delete_template_title')}: "${template.title}"?` }),
+        confirmText: t('recurring.delete_template_confirm'),
         destructive: true,
       });
       if (!wantsDelete) return;
 
       const alsoDeleteHistory = await confirmDialog({
-        title: 'מחיקת היסטוריה',
-        message: 'למחוק גם את כל הרשומות הקיימות שנוצרו מהתבנית? לחץ "מחק" כדי למחוק גם היסטוריה, "ביטול" כדי להשאיר אותן.',
-        confirmText: 'מחק היסטוריה',
-        cancelText: 'השאר היסטוריה',
+        title: t('recurring.delete_history_title'),
+        message: t('recurring.delete_history_msg'),
+        confirmText: t('recurring.delete_history_confirm'),
+        cancelText: t('recurring.keep_history'),
         destructive: true,
       });
 
@@ -99,10 +97,10 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
         await onDelete(template.id, alsoDeleteHistory);
         await refetch();
       } catch {
-        Alert.alert('שגיאה', 'מחיקה נכשלה');
+        Alert.alert(t('common.error'), t('recurring.err_delete'));
       }
     },
-    [onDelete, refetch]
+    [onDelete, refetch, t]
   );
 
   const renderEmpty = () => (
@@ -110,9 +108,9 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
       <View style={styles.emptyIconWrap}>
         <MaterialIcons name="event-repeat" size={42} color={colors.textTertiary} />
       </View>
-      <Text style={styles.emptyTitle}>{'אין תבניות חוזרות'}</Text>
+      <Text style={styles.emptyTitle}>{t('recurring.empty_title')}</Text>
       <Text style={styles.emptyDesc}>
-        {'יוצרים תבנית מתוך מסך ההוצאה / ההכנסה — סמן "הוצאה קבועה" ובחר יום בחודש.'}
+        {t('recurring.empty_desc')}
       </Text>
     </View>
   );
@@ -123,7 +121,7 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
     const sym = CURRENCY_SYMBOLS[globalCurrency] || CURRENCY_SYMBOLS.ILS;
     const amountDisplay = convertAmount(tpl.amount, 'ILS', globalCurrency);
     const accent = tpl.type === 'expense' ? colors.error : colors.success;
-    const typeLabel = tpl.type === 'expense' ? 'הוצאה' : 'הכנסה';
+    const typeLabel = tpl.type === 'expense' ? t('recurring.type_expense') : t('recurring.type_income');
 
     return (
       <DarkCard key={tpl.id} style={styles.card}>
@@ -152,13 +150,17 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
         <View style={styles.metaRow}>
           <MaterialIcons name="event" size={16} color={colors.textTertiary} />
           <Text style={styles.metaText}>
-            {`כל ${tpl.dayOfMonth} בחודש`}
-            {tpl.endDate ? ` • עד ${formatDateLabel(tpl.endDate)}` : ' • ללא תאריך סיום'}
+            {t('recurring.every_day_of_month', { day: tpl.dayOfMonth })}
+            {tpl.endDate
+              ? ` • ${t('recurring.until_label', { date: formatDateLabel(tpl.endDate, monthsFull) })}`
+              : ` • ${t('recurring.no_end_date')}`}
           </Text>
         </View>
         <View style={styles.metaRow}>
           <MaterialIcons name="schedule" size={16} color={colors.textTertiary} />
-          <Text style={styles.metaText}>{`התחלה: ${formatDateLabel(tpl.startDate)}`}</Text>
+          <Text style={styles.metaText}>
+            {t('recurring.starts_label', { date: formatDateLabel(tpl.startDate, monthsFull) })}
+          </Text>
         </View>
 
         <View style={styles.divider} />
@@ -172,7 +174,7 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
               }}
             />
             <Text style={styles.activeLabel}>
-              {tpl.isActive ? 'פעילה' : 'מושהית'}
+              {tpl.isActive ? t('recurring.active') : t('recurring.paused')}
             </Text>
           </View>
 
@@ -181,7 +183,7 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
             onPress={() => handleDelete(tpl)}
           >
             <MaterialIcons name="delete-outline" size={18} color={colors.error} />
-            <Text style={styles.deleteBtnText}>{'מחק'}</Text>
+            <Text style={styles.deleteBtnText}>{t('recurring.delete')}</Text>
           </TouchableOpacity>
         </View>
       </DarkCard>
@@ -190,7 +192,7 @@ const RecurringTemplates: React.FC<RecurringTemplatesProps> = ({
 
   return (
     <View style={styles.container}>
-      <ScreenTopBar title="תבניות חוזרות" onBack={goBack} />
+      <ScreenTopBar title={t('menu.recurring_templates')} onBack={goBack} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={

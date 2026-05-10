@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { AppScreen, Project, Currency, MainCategory, MAIN_CATEGORIES } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
@@ -45,16 +46,18 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
   convertAmount,
   selectedCategory,
 }) => {
-  const [filter, setFilter] = useState('הכל');
+  const { t } = useTranslation();
+  const ALL_LABEL = t('category_projects.all');
+  const [filter, setFilter] = useState(ALL_LABEL);
 
   const categoryProjects = useMemo(() => {
     return projects.filter((p) => p.mainCategory === selectedCategory);
   }, [projects, selectedCategory]);
 
-  const subCategories = ['הכל', ...Array.from(new Set(categoryProjects.map((p) => p.category)))];
+  const subCategories = [ALL_LABEL, ...Array.from(new Set(categoryProjects.map((p) => p.category)))];
 
   const filteredProjects = categoryProjects.filter(
-    (p) => filter === 'הכל' || p.category === filter
+    (p) => filter === ALL_LABEL || p.category === filter
   );
 
   const categoryTotals = useMemo(() => {
@@ -116,7 +119,7 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
                 color={colors.white}
               />
             </View>
-            <Text style={styles.headerTitle}>{MAIN_CATEGORIES[selectedCategory]}</Text>
+            <Text style={styles.headerTitle}>{t(`main_categories.${selectedCategory}`)}</Text>
           </View>
           <TouchableOpacity
             style={styles.addButton}
@@ -129,28 +132,28 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
 
         {/* Summary Card - Dashboard style */}
         <GlassCard style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>{'יתרה'}</Text>
+          <Text style={styles.summaryLabel}>{t('category_projects.balance')}</Text>
           <Text style={[styles.summaryAmount, { color: categoryTotals.remaining >= 0 ? colors.success : colors.error }]}>
             {categoryTotals.remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(categoryTotals.remaining))}
           </Text>
 
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'תקציב'}</Text>
+              <Text style={styles.subCardLabel}>{t('category_projects.budget')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.white }]}>
                 {symbol}{formatAmount(categoryTotals.budget)}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
+              <Text style={styles.subCardLabel}>{t('category_projects.income')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.success }]}>
                 {symbol}{formatAmount(categoryTotals.income)}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
+              <Text style={styles.subCardLabel}>{t('category_projects.expenses')}</Text>
               <Text style={[styles.subCardAmount, { color: colors.error }]}>
                 {symbol}{formatAmount(categoryTotals.spent)}
               </Text>
@@ -181,13 +184,13 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
             <View style={styles.emptyIconContainer}>
               <MaterialIcons name="folder-off" size={40} color={colors.textTertiary} />
             </View>
-            <Text style={styles.emptyText}>{'אין פרויקטים בקטגוריה זו'}</Text>
+            <Text style={styles.emptyText}>{t('category_projects.no_projects')}</Text>
             <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => onNavigate(AppScreen.ADD_PROJECT)}
               activeOpacity={0.7}
             >
-              <Text style={styles.emptyButtonText}>{'צור פרויקט חדש'}</Text>
+              <Text style={styles.emptyButtonText}>{t('category_projects.create_new')}</Text>
             </TouchableOpacity>
           </DarkCard>
         ) : (
@@ -238,25 +241,25 @@ const CategoryProjects: React.FC<CategoryProjectsProps> = ({
                 {/* Amounts Row */}
                 <View style={styles.amountsRow}>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'תקציב'}</Text>
+                    <Text style={styles.amountLabel}>{t('category_projects.budget')}</Text>
                     <Text style={[styles.amountValue, { color: colors.textSecondary }]}>
                       {symbol}{formatAmount(project.budget)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'הכנסות'}</Text>
+                    <Text style={styles.amountLabel}>{t('category_projects.income')}</Text>
                     <Text style={[styles.amountValue, { color: colors.success }]}>
                       {symbol}{formatAmount(projectIncome)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'הוצאות'}</Text>
+                    <Text style={styles.amountLabel}>{t('category_projects.expenses')}</Text>
                     <Text style={[styles.amountValue, { color: colors.error }]}>
                       {symbol}{formatAmount(project.spent)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>{'יתרה'}</Text>
+                    <Text style={styles.amountLabel}>{t('category_projects.balance')}</Text>
                     <Text style={[styles.amountValue, { color: remaining >= 0 ? colors.success : colors.error }]}>
                       {remaining < 0 ? '-' : ''}{symbol}{formatAmount(Math.abs(remaining))}
                     </Text>
