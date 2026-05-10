@@ -24,6 +24,9 @@
       },
       "package": "com.karnafstudio.sasomm"
     },
+    "web": {
+      "favicon": "./assets/logo-icon.png"
+    },
     "extra": {
       "eas": {
         "projectId": "d4062d5e-5dde-4356-9815-e66731bdfaf5"
