@@ -911,11 +911,10 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   categoryCardName: {
-    fontSize: 17,
+    fontSize: 22,
     color: colors.white,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.extrabold,
     marginBottom: spacing.sm,
-    writingDirection: 'rtl',
     textAlign: 'center',
     letterSpacing: 0.3,
   },
