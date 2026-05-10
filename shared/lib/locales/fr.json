@@ -60,6 +60,11 @@
     "project_count_one": "{{count}} projet",
     "project_count_other": "{{count}} projets"
   },
+  "reminder": {
+    "title": "Rappel de paiement",
+    "no_debt_suppliers": "Aucun fournisseur avec dette et numéro de téléphone à relancer. Ajoutez un téléphone depuis la fiche fournisseur.",
+    "message": "Bonjour {{name}}, ceci est un rappel amical concernant votre solde impayé. Je vous remercie de bien vouloir régler cela rapidement."
+  },
   "quick": {
     "new_project": "Nouveau projet",
     "new_supplier": "Nouveau fournisseur",

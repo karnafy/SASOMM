@@ -295,14 +295,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   const sendReminder = () => {
     const debtSuppliers = suppliers.filter((s) => s.status === 'debt' && s.phone);
     if (debtSuppliers.length === 0) {
-      Alert.alert('', 'אין ספקים עם חובות לשליחת תזכורת');
+      Alert.alert(
+        t('reminder.title'),
+        t('reminder.no_debt_suppliers'),
+      );
       return;
     }
-    const message = encodeURIComponent(
-      'שלום, זוהי תזכורת ידידותית לגבי יתרת החוב שלך. אשמח לסגור את החשבון בהקדם. תודה!',
-    );
     const firstSupplier = debtSuppliers[0];
-    const cleanPhone = firstSupplier.phone.replace(/\D/g, '');
+    const message = encodeURIComponent(
+      t('reminder.message', { name: firstSupplier.name }),
+    );
+    const cleanPhone = (firstSupplier.phone || '').replace(/\D/g, '');
     const phone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
     openExternalURL(`https://wa.me/972${phone}?text=${message}`);
   };

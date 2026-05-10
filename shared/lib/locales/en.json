@@ -60,6 +60,11 @@
     "project_count_one": "{{count}} project",
     "project_count_other": "{{count}} projects"
   },
+  "reminder": {
+    "title": "Payment reminder",
+    "no_debt_suppliers": "No suppliers with debts and a phone number to remind. Add a phone number from the supplier card.",
+    "message": "Hi {{name}}, this is a friendly reminder about your outstanding balance. I'd appreciate clearing this up soon. Thank you!"
+  },
   "quick": {
     "new_project": "New project",
     "new_supplier": "New supplier",
