@@ -290,7 +290,13 @@ const Debts: React.FC<DebtsProps> = ({
 
   const handleSendWhatsApp = (debt: Debt) => {
     if (!debt.personPhone) {
-      Alert.alert('שגיאה', 'אין מספר טלפון לאיש קשר זה');
+      const title = t('common.error');
+      const body = t('debts.err_no_phone');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`${title}\n\n${body}`);
+      } else {
+        Alert.alert(title, body);
+      }
       return;
     }
 
@@ -315,6 +321,31 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
       lastReminderDate: new Date().toISOString().split('T')[0],
       nextReminderDate: calculateNextReminder(debt.reminderInterval),
     });
+  };
+
+  const handleSendAllReminders = async () => {
+    const eligible = activeDebts.filter((d) => d.personPhone);
+    if (eligible.length === 0) {
+      const title = t('debts.reminders_title');
+      const body = t('debts.no_eligible_reminders');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`${title}\n\n${body}`);
+      } else {
+        Alert.alert(title, body);
+      }
+      return;
+    }
+    const ok = await confirmDialog({
+      title: t('debts.reminders_title'),
+      message: t('debts.confirm_send_all', { count: eligible.length }),
+      confirmText: t('debts.send_all'),
+    });
+    if (!ok) return;
+    for (const debt of eligible) {
+      // small stagger so the browser doesn't squash multiple window.opens
+      await new Promise((r) => setTimeout(r, 350));
+      handleSendWhatsApp(debt);
+    }
   };
 
   const activeDebts = directionDebts.filter((d) => !d.isPaid);
@@ -756,6 +787,20 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Bulk-reminder button — only for the "owed to me" tab */}
+        {isOwedToMe && activeDebts.length > 0 && (
+          <TouchableOpacity
+            style={styles.bulkReminderBtn}
+            onPress={handleSendAllReminders}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons name="notifications-active" size={20} color={colors.white} />
+            <Text style={styles.bulkReminderText}>
+              {t('debts.send_reminders_to_all')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Active Debts */}
         {activeDebts.length > 0 ? (
           <View style={styles.debtSection}>
@@ -1074,6 +1119,22 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: 120,
     gap: 20,
+  },
+
+  // Bulk reminder
+  bulkReminderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: radii.lg,
+  },
+  bulkReminderText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 15,
   },
 
   // Section

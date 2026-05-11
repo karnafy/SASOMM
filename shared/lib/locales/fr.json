@@ -177,7 +177,13 @@
     "due_date_label_i_owe": "Date de paiement",
     "reminder_label": "Rappel",
     "send_whatsapp": "Envoyer WhatsApp",
-    "empty_active": "Aucune dette active"
+    "empty_active": "Aucune dette active",
+    "send_reminders_to_all": "Envoyer un rappel à tous",
+    "reminders_title": "Rappels de dettes",
+    "no_eligible_reminders": "Aucune dette n'a de numéro de téléphone à relancer.",
+    "confirm_send_all": "Envoyer un rappel à {{count}} dettes ?",
+    "send_all": "Envoyer à tous",
+    "err_no_phone": "Pas de numéro de téléphone pour ce contact"
   },
   "common_extra": {
     "active": "Actif",

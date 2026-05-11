@@ -293,24 +293,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   // ---------------------------------------------------------------------------
 
   const sendReminder = () => {
-    const debtSuppliers = suppliers.filter((s) => s.status === 'debt' && s.phone);
-    if (debtSuppliers.length === 0) {
-      const title = t('reminder.title');
-      const body = t('reminder.no_debt_suppliers');
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert(`${title}\n\n${body}`);
-      } else {
-        Alert.alert(title, body);
-      }
-      return;
-    }
-    const firstSupplier = debtSuppliers[0];
-    const message = encodeURIComponent(
-      t('reminder.message', { name: firstSupplier.name }),
-    );
-    const cleanPhone = (firstSupplier.phone || '').replace(/\D/g, '');
-    const phone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
-    openExternalURL(`https://wa.me/972${phone}?text=${message}`);
+    // The "real" debts (people who owe me / I owe) live on the Debts screen.
+    // Navigate there so the user can pick which one to remind — each row
+    // has its own per-debt WhatsApp button.
+    onNavigate(AppScreen.DEBTS);
   };
 
   // ---------------------------------------------------------------------------

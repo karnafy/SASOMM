@@ -177,7 +177,13 @@
     "due_date_label_i_owe": "תאריך תשלום",
     "reminder_label": "תזכורת",
     "send_whatsapp": "שלח וואטסאפ",
-    "empty_active": "אין חובות פעילים"
+    "empty_active": "אין חובות פעילים",
+    "send_reminders_to_all": "שלח תזכורת לכולם",
+    "reminders_title": "תזכורות חוב",
+    "no_eligible_reminders": "אין חובות עם מספר טלפון לשליחת תזכורת.",
+    "confirm_send_all": "לשלוח תזכורת ל-{{count}} חובות?",
+    "send_all": "שלח לכולם",
+    "err_no_phone": "אין מספר טלפון לאיש קשר זה"
   },
   "auth": {
     "login": "התחברות",

@@ -199,7 +199,13 @@
     "due_date_label_i_owe": "Payment date",
     "reminder_label": "Reminder",
     "send_whatsapp": "Send WhatsApp",
-    "empty_active": "No active debts"
+    "empty_active": "No active debts",
+    "send_reminders_to_all": "Send reminder to all",
+    "reminders_title": "Debt reminders",
+    "no_eligible_reminders": "No debts have a phone number to remind.",
+    "confirm_send_all": "Send a reminder to {{count}} debts?",
+    "send_all": "Send to all",
+    "err_no_phone": "No phone number for this contact"
   },
   "common_extra": {
     "active": "Active",
