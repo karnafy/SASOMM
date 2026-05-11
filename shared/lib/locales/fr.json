@@ -79,7 +79,7 @@
     "no_phone_title": "Numéro de téléphone manquant",
     "no_phone_msg": "Ce fournisseur n'a pas de numéro de téléphone. Pour envoyer un rappel, ajoutez un téléphone depuis la fiche fournisseur.",
     "greeting": "Bonjour {{name}},",
-    "footer": "Je vous remercie de régler cela rapidement. — SASOMM",
+    "footer": "Je vous remercie de régler cela rapidement.",
     "expense": "Dépense",
     "income": "Revenu",
     "debt": "Dette ouverte",

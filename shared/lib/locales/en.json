@@ -79,7 +79,7 @@
     "no_phone_title": "Phone number missing",
     "no_phone_msg": "This supplier has no phone number. To send a reminder, add a phone from the supplier card.",
     "greeting": "Hi {{name}},",
-    "footer": "I'd appreciate clearing this up soon. Thank you! — SASOMM",
+    "footer": "I'd appreciate clearing this up soon. Thank you!",
     "expense": "Expense",
     "income": "Income",
     "debt": "Open debt",
