@@ -407,6 +407,56 @@ _הופק מאפליקציית SASOMM_`;
           </Text>
         </View>
 
+        {/* Supplier Card — first content section so the contact name is the
+            most prominent thing after the amount hero. */}
+        {supplier && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('activity_detail.contact_section')}</Text>
+              <Text style={styles.sectionSubtitle}>{t('activity_detail.supplier_registered')}</Text>
+            </View>
+
+            <DarkCard style={styles.supplierCard}>
+              <TouchableOpacity
+                style={styles.supplierAvatar}
+                onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
+              >
+                <Image
+                  source={{ uri: supplier.avatar }}
+                  style={styles.supplierAvatarImage}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.supplierInfo}
+                onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
+              >
+                <Text style={styles.supplierName}>{supplier.name}</Text>
+                <Text style={styles.supplierPhone}>{supplier.phone}</Text>
+                <View style={styles.whatsappBadge}>
+                  <View style={styles.activeDot} />
+                  <Text style={styles.whatsappBadgeText}>WhatsApp {t('activity_detail.whatsapp_active')}</Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.supplierActions}>
+                <TouchableOpacity
+                  style={styles.supplierActionBtn}
+                  onPress={() => handleContactWhatsApp(supplier.phone)}
+                >
+                  <MaterialIcons name="chat" size={22} color={colors.success} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.supplierActionBtn}
+                  onPress={() => handleContactCall(supplier.phone)}
+                >
+                  <MaterialIcons name="call" size={22} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </DarkCard>
+          </View>
+        )}
+
         {/* Detail Card */}
         <View style={styles.cardWrapper}>
           <DarkCard style={styles.detailCard}>
@@ -462,55 +512,6 @@ _הופק מאפליקציית SASOMM_`;
             )}
           </DarkCard>
         </View>
-
-        {/* Supplier Card */}
-        {supplier && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('activity_detail.contact_section')}</Text>
-              <Text style={styles.sectionSubtitle}>{t('activity_detail.supplier_registered')}</Text>
-            </View>
-
-            <DarkCard style={styles.supplierCard}>
-              <TouchableOpacity
-                style={styles.supplierAvatar}
-                onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
-              >
-                <Image
-                  source={{ uri: supplier.avatar }}
-                  style={styles.supplierAvatarImage}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.supplierInfo}
-                onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
-              >
-                <Text style={styles.supplierName}>{supplier.name}</Text>
-                <Text style={styles.supplierPhone}>{supplier.phone}</Text>
-                <View style={styles.whatsappBadge}>
-                  <View style={styles.activeDot} />
-                  <Text style={styles.whatsappBadgeText}>WhatsApp {t('activity_detail.whatsapp_active')}</Text>
-                </View>
-              </TouchableOpacity>
-
-              <View style={styles.supplierActions}>
-                <TouchableOpacity
-                  style={styles.supplierActionBtn}
-                  onPress={() => handleContactWhatsApp(supplier.phone)}
-                >
-                  <MaterialIcons name="chat" size={22} color={colors.success} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.supplierActionBtn}
-                  onPress={() => handleContactCall(supplier.phone)}
-                >
-                  <MaterialIcons name="call" size={22} color={colors.primary} />
-                </TouchableOpacity>
-              </View>
-            </DarkCard>
-          </View>
-        )}
 
         {/* Receipt Images */}
         <View style={styles.section}>
@@ -840,10 +841,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   supplierName: {
-    fontSize: 16,
-    fontFamily: fonts.semibold,
+    fontSize: 22,
+    fontFamily: fonts.extrabold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
+    letterSpacing: 0.3,
+    marginBottom: 4,
   },
   supplierPhone: {
     fontSize: 13,

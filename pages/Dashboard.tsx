@@ -477,14 +477,33 @@ const Dashboard: React.FC<DashboardProps> = ({
               {allActivities.slice(0, 5).map((act: any) => {
                 const supplierName = getSupplierName(act.supplierId);
                 const isIncome = act.type === 'income';
-                const metaParts = [act.projectName];
-                if (supplierName) metaParts.push(supplierName);
+                // Prefer the supplier name (who was paid) as the primary
+                // title — that's what the user actually scans for. Fall
+                // back to the entry's own title only when no supplier is
+                // linked.
+                const primaryTitle = supplierName || act.title || '—';
+                // Meta line: project • category (tag). Skip blanks.
+                const metaParts: string[] = [];
+                if (act.projectName) metaParts.push(act.projectName);
+                if (act.tag && act.tag !== primaryTitle) metaParts.push(act.tag);
+                // If we promoted the supplier into the title, the original
+                // title (e.g. "מיסים" / "כללי") still carries useful info —
+                // append it as a tail meta token unless it duplicates the
+                // tag we already added.
+                if (
+                  supplierName &&
+                  act.title &&
+                  act.title !== act.tag &&
+                  act.title !== supplierName
+                ) {
+                  metaParts.push(act.title);
+                }
                 return (
                   <TransactionRow
                     key={act.id}
                     icon={isIncome ? 'arrow-downward' : 'arrow-upward'}
                     iconColor={isIncome ? colors.success : colors.error}
-                    title={act.title}
+                    title={primaryTitle}
                     meta={metaParts.join(' \• ')}
                     amount={`${isIncome ? '+' : '-'}${sym}${formatNumber(convertAmount(act.amount))}${act.originalCurrency && act.originalCurrency !== 'ILS' ? ` (${currencySymbols[act.originalCurrency as Currency]}${act.originalAmount?.toLocaleString()})` : ''}`}
                     isIncome={isIncome}
