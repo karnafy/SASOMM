@@ -871,14 +871,31 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
 
                 {/* Actions */}
                 <View style={styles.debtActions}>
-                  {debt.personPhone && debt.direction !== 'i_owe' && (
+                  {debt.direction !== 'i_owe' && (
                     <TouchableOpacity
                       style={[styles.debtActionBtn, { flex: 1 }]}
-                      onPress={() => handleSendWhatsApp(debt)}
+                      onPress={() => {
+                        if (debt.personPhone) {
+                          handleSendWhatsApp(debt);
+                        } else {
+                          // No phone yet — open the edit modal so the user
+                          // can add one and the reminder becomes actionable.
+                          openEditModal(debt);
+                        }
+                      }}
                     >
-                      <MaterialIcons name="chat" size={16} color={colors.success} />
-                      <Text style={[styles.debtActionText, { color: colors.success }]}>
-                        {'שלח תזכורת'}
+                      <MaterialIcons
+                        name={debt.personPhone ? 'chat' : 'add-call'}
+                        size={16}
+                        color={debt.personPhone ? colors.success : colors.warning}
+                      />
+                      <Text
+                        style={[
+                          styles.debtActionText,
+                          { color: debt.personPhone ? colors.success : colors.warning },
+                        ]}
+                      >
+                        {debt.personPhone ? t('debts.send_reminder_btn') : t('debts.add_phone_btn')}
                       </Text>
                     </TouchableOpacity>
                   )}

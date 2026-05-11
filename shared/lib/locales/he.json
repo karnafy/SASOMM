@@ -183,7 +183,9 @@
     "no_eligible_reminders": "אין חובות עם מספר טלפון לשליחת תזכורת.",
     "confirm_send_all": "לשלוח תזכורת ל-{{count}} חובות?",
     "send_all": "שלח לכולם",
-    "err_no_phone": "אין מספר טלפון לאיש קשר זה"
+    "err_no_phone": "אין מספר טלפון לאיש קשר זה",
+    "send_reminder_btn": "שלח תזכורת",
+    "add_phone_btn": "הוסף טלפון"
   },
   "auth": {
     "login": "התחברות",

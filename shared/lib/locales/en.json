@@ -205,7 +205,9 @@
     "no_eligible_reminders": "No debts have a phone number to remind.",
     "confirm_send_all": "Send a reminder to {{count}} debts?",
     "send_all": "Send to all",
-    "err_no_phone": "No phone number for this contact"
+    "err_no_phone": "No phone number for this contact",
+    "send_reminder_btn": "Send reminder",
+    "add_phone_btn": "Add phone"
   },
   "common_extra": {
     "active": "Active",

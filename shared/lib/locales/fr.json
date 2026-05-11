@@ -183,7 +183,9 @@
     "no_eligible_reminders": "Aucune dette n'a de numéro de téléphone à relancer.",
     "confirm_send_all": "Envoyer un rappel à {{count}} dettes ?",
     "send_all": "Envoyer à tous",
-    "err_no_phone": "Pas de numéro de téléphone pour ce contact"
+    "err_no_phone": "Pas de numéro de téléphone pour ce contact",
+    "send_reminder_btn": "Envoyer un rappel",
+    "add_phone_btn": "Ajouter un téléphone"
   },
   "common_extra": {
     "active": "Actif",
