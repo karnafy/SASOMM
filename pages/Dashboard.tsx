@@ -295,10 +295,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   const sendReminder = () => {
     const debtSuppliers = suppliers.filter((s) => s.status === 'debt' && s.phone);
     if (debtSuppliers.length === 0) {
-      Alert.alert(
-        t('reminder.title'),
-        t('reminder.no_debt_suppliers'),
-      );
+      const title = t('reminder.title');
+      const body = t('reminder.no_debt_suppliers');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`${title}\n\n${body}`);
+      } else {
+        Alert.alert(title, body);
+      }
       return;
     }
     const firstSupplier = debtSuppliers[0];
