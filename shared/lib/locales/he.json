@@ -185,7 +185,10 @@
     "send_all": "שלח לכולם",
     "err_no_phone": "אין מספר טלפון לאיש קשר זה",
     "send_reminder_btn": "שלח תזכורת",
-    "add_phone_btn": "הוסף טלפון"
+    "set_reminder_btn": "קבע תזכורת",
+    "pick_from_contacts": "בחר מאנשי קשר",
+    "pick_contact_title": "בחירת איש קשר",
+    "pick_contact_empty": "אין עדיין אנשי קשר. הוסף ספק או חוב ראשון."
   },
   "auth": {
     "login": "התחברות",

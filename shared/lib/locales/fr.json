@@ -185,7 +185,10 @@
     "send_all": "Envoyer à tous",
     "err_no_phone": "Pas de numéro de téléphone pour ce contact",
     "send_reminder_btn": "Envoyer un rappel",
-    "add_phone_btn": "Ajouter un téléphone"
+    "set_reminder_btn": "Définir un rappel",
+    "pick_from_contacts": "Choisir dans les contacts",
+    "pick_contact_title": "Choisir un contact",
+    "pick_contact_empty": "Pas encore de contacts. Ajoutez un fournisseur ou une dette."
   },
   "common_extra": {
     "active": "Actif",

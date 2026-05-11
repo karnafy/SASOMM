@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ const openExternalURL = (url: string) => {
 import * as ImagePicker from 'expo-image-picker';
 import * as Contacts from 'expo-contacts';
 import { useTranslation } from 'react-i18next';
-import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection, confirmDialog } from '@monn/shared';
+import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection, Supplier, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -41,6 +41,7 @@ interface DebtsProps {
   convertAmount: (amount: number) => number;
   projects: Project[];
   debts: Debt[];
+  suppliers?: Supplier[];
   onSaveDebt: (debt: Omit<Debt, 'id' | 'createdAt'> & { id?: string }) => void;
   onDeleteDebt: (id: string) => void;
   autoOpenAdd?: boolean;
@@ -69,13 +70,35 @@ const Debts: React.FC<DebtsProps> = ({
   convertAmount,
   projects,
   debts,
+  suppliers,
   onSaveDebt,
   onDeleteDebt,
   autoOpenAdd,
 }) => {
   const { t } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showContactPicker, setShowContactPicker] = useState(false);
   const [activeDirection, setActiveDirection] = useState<DebtDirection>('owed_to_me');
+
+  // Unified contact list built from existing debts + suppliers, deduplicated
+  // by name+phone so the picker doesn't repeat the same person.
+  const contactPickerEntries = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Array<{ id: string; name: string; phone?: string; source: 'debt' | 'supplier' }> = [];
+    for (const d of debts) {
+      const key = `${d.personName}|${d.personPhone || ''}`.toLowerCase();
+      if (seen.has(key) || !d.personName.trim()) continue;
+      seen.add(key);
+      out.push({ id: `d-${d.id}`, name: d.personName, phone: d.personPhone, source: 'debt' });
+    }
+    for (const s of suppliers || []) {
+      const key = `${s.name}|${s.phone || ''}`.toLowerCase();
+      if (seen.has(key) || !s.name.trim()) continue;
+      seen.add(key);
+      out.push({ id: `s-${s.id}`, name: s.name, phone: s.phone, source: 'supplier' });
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }, [debts, suppliers]);
 
   useEffect(() => {
     if (autoOpenAdd) {
@@ -404,6 +427,58 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
 
   return (
     <View style={styles.container}>
+      {/* Contact Picker Modal */}
+      <Modal visible={showContactPicker} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowContactPicker(false)}
+          />
+          <View style={styles.contactPickerCard}>
+            <Text style={styles.modalTitle}>{t('debts.pick_contact_title')}</Text>
+            {contactPickerEntries.length === 0 ? (
+              <Text style={styles.contactPickerEmpty}>
+                {t('debts.pick_contact_empty')}
+              </Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 360 }}>
+                {contactPickerEntries.map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={styles.contactPickerRow}
+                    onPress={() => {
+                      setPersonName(c.name);
+                      if (c.phone) setPersonPhone(c.phone);
+                      setShowContactPicker(false);
+                    }}
+                  >
+                    <View style={styles.contactPickerAvatar}>
+                      <MaterialIcons
+                        name={c.source === 'supplier' ? 'store' : 'person'}
+                        size={18}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.contactPickerName}>{c.name}</Text>
+                      {c.phone ? (
+                        <Text style={styles.contactPickerPhone}>{c.phone}</Text>
+                      ) : null}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            <TouchableOpacity
+              style={styles.contactPickerCancel}
+              onPress={() => setShowContactPicker(false)}
+            >
+              <Text style={styles.contactPickerCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Add/Edit Modal */}
       <Modal visible={showAddModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -474,6 +549,20 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                   </Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Pick from contacts */}
+              {contactPickerEntries.length > 0 && (
+                <TouchableOpacity
+                  style={styles.contactPickerInlineBtn}
+                  onPress={() => setShowContactPicker(true)}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="contacts" size={18} color={colors.primary} />
+                  <Text style={styles.contactPickerText}>
+                    {t('debts.pick_from_contacts')}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               {/* Person Name */}
               <Text style={styles.fieldLabel}>{personLabel}</Text>
@@ -895,7 +984,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                           { color: debt.personPhone ? colors.success : colors.warning },
                         ]}
                       >
-                        {debt.personPhone ? t('debts.send_reminder_btn') : t('debts.add_phone_btn')}
+                        {debt.personPhone ? t('debts.send_reminder_btn') : t('debts.set_reminder_btn')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -1136,6 +1225,77 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: 120,
     gap: 20,
+  },
+
+  // Contact picker
+  contactPickerInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
+  },
+  contactPickerText: {
+    color: colors.primary,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
+  contactPickerCard: {
+    width: '88%',
+    maxWidth: 420,
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii.xl,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  contactPickerEmpty: {
+    color: colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
+  contactPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: radii.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.subtleBorder,
+  },
+  contactPickerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.bgTertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactPickerName: {
+    color: colors.textPrimary,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
+  contactPickerPhone: {
+    color: colors.textTertiary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  contactPickerCancel: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  contactPickerCancelText: {
+    color: colors.textTertiary,
+    fontFamily: fonts.semibold,
   },
 
   // Bulk reminder

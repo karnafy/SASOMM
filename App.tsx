@@ -563,7 +563,7 @@ function AppContent() {
       case AppScreen.SETTINGS:
         return <Settings {...commonProps} setGlobalCurrency={setGlobalCurrency} />;
       case AppScreen.DEBTS:
-        return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
+        return <Debts {...commonProps} projects={projects} debts={debts} suppliers={suppliers} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
       case AppScreen.ADD_DEBT:
         return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} autoOpenAdd />;
       case AppScreen.RECURRING_TEMPLATES:

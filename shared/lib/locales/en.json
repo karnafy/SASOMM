@@ -207,7 +207,10 @@
     "send_all": "Send to all",
     "err_no_phone": "No phone number for this contact",
     "send_reminder_btn": "Send reminder",
-    "add_phone_btn": "Add phone"
+    "set_reminder_btn": "Set reminder",
+    "pick_from_contacts": "Pick from contacts",
+    "pick_contact_title": "Choose a contact",
+    "pick_contact_empty": "No contacts yet. Add a supplier or debt first."
   },
   "common_extra": {
     "active": "Active",
