@@ -973,18 +973,9 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                         }
                       }}
                     >
-                      <MaterialIcons
-                        name={debt.personPhone ? 'chat' : 'add-call'}
-                        size={16}
-                        color={debt.personPhone ? colors.success : colors.warning}
-                      />
-                      <Text
-                        style={[
-                          styles.debtActionText,
-                          { color: debt.personPhone ? colors.success : colors.warning },
-                        ]}
-                      >
-                        {debt.personPhone ? t('debts.send_reminder_btn') : t('debts.set_reminder_btn')}
+                      <MaterialIcons name="chat" size={16} color={colors.success} />
+                      <Text style={[styles.debtActionText, { color: colors.success }]}>
+                        {t('debts.send_reminder_btn')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -1416,6 +1407,7 @@ const styles = StyleSheet.create({
   },
   debtActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginTop: 12,
     paddingTop: 12,
