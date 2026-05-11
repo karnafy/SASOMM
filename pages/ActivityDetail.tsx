@@ -431,13 +431,22 @@ _הופק מאפליקציית SASOMM_`;
                 style={styles.supplierInfo}
                 onPress={() => onNavigate(AppScreen.SUPPLIER_DETAIL, supplier.id)}
               >
-                <Text style={styles.supplierName}>{supplier.name}</Text>
+                <Text
+                  style={styles.supplierName}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
+                >
+                  {supplier.name}
+                </Text>
                 <Text style={styles.supplierPhone}>{supplier.phone}</Text>
                 <View style={styles.whatsappBadge}>
                   <View style={styles.activeDot} />
                   <Text style={styles.whatsappBadgeText}>WhatsApp {t('activity_detail.whatsapp_active')}</Text>
                 </View>
               </TouchableOpacity>
+
+              <View style={styles.supplierInfoSpacer} />
 
               <View style={styles.supplierActions}>
                 <TouchableOpacity
@@ -837,16 +846,21 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   supplierInfo: {
-    flex: 1,
+    // No flex:1 — let the info hug the avatar instead of stretching
+    // across the whole card. The spacer pushes the action buttons to
+    // the opposite edge.
     alignItems: 'flex-end',
   },
+  supplierInfoSpacer: {
+    flex: 1,
+  },
   supplierName: {
-    fontSize: 22,
+    fontSize: 40,
     fontFamily: fonts.extrabold,
     color: colors.textPrimary,
     writingDirection: 'rtl',
     letterSpacing: 0.3,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   supplierPhone: {
     fontSize: 13,
