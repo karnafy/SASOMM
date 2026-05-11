@@ -65,11 +65,33 @@
     "no_debt_suppliers": "אין ספקים עם חובות וטלפון לשליחת תזכורת. אפשר להוסיף טלפון מתוך מסך הספק.",
     "message": "שלום {{name}}, זוהי תזכורת ידידותית לגבי יתרת החוב שלך. אשמח לסגור את החשבון בהקדם. תודה!"
   },
+  "send_reminder": {
+    "page_title": "שלח תזכורת",
+    "pick_supplier": "בחר ספק",
+    "items_label": "מה לכלול בתזכורת",
+    "select_all": "סמן הכל",
+    "unselect_all": "נקה הכל",
+    "no_items": "אין פעולות פיננסיות לספק זה — אבל אפשר עדיין לשלוח הודעה.",
+    "change": "החלף",
+    "preview": "תצוגה מקדימה",
+    "send_btn": "שלח ל־WhatsApp",
+    "no_phone_short": "אין טלפון",
+    "no_phone_title": "חסר מספר טלפון",
+    "no_phone_msg": "לספק הזה אין מספר טלפון. כדי לשלוח תזכורת, הוסף טלפון מתוך כרטיס הספק.",
+    "greeting": "שלום {{name}},",
+    "footer": "אשמח לסגור את העניין בהקדם. תודה! — SASOMM",
+    "expense": "הוצאה",
+    "income": "הכנסה",
+    "debt": "חוב פתוח",
+    "line_expense": "הוצאה",
+    "line_income": "הכנסה",
+    "line_debt": "חוב פתוח"
+  },
   "quick": {
     "new_project": "פרויקט חדש",
     "new_supplier": "ספק חדש",
     "new_debt": "חוב חדש",
-    "contacts": "אנשי קשר",
+    "contacts": "ספקים",
     "send_reminder": "שלח תזכורת"
   },
   "menu": {

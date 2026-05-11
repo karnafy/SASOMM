@@ -293,10 +293,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // ---------------------------------------------------------------------------
 
   const sendReminder = () => {
-    // The "real" debts (people who owe me / I owe) live on the Debts screen.
-    // Navigate there so the user can pick which one to remind — each row
-    // has its own per-debt WhatsApp button.
-    onNavigate(AppScreen.DEBTS);
+    onNavigate(AppScreen.SEND_REMINDER);
   };
 
   // ---------------------------------------------------------------------------

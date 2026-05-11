@@ -65,11 +65,33 @@
     "no_debt_suppliers": "No suppliers with debts and a phone number to remind. Add a phone number from the supplier card.",
     "message": "Hi {{name}}, this is a friendly reminder about your outstanding balance. I'd appreciate clearing this up soon. Thank you!"
   },
+  "send_reminder": {
+    "page_title": "Send reminder",
+    "pick_supplier": "Choose a supplier",
+    "items_label": "What to include in the reminder",
+    "select_all": "Select all",
+    "unselect_all": "Clear all",
+    "no_items": "No financial activity for this supplier — but you can still send a message.",
+    "change": "Change",
+    "preview": "Preview",
+    "send_btn": "Send via WhatsApp",
+    "no_phone_short": "No phone",
+    "no_phone_title": "Phone number missing",
+    "no_phone_msg": "This supplier has no phone number. To send a reminder, add a phone from the supplier card.",
+    "greeting": "Hi {{name}},",
+    "footer": "I'd appreciate clearing this up soon. Thank you! — SASOMM",
+    "expense": "Expense",
+    "income": "Income",
+    "debt": "Open debt",
+    "line_expense": "Expense",
+    "line_income": "Income",
+    "line_debt": "Open debt"
+  },
   "quick": {
     "new_project": "New project",
     "new_supplier": "New supplier",
     "new_debt": "New debt",
-    "contacts": "Contacts",
+    "contacts": "Suppliers",
     "send_reminder": "Send reminder"
   },
   "menu": {

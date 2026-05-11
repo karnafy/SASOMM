@@ -19,7 +19,8 @@ export enum AppScreen {
   SETTINGS = 'settings',
   DEBTS = 'debts',
   ADD_DEBT = 'add_debt',
-  RECURRING_TEMPLATES = 'recurring_templates'
+  RECURRING_TEMPLATES = 'recurring_templates',
+  SEND_REMINDER = 'send_reminder'
 }
 
 export type ReminderInterval = 'daily' | '2days' | '3days' | 'weekly' | 'biweekly' | 'monthly' | 'none';

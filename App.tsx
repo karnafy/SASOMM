@@ -48,6 +48,7 @@ import ReportsCenter from './pages/ReportsCenter';
 import Settings from './pages/Settings';
 import Debts from './pages/Debts';
 import RecurringTemplates from './pages/RecurringTemplates';
+import SendReminder from './pages/SendReminder';
 
 // Initialize Supabase with Expo env vars
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -562,6 +563,8 @@ function AppContent() {
         return <ReportsCenter {...commonProps} projects={projects} suppliers={suppliers} />;
       case AppScreen.SETTINGS:
         return <Settings {...commonProps} setGlobalCurrency={setGlobalCurrency} />;
+      case AppScreen.SEND_REMINDER:
+        return <SendReminder {...commonProps} projects={projects} debts={debts} suppliers={suppliers} />;
       case AppScreen.DEBTS:
         return <Debts {...commonProps} projects={projects} debts={debts} suppliers={suppliers} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
       case AppScreen.ADD_DEBT:

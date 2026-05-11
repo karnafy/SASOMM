@@ -65,11 +65,33 @@
     "no_debt_suppliers": "Aucun fournisseur avec dette et numéro de téléphone à relancer. Ajoutez un téléphone depuis la fiche fournisseur.",
     "message": "Bonjour {{name}}, ceci est un rappel amical concernant votre solde impayé. Je vous remercie de bien vouloir régler cela rapidement."
   },
+  "send_reminder": {
+    "page_title": "Envoyer un rappel",
+    "pick_supplier": "Choisir un fournisseur",
+    "items_label": "Que faut-il inclure dans le rappel",
+    "select_all": "Tout sélectionner",
+    "unselect_all": "Tout effacer",
+    "no_items": "Aucune activité financière pour ce fournisseur — vous pouvez quand même envoyer un message.",
+    "change": "Changer",
+    "preview": "Aperçu",
+    "send_btn": "Envoyer via WhatsApp",
+    "no_phone_short": "Pas de téléphone",
+    "no_phone_title": "Numéro de téléphone manquant",
+    "no_phone_msg": "Ce fournisseur n'a pas de numéro de téléphone. Pour envoyer un rappel, ajoutez un téléphone depuis la fiche fournisseur.",
+    "greeting": "Bonjour {{name}},",
+    "footer": "Je vous remercie de régler cela rapidement. — SASOMM",
+    "expense": "Dépense",
+    "income": "Revenu",
+    "debt": "Dette ouverte",
+    "line_expense": "Dépense",
+    "line_income": "Revenu",
+    "line_debt": "Dette ouverte"
+  },
   "quick": {
     "new_project": "Nouveau projet",
     "new_supplier": "Nouveau fournisseur",
     "new_debt": "Nouvelle dette",
-    "contacts": "Contacts",
+    "contacts": "Fournisseurs",
     "send_reminder": "Envoyer un rappel"
   },
   "menu": {
