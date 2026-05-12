@@ -6,7 +6,19 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "web": "expo start --web --port 8082",
+    "sb": "supabase --workdir backend/supabase",
+    "sb:start": "supabase --workdir backend/supabase start",
+    "sb:stop": "supabase --workdir backend/supabase stop",
+    "sb:status": "supabase --workdir backend/supabase status",
+    "sb:diff": "supabase --workdir backend/supabase db diff",
+    "sb:migrate": "supabase --workdir backend/supabase db push",
+    "sb:migrate:new": "supabase --workdir backend/supabase migration new",
+    "sb:fn:serve": "supabase --workdir backend/supabase functions serve --no-verify-jwt",
+    "sb:fn:deploy": "supabase --workdir backend/supabase functions deploy",
+    "sb:fn:logs": "supabase --workdir backend/supabase functions logs",
+    "sb:types": "supabase --workdir backend/supabase gen types typescript --linked > shared/lib/database.types.ts"
   },
   "dependencies": {
     "@expo-google-fonts/open-sans": "^0.4.2",
