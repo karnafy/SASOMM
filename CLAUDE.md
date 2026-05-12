@@ -66,12 +66,14 @@ eas build --platform android   # Build Android APK
 ## Architecture Rules
 
 ### Navigation
+
 - Custom manual navigation (NOT React Navigation)
 - Stack-based history in App.tsx via `historyStack`
 - Screen enum `AppScreen` in shared/types.ts
 - Navigate via `navigate(screen, id)` pattern
 
 ### Data Flow
+
 - All amounts stored in ILS in Supabase, converted on display
 - Bidirectional transformers in `dataTransformers.ts`
 - Read: `useSupabaseData` hooks -> transform -> render
@@ -79,11 +81,13 @@ eas build --platform android   # Build Android APK
 - Auth: `AuthContext` wraps entire app
 
 ### Currency
+
 - Base currency: ILS (stored in DB)
 - Display currencies: ILS, USD, EUR
 - Conversion rates defined in App.tsx
 
 ### Database Tables
+
 - `profiles`, `projects`, `expenses`, `incomes`, `suppliers`
 - `project_activities` (change log), `contacts`, `audit_log`
 - All tables have `user_id` for row-level security
