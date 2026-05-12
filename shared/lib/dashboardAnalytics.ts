@@ -48,6 +48,52 @@ function getLastNMonths(n: number): { year: number; month: number }[] {
   return months;
 }
 
+/**
+ * Per main-category monthly net (income − expenses) for the last N months.
+ * Used by the Dashboard category trend chart to draw 3 lines (one per
+ * mainCategory). Returns parallel arrays so the chart component doesn't
+ * have to re-pivot.
+ */
+export function getCategoryMonthlyNet(
+  projects: Project[],
+  months: number = 6
+): {
+  labels: string[];
+  series: { key: 'projects' | 'personal' | 'other'; values: number[] }[];
+} {
+  const monthList = getLastNMonths(months);
+  const cats: ('projects' | 'personal' | 'other')[] = ['projects', 'personal', 'other'];
+
+  const series = cats.map((cat) => {
+    const catProjects = projects.filter((p) => p.mainCategory === cat);
+    const expenses = catProjects.flatMap((p) => p.expenses);
+    const incomes = catProjects.flatMap((p) => p.incomes || []);
+
+    const values = monthList.map(({ year, month }) => {
+      const monthExpenses = expenses
+        .filter((e) => {
+          const d = parseTransactionDate(e.date);
+          return d && d.year === year && d.month === month;
+        })
+        .reduce((sum, e) => sum + e.amount, 0);
+      const monthIncome = incomes
+        .filter((i) => {
+          const d = parseTransactionDate(i.date);
+          return d && d.year === year && d.month === month;
+        })
+        .reduce((sum, i) => sum + i.amount, 0);
+      return monthIncome - monthExpenses;
+    });
+
+    return { key: cat, values };
+  });
+
+  return {
+    labels: monthList.map(({ month }) => HEBREW_MONTHS[month - 1].slice(0, 3)),
+    series,
+  };
+}
+
 /** Group transactions by month (last 12 months) */
 export function getMonthlyBreakdown(projects: Project[]): {
   month: string; monthKey: string; expenses: number; income: number;

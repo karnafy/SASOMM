@@ -20,6 +20,7 @@ interface TransactionRowProps {
   attachmentCount?: number;
   firstAttachmentUri?: string;
   onAttachmentPress?: () => void;
+  isRecurring?: boolean;
 }
 
 export function TransactionRow({
@@ -37,6 +38,7 @@ export function TransactionRow({
   attachmentCount,
   firstAttachmentUri,
   onAttachmentPress,
+  isRecurring,
 }: TransactionRowProps) {
   const amountColor = isIncome ? colors.success : colors.error;
   const useStructured = Boolean(supplier || dateTime);
@@ -62,6 +64,12 @@ export function TransactionRow({
               >
                 {typeLabel}
               </Text>
+            </View>
+          ) : null}
+          {isRecurring ? (
+            <View style={styles.recurringChip}>
+              <MaterialIcons name="event-repeat" size={11} color={colors.primary} />
+              <Text style={styles.recurringChipText}>{'קבוע'}</Text>
             </View>
           ) : null}
           <Text style={styles.title} numberOfLines={1}>
@@ -147,7 +155,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   row: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     gap: 12,
@@ -163,10 +171,10 @@ const styles = StyleSheet.create({
   },
   textBlock: {
     flex: 1,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   titleLine: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
@@ -178,6 +186,23 @@ const styles = StyleSheet.create({
   typeChipText: {
     fontSize: 10,
     fontFamily: fonts.bold,
+    writingDirection: 'rtl',
+  },
+  recurringChip: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,217,217,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,217,217,0.25)',
+  },
+  recurringChipText: {
+    fontSize: 9,
+    fontFamily: fonts.bold,
+    color: colors.primary,
     writingDirection: 'rtl',
   },
   attachmentWrap: {
@@ -225,7 +250,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontFamily: fonts.medium,
     fontSize: 13,
-    textAlign: 'right',
+    textAlign: 'left',
     flexShrink: 1,
   },
   supplier: {
@@ -233,18 +258,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 13,
     marginTop: 3,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   meta: {
     color: colors.textTertiary,
     fontFamily: fonts.regular,
     fontSize: 10,
     marginTop: 2,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   amount: {
     fontFamily: fonts.bold,
     fontSize: 13,
-    textAlign: 'left',
+    textAlign: 'right',
   },
 });

@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Currency, MainCategory } from '../types';
+import type { Currency, MainCategory, RecurringTransaction } from '../types';
 import {
   localExpenseToSupabase,
   localIncomeToSupabase,
   localProjectToSupabase,
   localSupplierToSupabase,
   localActivityToSupabase,
+  localRecurringToSupabase,
 } from '../lib/dataTransformers';
 import { useExchangeRates } from './useExchangeRates';
 
@@ -159,7 +160,11 @@ export function useMutations(userId: string | undefined) {
       const { error } = await supabase
         .from(table)
         .insert(transactionData);
-      if (error) throw error;
+      if (error) {
+        console.error('[saveTransaction] insert failed', { table, error, transactionData });
+        throw error;
+      }
+      console.log('[saveTransaction] inserted', { table });
     }
 
     // Update project totals
@@ -272,24 +277,12 @@ export function useMutations(userId: string | undefined) {
 
     const totalIncome = (incomes || []).reduce((sum, i) => sum + i.amount, 0);
 
-    // Get project budget for status calculation
-    const { data: project } = await supabase
-      .from('projects')
-      .select('budget')
-      .eq('id', projectId)
-      .single();
-
-    const budget = project?.budget || 0;
-
-    // Calculate status
+    // Calculate status based on income vs expenses (contractor semantics)
     let status: 'ok' | 'warning' | 'over' = 'ok';
-    if (budget > 0) {
-      const percentUsed = (totalSpent / budget) * 100;
-      if (percentUsed >= 100) {
-        status = 'over';
-      } else if (percentUsed >= 80) {
-        status = 'warning';
-      }
+    if (totalSpent > totalIncome) {
+      status = 'over';
+    } else if (totalIncome > 0 && totalSpent / totalIncome >= 0.9) {
+      status = 'warning';
     }
 
     // Update project
@@ -540,6 +533,169 @@ export function useMutations(userId: string | undefined) {
     await recalculateProjectTotals(projectId);
   }, [userId, updateSupplierBalance, recalculateProjectTotals]);
 
+  // ============================================
+  // Recurring Templates CRUD
+  // ============================================
+
+  const saveRecurringTemplate = useCallback(async (
+    template: Partial<RecurringTransaction>
+  ): Promise<string> => {
+    if (!userId) throw new Error('User not authenticated');
+
+    // Convert amount to ILS for consistency with regular transactions
+    const currency = template.currency || 'ILS';
+    const amountInILS = (template.amount ?? 0) / CONVERSION_RATES[currency];
+
+    const dbData = localRecurringToSupabase({
+      ...template,
+      amount: amountInILS,
+      currency: 'ILS',
+    }, userId);
+
+    if (template.id) {
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .update({ ...dbData, updated_at: new Date().toISOString() })
+        .eq('id', template.id);
+      if (error) throw error;
+      return template.id;
+    } else {
+      delete dbData.id;
+      const { data, error } = await supabase
+        .from('recurring_transactions')
+        .insert(dbData)
+        .select('id')
+        .single();
+      if (error) throw error;
+      return data.id;
+    }
+  }, [userId, CONVERSION_RATES]);
+
+  const pauseRecurringTemplate = useCallback(async (
+    templateId: string,
+    isActive: boolean
+  ) => {
+    if (!userId) throw new Error('User not authenticated');
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
+      .eq('id', templateId);
+    if (error) throw error;
+  }, [userId]);
+
+  const deleteRecurringTemplate = useCallback(async (
+    templateId: string,
+    options?: { deleteGeneratedRows?: boolean }
+  ) => {
+    if (!userId) throw new Error('User not authenticated');
+
+    if (options?.deleteGeneratedRows) {
+      // Need to find affected projects to recalc totals after deletion
+      const [{ data: expRows }, { data: incRows }] = await Promise.all([
+        supabase
+          .from('expenses')
+          .select('project_id')
+          .eq('recurring_template_id', templateId),
+        supabase
+          .from('incomes')
+          .select('project_id')
+          .eq('recurring_template_id', templateId),
+      ]);
+      const affectedProjectIds = new Set<string>([
+        ...((expRows || []).map((r: any) => r.project_id)),
+        ...((incRows || []).map((r: any) => r.project_id)),
+      ]);
+
+      await Promise.all([
+        supabase.from('expenses').delete().eq('recurring_template_id', templateId),
+        supabase.from('incomes').delete().eq('recurring_template_id', templateId),
+      ]);
+
+      await Promise.all(
+        Array.from(affectedProjectIds).map((pid) => recalculateProjectTotals(pid))
+      );
+    }
+
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .delete()
+      .eq('id', templateId);
+    if (error) throw error;
+  }, [userId, recalculateProjectTotals]);
+
+  /**
+   * Propagate edits across a recurring series based on scope.
+   * - 'this': caller already updated the single row via saveTransaction; nothing more to do.
+   * - 'this_and_future': updates the template's mutable fields, advances template.start_date
+   *    to the cursor date, and updates all generated rows with date >= cursor.
+   * - 'all': updates the template's mutable fields and updates ALL generated rows.
+   */
+  const applyRecurringEdit = useCallback(async (
+    templateId: string,
+    type: 'expense' | 'income',
+    scope: 'this' | 'this_and_future' | 'all',
+    cursorDate: string, // YYYY-MM-DD of the instance being edited
+    updates: {
+      title?: string;
+      tag?: string;
+      amount?: number;        // already in ILS
+      currency?: Currency;
+      paymentMethod?: string;
+      includesVat?: boolean;
+      supplierId?: string;
+    }
+  ) => {
+    if (!userId) throw new Error('User not authenticated');
+    if (scope === 'this') return;
+
+    const table = type === 'expense' ? 'expenses' : 'incomes';
+
+    const templatePatch: any = { updated_at: new Date().toISOString() };
+    if (updates.title !== undefined) templatePatch.title = updates.title;
+    if (updates.tag !== undefined) templatePatch.tag = updates.tag;
+    if (updates.amount !== undefined) templatePatch.amount = updates.amount;
+    if (updates.currency !== undefined) templatePatch.currency = updates.currency;
+    if (updates.paymentMethod !== undefined) templatePatch.payment_method = updates.paymentMethod;
+    if (updates.includesVat !== undefined) templatePatch.includes_vat = updates.includesVat;
+    if (updates.supplierId !== undefined) templatePatch.supplier_id = updates.supplierId;
+    if (scope === 'this_and_future') templatePatch.start_date = cursorDate;
+
+    const { error: tplErr } = await supabase
+      .from('recurring_transactions')
+      .update(templatePatch)
+      .eq('id', templateId);
+    if (tplErr) throw tplErr;
+
+    const rowPatch: any = {};
+    if (updates.title !== undefined) rowPatch.title = updates.title;
+    if (updates.tag !== undefined) rowPatch.tag = updates.tag;
+    if (updates.amount !== undefined) rowPatch.amount = updates.amount;
+    if (updates.currency !== undefined) rowPatch.currency = updates.currency;
+    if (updates.paymentMethod !== undefined) rowPatch.payment_method = updates.paymentMethod;
+    if (updates.includesVat !== undefined) rowPatch.includes_vat = updates.includesVat;
+    if (updates.supplierId !== undefined) rowPatch.supplier_id = updates.supplierId;
+
+    if (Object.keys(rowPatch).length > 0) {
+      let q = supabase
+        .from(table)
+        .update(rowPatch)
+        .eq('recurring_template_id', templateId);
+      if (scope === 'this_and_future') q = q.gte('date', cursorDate);
+      const { error: rowErr } = await q;
+      if (rowErr) throw rowErr;
+    }
+
+    // Recalc project totals for all touched projects
+    const { data: affectedRows } = await supabase
+      .from(table)
+      .select('project_id')
+      .eq('recurring_template_id', templateId);
+    const projectIds = new Set<string>((affectedRows || []).map((r: any) => r.project_id));
+    await Promise.all(
+      Array.from(projectIds).map((pid) => recalculateProjectTotals(pid))
+    );
+  }, [userId, recalculateProjectTotals]);
+
   return {
     saveTransaction,
     createProject,
@@ -551,5 +707,9 @@ export function useMutations(userId: string | undefined) {
     deleteSupplier,
     deleteTransaction,
     updateSupplierBalance,
+    saveRecurringTemplate,
+    pauseRecurringTemplate,
+    deleteRecurringTemplate,
+    applyRecurringEdit,
   };
 }

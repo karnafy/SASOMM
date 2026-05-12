@@ -7,8 +7,10 @@ import {
   ScrollView,
   Alert,
   Platform,
+  I18nManager,
 } from 'react-native';
 import * as Linking from 'expo-linking';
+import { useTranslation } from 'react-i18next';
 
 const openExternalURL = (url: string) => {
   if (Platform.OS === 'web') {
@@ -33,7 +35,6 @@ import { DarkCard } from '../components/ui/DarkCard';
 import { CurrencyToggle } from '../components/ui/CurrencyToggle';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { TransactionRow } from '../components/ui/TransactionRow';
-import { StatusBadge } from '../components/ui/StatusBadge';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { AvatarCircle } from '../components/ui/AvatarCircle';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -103,6 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onLogout,
   userName,
 }) => {
+  const { t } = useTranslation();
   const sym = currencySymbols[globalCurrency];
 
   // ---------------------------------------------------------------------------
@@ -112,7 +114,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const allActivities = useMemo(() => {
     return projects
       .flatMap((p) => {
-        const remaining = p.budget - p.spent;
+        const pIncome = (p.incomes || []).reduce((s, i) => s + i.amount, 0);
+        const remaining = pIncome - p.spent;
         return [
           ...p.expenses.map((e) => ({
             ...e,
@@ -180,24 +183,76 @@ const Dashboard: React.FC<DashboardProps> = ({
         (sum, p) => sum + (p.incomes || []).reduce((s, i) => s + i.amount, 0),
         0,
       );
-      const remaining = totalBudget - totalSpent;
+      const remaining = totalIncome - totalSpent;
+
+      // Last activity timestamp across all transactions in this category
+      let lastActivity = 0;
+      catProjects.forEach((p) => {
+        (p.expenses || []).forEach((e: any) => {
+          const t = new Date(e.created_at || 0).getTime();
+          if (!Number.isNaN(t) && t > lastActivity) lastActivity = t;
+        });
+        (p.incomes || []).forEach((i: any) => {
+          const t = new Date(i.created_at || 0).getTime();
+          if (!Number.isNaN(t) && t > lastActivity) lastActivity = t;
+        });
+      });
+
       return {
         category: cat,
-        name: MAIN_CATEGORIES[cat],
+        name: t(`main_categories.${cat}`),
         budget: totalBudget,
         spent: totalSpent,
         income: totalIncome,
         remaining,
         projectCount: catProjects.length,
+        lastActivity, // ms timestamp; 0 if no activity
       };
     });
   }, [projects]);
+
+  const overallLastActivity = useMemo(() => {
+    let latest = 0;
+    projects.forEach((p) => {
+      (p.expenses || []).forEach((e: any) => {
+        const t = new Date(e.created_at || 0).getTime();
+        if (!Number.isNaN(t) && t > latest) latest = t;
+      });
+      (p.incomes || []).forEach((i: any) => {
+        const t = new Date(i.created_at || 0).getTime();
+        if (!Number.isNaN(t) && t > latest) latest = t;
+      });
+    });
+    return latest;
+  }, [projects]);
+
+  const formatLastActivity = (ts: number): string => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mn = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mn} ${dd}.${mm}.${yyyy}`;
+  };
 
   // ---------------------------------------------------------------------------
   // Analytics data
   // ---------------------------------------------------------------------------
 
-  const monthlyBreakdown = useMemo(() => getMonthlyBreakdown(projects), [projects]);
+  const monthlyBreakdown = useMemo(() => {
+    // getMonthlyBreakdown returns Hebrew month names by default.
+    // Re-map them to the active locale via the months_full array.
+    const raw = getMonthlyBreakdown(projects);
+    const localized = (t('months_full', { returnObjects: true }) as string[]) || [];
+    return raw.map((row) => {
+      const [, mm] = row.monthKey.split('-');
+      const idx = parseInt(mm, 10) - 1;
+      const localizedMonth = localized[idx] || row.month;
+      return { ...row, month: localizedMonth };
+    });
+  }, [projects, t]);
   const monthlyAverages = useMemo(() => getMonthlyAverages(projects), [projects]);
   const monthlyTrend = useMemo(() => getMonthlyTrend(projects), [projects]);
   const expenseCategories = useMemo(() => getExpensesByCategory(projects), [projects]);
@@ -227,10 +282,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   // ---------------------------------------------------------------------------
 
   const quickAccessItems: { id: string; label: string; icon: IconName; screen: AppScreen }[] = [
-    { id: 'proj', label: 'פרויקט חדש', icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
-    { id: 'supp', label: 'ספק חדש', icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
-    { id: 'debt', label: 'חוב חדש', icon: 'receipt-long', screen: AppScreen.ADD_DEBT },
-    { id: 'contacts', label: 'אנשי קשר', icon: 'contacts', screen: AppScreen.SUPPLIERS },
+    { id: 'proj', label: t('quick.new_project'), icon: 'create-new-folder', screen: AppScreen.ADD_PROJECT },
+    { id: 'supp', label: t('quick.new_supplier'), icon: 'person-add', screen: AppScreen.ADD_SUPPLIER },
+    { id: 'debt', label: t('quick.new_debt'), icon: 'receipt-long', screen: AppScreen.ADD_DEBT },
+    { id: 'contacts', label: t('quick.contacts'), icon: 'contacts', screen: AppScreen.SUPPLIERS },
   ];
 
   // ---------------------------------------------------------------------------
@@ -238,18 +293,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // ---------------------------------------------------------------------------
 
   const sendReminder = () => {
-    const debtSuppliers = suppliers.filter((s) => s.status === 'debt' && s.phone);
-    if (debtSuppliers.length === 0) {
-      Alert.alert('', 'אין ספקים עם חובות לשליחת תזכורת');
-      return;
-    }
-    const message = encodeURIComponent(
-      'שלום, זוהי תזכורת ידידותית לגבי יתרת החוב שלך. אשמח לסגור את החשבון בהקדם. תודה!',
-    );
-    const firstSupplier = debtSuppliers[0];
-    const cleanPhone = firstSupplier.phone.replace(/\D/g, '');
-    const phone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
-    openExternalURL(`https://wa.me/972${phone}?text=${message}`);
+    onNavigate(AppScreen.SEND_REMINDER);
   };
 
   // ---------------------------------------------------------------------------
@@ -260,18 +304,32 @@ const Dashboard: React.FC<DashboardProps> = ({
     <View style={styles.root}>
       {/* ===== GRADIENT ZONE ===== */}
       <GradientHeader style={styles.gradientZone}>
-        {/* Header row: greeting + currency toggle */}
-        <View style={styles.headerRow}>
+        {/* Currency toggle row (above greeting) */}
+        <View style={styles.currencyRow}>
           <CurrencyToggle selected={globalCurrency} onSelect={setGlobalCurrency} />
-          <Text style={styles.greeting}>
-            {userName ? `שלום, ${userName}` : 'שלום,'}
+        </View>
+
+        {/* Greeting row (below currency) */}
+        <View style={styles.greetingRow}>
+          <Text style={styles.greeting} numberOfLines={1} adjustsFontSizeToFit>
+            {userName ? t('greeting.with_name', { name: userName }) : t('greeting.no_name')}
           </Text>
         </View>
+
+        {/* System message banner — last activity */}
+        {overallLastActivity > 0 && (
+          <View style={styles.systemBanner}>
+            <MaterialIcons name="schedule" size={14} color="rgba(255,255,255,0.65)" />
+            <Text style={styles.systemBannerText}>
+              {t('system.last_activity_at', { when: formatLastActivity(overallLastActivity) })}
+            </Text>
+          </View>
+        )}
 
         {/* Summary GlassCard */}
         <GlassCard style={styles.summaryCard}>
           {/* Balance label + big amount */}
-          <Text style={styles.summaryLabel}>{'יתרה'}</Text>
+          <Text style={styles.summaryLabel}>{t('summary.balance')}</Text>
           <Text style={[styles.summaryAmount, { color: totals.net >= 0 ? colors.success : colors.error }]}>
             {totals.net < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(totals.net)))}
           </Text>
@@ -279,60 +337,46 @@ const Dashboard: React.FC<DashboardProps> = ({
           {/* Sub-cards row: budget + income + expenses */}
           <View style={styles.subCardsRow}>
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'תקציב'}</Text>
-              <Text style={[styles.subCardAmount, { color: colors.white }]}>
+              <Text style={styles.subCardLabel} numberOfLines={1}>{t('summary.budget')}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.white }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {sym}{formatNumber(convertAmount(totals.budget))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הכנסות'}</Text>
-              <Text style={[styles.subCardAmount, { color: colors.success }]}>
+              <Text style={styles.subCardLabel} numberOfLines={1}>{t('summary.income')}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.success }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {sym}{formatNumber(convertAmount(totals.income))}
               </Text>
             </GlassCard>
 
             <GlassCard style={styles.subCard}>
-              <Text style={styles.subCardLabel}>{'הוצאות'}</Text>
-              <Text style={[styles.subCardAmount, { color: colors.error }]}>
+              <Text style={styles.subCardLabel} numberOfLines={1}>{t('summary.expenses')}</Text>
+              <Text style={[styles.subCardAmount, { color: colors.error }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {sym}{formatNumber(convertAmount(totals.expenses))}
               </Text>
             </GlassCard>
           </View>
         </GlassCard>
 
-        {/* Quick Action Buttons */}
-        <View style={styles.quickActionRow}>
+        {/* Big Action Buttons — full-width income/expense buttons (per design) */}
+        <View style={styles.bigActionRow}>
           <TouchableOpacity
-            style={styles.quickActionBtn}
+            style={[styles.bigActionBtn, styles.bigActionExpense]}
             onPress={() => onNavigate(AppScreen.ADD_EXPENSE)}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <GlassCard style={styles.quickActionCard}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(255,77,106,0.18)' }]}>
-                <MaterialIcons name="remove-circle" size={26} color={colors.error} />
-              </View>
-              <View style={styles.quickActionTextWrap}>
-                <Text style={styles.quickActionSmall}>{'הוספת'}</Text>
-                <Text style={[styles.quickActionBig, { color: colors.error }]}>{'הוצאה'}</Text>
-              </View>
-            </GlassCard>
+            <Text style={styles.bigActionLabel}>{t('actions.expense')}</Text>
+            <MaterialIcons name="remove-circle-outline" size={28} color={colors.white} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.quickActionBtn}
+            style={[styles.bigActionBtn, styles.bigActionIncome]}
             onPress={() => onNavigate(AppScreen.ADD_INCOME)}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <GlassCard style={styles.quickActionCard}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0,232,143,0.18)' }]}>
-                <MaterialIcons name="add-circle" size={26} color={colors.success} />
-              </View>
-              <View style={styles.quickActionTextWrap}>
-                <Text style={styles.quickActionSmall}>{'הוספת'}</Text>
-                <Text style={[styles.quickActionBig, { color: colors.success }]}>{'הכנסה'}</Text>
-              </View>
-            </GlassCard>
+            <Text style={styles.bigActionLabel}>{t('actions.income')}</Text>
+            <MaterialIcons name="add-circle-outline" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
       </GradientHeader>
@@ -342,13 +386,15 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Categories – 3 cards in a row ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'קטגוריות'} />
+          <SectionHeader title={t('sections.projects')} />
           <View style={styles.categoryRow}>
             {categoryTotals.map((cat) => {
-              const percentSpent =
-                cat.budget > 0 ? Math.round((cat.spent / cat.budget) * 100) : 0;
-              const status: 'ok' | 'warning' | 'over' =
-                percentSpent > 100 ? 'over' : percentSpent > 80 ? 'warning' : 'ok';
+              // Bar shows balance vs budget: positive = how close to budget (green from left),
+              // negative = deficit (red from right).
+              const percentOfBudget =
+                cat.budget > 0 ? Math.round((cat.remaining / cat.budget) * 100) : 0;
+              const isDeficit = percentOfBudget < 0;
+              const pctColor = isDeficit ? colors.error : colors.success;
 
               return (
                 <DarkCard
@@ -356,22 +402,28 @@ const Dashboard: React.FC<DashboardProps> = ({
                   style={styles.categoryCard}
                   onPress={() => onNavigate(AppScreen.CATEGORY_PROJECTS, cat.category)}
                 >
-                  <Text style={styles.categoryCardName} numberOfLines={1}>{cat.name}</Text>
-                  <Text style={styles.categoryCardAmount}>
+                  <Text style={styles.categoryCardName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t(`main_categories.${cat.category}`)}</Text>
+                  <Text style={styles.categoryCardAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.55}>
                     {cat.remaining < 0 ? '-' : ''}{sym}{formatNumber(convertAmount(Math.abs(cat.remaining)))}
                   </Text>
-                  <StatusBadge status={status} size="sm" />
                   <ProgressBar
-                    percentage={percentSpent}
-                    status={status}
+                    percentage={percentOfBudget}
+                    signed
                     style={styles.categoryProgressBar}
                   />
                   <View style={styles.categoryCardFooter}>
-                    <Text style={styles.categoryCardFooterPct}>{percentSpent}%</Text>
+                    <Text style={[styles.categoryCardFooterPct, { color: pctColor }]}>
+                      {percentOfBudget > 0 ? '+' : ''}{percentOfBudget}%
+                    </Text>
                     <Text style={styles.categoryCardFooterTotal}>
                       {sym}{formatNumber(convertAmount(cat.budget))}
                     </Text>
                   </View>
+                  {cat.lastActivity > 0 && (
+                    <Text style={styles.categoryCardLastActivity} numberOfLines={1}>
+                      {t('category.last_activity', { when: formatLastActivity(cat.lastActivity) })}
+                    </Text>
+                  )}
                 </DarkCard>
               );
             })}
@@ -380,7 +432,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* ===== Quick Access ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'גישה מהירה'} />
+          <SectionHeader title={t('sections.quick_access')} />
           <View style={styles.quickAccessRow}>
             {quickAccessItems.map((action) => (
               <TouchableOpacity
@@ -391,7 +443,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <DarkCard style={styles.quickAccessIconCard}>
                   <MaterialIcons
                     name={action.icon}
-                    size={24}
+                    size={26}
                     color={action.id === 'debt' ? colors.warning : colors.primary}
                   />
                 </DarkCard>
@@ -402,16 +454,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Send reminder */}
             <TouchableOpacity style={styles.quickAccessItem} onPress={sendReminder}>
               <DarkCard style={styles.quickAccessIconCard}>
-                <MaterialIcons name="notifications-active" size={24} color={colors.primary} />
+                <MaterialIcons name="notifications-active" size={26} color={colors.primary} />
               </DarkCard>
-              <Text style={styles.quickAccessLabel}>{'שלח תזכורת'}</Text>
+              <Text style={styles.quickAccessLabel}>{t('quick.send_reminder')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* ===== Recent Activity ===== */}
         <View style={styles.section}>
-          <SectionHeader title={'פעילות אחרונה'} />
+          <SectionHeader title={t('sections.recent_activity')} />
 
           {allActivities.length === 0 ? (
             <DarkCard style={styles.emptyCard}>
@@ -425,14 +477,33 @@ const Dashboard: React.FC<DashboardProps> = ({
               {allActivities.slice(0, 5).map((act: any) => {
                 const supplierName = getSupplierName(act.supplierId);
                 const isIncome = act.type === 'income';
-                const metaParts = [act.projectName];
-                if (supplierName) metaParts.push(supplierName);
+                // Prefer the supplier name (who was paid) as the primary
+                // title — that's what the user actually scans for. Fall
+                // back to the entry's own title only when no supplier is
+                // linked.
+                const primaryTitle = supplierName || act.title || '—';
+                // Meta line: project • category (tag). Skip blanks.
+                const metaParts: string[] = [];
+                if (act.projectName) metaParts.push(act.projectName);
+                if (act.tag && act.tag !== primaryTitle) metaParts.push(act.tag);
+                // If we promoted the supplier into the title, the original
+                // title (e.g. "מיסים" / "כללי") still carries useful info —
+                // append it as a tail meta token unless it duplicates the
+                // tag we already added.
+                if (
+                  supplierName &&
+                  act.title &&
+                  act.title !== act.tag &&
+                  act.title !== supplierName
+                ) {
+                  metaParts.push(act.title);
+                }
                 return (
                   <TransactionRow
                     key={act.id}
                     icon={isIncome ? 'arrow-downward' : 'arrow-upward'}
                     iconColor={isIncome ? colors.success : colors.error}
-                    title={act.title}
+                    title={primaryTitle}
                     meta={metaParts.join(' \• ')}
                     amount={`${isIncome ? '+' : '-'}${sym}${formatNumber(convertAmount(act.amount))}${act.originalCurrency && act.originalCurrency !== 'ILS' ? ` (${currencySymbols[act.originalCurrency as Currency]}${act.originalAmount?.toLocaleString()})` : ''}`}
                     isIncome={isIncome}
@@ -458,7 +529,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               contentContainerStyle={styles.projectsScroll}
             >
               {recentProjects.map((project) => {
-                const remaining = project.budget - project.spent;
+                const pIncome = (project.incomes || []).reduce((s, i) => s + i.amount, 0);
+                const remaining = pIncome - project.spent;
                 const percentUsed =
                   project.budget > 0
                     ? Math.round((project.spent / project.budget) * 100)
@@ -581,7 +653,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <View style={styles.section}>
             <CategoryDonut
               data={expenseCategories}
-              title={'פילוח הוצאות'}
+              title={t('chart.expense_breakdown')}
               sym={sym}
               convertAmount={convertForWidget}
             />
@@ -593,7 +665,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <View style={styles.section}>
             <CategoryDonut
               data={incomeCategories}
-              title={'פילוח הכנסות'}
+              title={t('chart.income_breakdown')}
               sym={sym}
               convertAmount={convertForWidget}
             />
@@ -672,36 +744,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     paddingTop: spacing.md,
+  },
+  currencyRow: {
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+    paddingTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  greetingRow: {
+    marginBottom: spacing.sm,
+  },
+  systemBanner: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing['2xl'],
+    paddingHorizontal: spacing.sm,
+  },
+  systemBannerText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.65)',
+    fontFamily: fonts.medium,
+    writingDirection: 'rtl',
   },
   greeting: {
     fontSize: 20,
     fontFamily: fonts.bold,
     color: colors.white,
-    writingDirection: 'rtl',
-    textAlign: 'right',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
 
   /* ---- Summary GlassCard ---- */
   summaryCard: {
     padding: spacing['2xl'],
     marginBottom: spacing.lg,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   summaryLabel: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.6)',
     fontFamily: fonts.medium,
     marginBottom: spacing.xs,
-    writingDirection: 'rtl',
+    // Visually right in both LTR and RTL — RN auto-flips 'left'/'right'
+    // in RTL native, so we pick the value that resolves to right.
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
   summaryAmount: {
     fontSize: 34,
     fontFamily: fonts.bold,
     color: colors.white,
     marginBottom: spacing.lg,
-    writingDirection: 'rtl',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
   subCardsRow: {
     flexDirection: 'row-reverse',
@@ -710,20 +804,21 @@ const styles = StyleSheet.create({
   },
   subCard: {
     flex: 1,
-    padding: spacing.md,
-    alignItems: 'flex-end',
+    padding: spacing.sm,
+    alignItems: 'stretch',
+    minWidth: 0,
   },
   subCardLabel: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.55)',
     fontFamily: fonts.medium,
     marginBottom: 4,
-    writingDirection: 'rtl',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
   subCardAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.bold,
-    writingDirection: 'rtl',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
   },
 
   /* ---- Quick Action Buttons (in gradient) ---- */
@@ -740,6 +835,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: spacing.md,
+  },
+
+  /* ---- Big income/expense buttons (per design) ---- */
+  bigActionRow: {
+    flexDirection: 'row-reverse',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  bigActionBtn: {
+    flex: 1,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    paddingVertical: 22,
+    borderRadius: radii['2xl'],
+    borderWidth: 1.5,
+  },
+  bigActionIncome: {
+    backgroundColor: 'rgba(0,232,143,0.85)',
+    borderColor: 'rgba(0,232,143,0.95)',
+    shadowColor: '#00E88F',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  bigActionExpense: {
+    backgroundColor: 'rgba(255,77,106,0.85)',
+    borderColor: 'rgba(255,77,106,0.95)',
+    shadowColor: '#FF4D6A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  bigActionLabel: {
+    fontSize: 22,
+    fontFamily: fonts.bold,
+    color: colors.white,
+    writingDirection: 'rtl',
   },
   quickActionIconWrap: {
     width: 48,
@@ -783,12 +919,12 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   categoryCardName: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontFamily: fonts.semibold,
+    fontSize: 22,
+    color: colors.white,
+    fontFamily: fonts.extrabold,
     marginBottom: spacing.sm,
-    writingDirection: 'rtl',
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   categoryCardAmount: {
     fontSize: 16,
@@ -818,31 +954,51 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontFamily: fonts.regular,
   },
+  categoryCardLastActivity: {
+    fontSize: 9,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
+    marginTop: 6,
+    writingDirection: 'rtl',
+    textAlign: 'center',
+    alignSelf: 'stretch',
+  },
 
   /* ---- Quick Access ---- */
   quickAccessRow: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-around',
     alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   quickAccessItem: {
     alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
   },
+  // Semi-transparent icon card with primary glow (per design).
+  // Sized so 5 tiles fit on a ~360-380px wide phone without overlap.
   quickAccessIconCard: {
-    width: 54,
-    height: 54,
+    width: 56,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.xl,
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(0,217,217,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,217,217,0.30)',
+    shadowColor: '#00D9D9',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   quickAccessLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: fonts.semibold,
     color: colors.textSecondary,
-    writingDirection: 'rtl',
     textAlign: 'center',
-    maxWidth: 64,
+    maxWidth: 70,
   },
 
   /* ---- Activity ---- */

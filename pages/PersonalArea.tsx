@@ -13,7 +13,8 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { AppScreen, Currency } from '@monn/shared';
+import { useTranslation } from 'react-i18next';
+import { AppScreen, Currency, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -40,7 +41,8 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
   goBack,
   globalCurrency,
 }) => {
-  const [userName, setUserName] = useState('משתמש');
+  const { t } = useTranslation();
+  const [userName, setUserName] = useState(t('personal_area.default_user'));
   const [userEmail, setUserEmail] = useState('user@example.com');
   const [userPhone, setUserPhone] = useState('050-1234567');
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -54,7 +56,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         const saved = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
         if (saved) {
           const profile = JSON.parse(saved);
-          setUserName(profile.name || 'משתמש');
+          setUserName(profile.name || t('personal_area.default_user'));
           setUserEmail(profile.email || '');
           setUserPhone(profile.phone || '');
           setUserAvatar(profile.avatar || null);
@@ -71,7 +73,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
       if (useCamera) {
         const permResult = await ImagePicker.requestCameraPermissionsAsync();
         if (!permResult.granted) {
-          Alert.alert('שגיאה', 'נדרשת הרשאת גישה למצלמה');
+          Alert.alert(t('common.error'), t('personal_area.err_camera_permission'));
           return;
         }
         const result = await ImagePicker.launchCameraAsync({
@@ -87,7 +89,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
       } else {
         const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permResult.granted) {
-          Alert.alert('שגיאה', 'נדרשת הרשאת גישה לגלריה');
+          Alert.alert(t('common.error'), t('personal_area.err_gallery_permission'));
           return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -102,7 +104,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         }
       }
     } catch (err) {
-      Alert.alert('שגיאה', 'שגיאה בבחירת תמונה');
+      Alert.alert(t('common.error'), t('personal_area.err_pick_image'));
     }
     setShowPhotoModal(false);
   };
@@ -150,46 +152,46 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
   const settingsItems = [
     {
       icon: 'language' as const,
-      label: 'שפה',
-      value: 'עברית',
+      label: t('language.title'),
+      value: t('personal_area.language_value'),
     },
     {
       icon: 'payment' as const,
-      label: 'מטבע ברירת מחדל',
+      label: t('personal_area.default_currency'),
       value: `${currencySymbols[globalCurrency]} ${globalCurrency}`,
     },
     {
       icon: 'notifications' as const,
-      label: 'התראות',
-      value: 'פעיל',
+      label: t('personal_area.notifications'),
+      value: t('personal_area.active'),
     },
     {
       icon: 'dark-mode' as const,
-      label: 'מצב כהה',
-      value: 'כבוי',
+      label: t('personal_area.dark_mode'),
+      value: t('personal_area.off'),
     },
   ];
 
   const quickLinks = [
     {
       icon: 'help' as const,
-      label: 'עזרה ותמיכה',
-      onPress: () => Alert.alert('עזרה ותמיכה'),
+      label: t('personal_area.help_support'),
+      onPress: () => Alert.alert(t('personal_area.help_support')),
     },
     {
       icon: 'privacy-tip' as const,
-      label: 'פרטיות ואבטחה',
-      onPress: () => Alert.alert('פרטיות'),
+      label: t('personal_area.privacy_security'),
+      onPress: () => Alert.alert(t('personal_area.privacy')),
     },
     {
       icon: 'description' as const,
-      label: 'תנאי שימוש',
-      onPress: () => Alert.alert('תנאי שימוש'),
+      label: t('personal_area.terms'),
+      onPress: () => Alert.alert(t('personal_area.terms')),
     },
     {
       icon: 'info' as const,
-      label: 'אודות האפליקציה',
-      onPress: () => Alert.alert('SASOMM v1.0', 'ניהול פיננסי חכם'),
+      label: t('personal_area.about_app'),
+      onPress: () => Alert.alert('SASOMM v1.0', t('personal_area.about_subtitle')),
     },
   ];
 
@@ -202,7 +204,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
           onPress={() => setShowPhotoModal(false)}
         >
           <DarkCard style={styles.photoModalCard}>
-            <Text style={styles.photoModalTitle}>{'בחר תמונת פרופיל'}</Text>
+            <Text style={styles.photoModalTitle}>{t('personal_area.modal_title')}</Text>
 
             <TouchableOpacity
               style={styles.photoModalItem}
@@ -211,7 +213,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               <View style={styles.photoModalIcon}>
                 <MaterialIcons name="photo-camera" size={22} color={colors.primary} />
               </View>
-              <Text style={styles.photoModalItemText}>{'צלם תמונה'}</Text>
+              <Text style={styles.photoModalItemText}>{t('personal_area.take_photo')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -221,7 +223,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               <View style={styles.photoModalIcon}>
                 <MaterialIcons name="photo-library" size={22} color={colors.primary} />
               </View>
-              <Text style={styles.photoModalItemText}>{'בחר מהגלריה'}</Text>
+              <Text style={styles.photoModalItemText}>{t('personal_area.from_gallery')}</Text>
             </TouchableOpacity>
 
             {userAvatar && (
@@ -233,7 +235,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                   <MaterialIcons name="delete" size={22} color={colors.error} />
                 </View>
                 <Text style={[styles.photoModalItemText, { color: colors.error }]}>
-                  {'הסר תמונה'}
+                  {t('personal_area.remove_photo')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -242,7 +244,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
               style={styles.photoModalCancel}
               onPress={() => setShowPhotoModal(false)}
             >
-              <Text style={styles.photoModalCancelText}>{'ביטול'}</Text>
+              <Text style={styles.photoModalCancelText}>{t('personal_area.cancel')}</Text>
             </TouchableOpacity>
           </DarkCard>
         </Pressable>
@@ -250,7 +252,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
 
       {/* Header with gradient + centered avatar */}
       <GradientHeader style={styles.headerContainer}>
-        <ScreenTopBar title={'איזור אישי'} onBack={goBack} />
+        <ScreenTopBar title={t('menu.personal_area')} onBack={goBack} />
         <View style={styles.avatarSection}>
           <TouchableOpacity onPress={() => setShowPhotoModal(true)} style={styles.avatarTouchable}>
             <AvatarCircle
@@ -285,7 +287,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 style={styles.editInput}
                 value={userName}
                 onChangeText={setUserName}
-                placeholder={'שם מלא'}
+                placeholder={t('auth.full_name_placeholder')}
                 placeholderTextColor={colors.textTertiary}
                 textAlign="center"
               />
@@ -293,7 +295,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 style={styles.editInput}
                 value={userEmail}
                 onChangeText={setUserEmail}
-                placeholder={'אימייל'}
+                placeholder={t('auth.email')}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="email-address"
                 textAlign="center"
@@ -302,30 +304,30 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 style={styles.editInput}
                 value={userPhone}
                 onChangeText={setUserPhone}
-                placeholder={'טלפון'}
+                placeholder={t('supplier_detail.phone_label')}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="phone-pad"
                 textAlign="center"
               />
               <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveBtnText}>{'שמור שינויים'}</Text>
+                <Text style={styles.saveBtnText}>{t('add_project.save_changes')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.profileDetails}>
               <View style={styles.profileRow}>
                 <MaterialIcons name="person" size={18} color={colors.primary} />
-                <Text style={styles.profileDetailLabel}>{'שם'}</Text>
+                <Text style={styles.profileDetailLabel}>{t('supplier_detail.name_label')}</Text>
                 <Text style={styles.profileDetailValue}>{userName}</Text>
               </View>
               <View style={[styles.profileRow, styles.profileRowBorder]}>
                 <MaterialIcons name="email" size={18} color={colors.primary} />
-                <Text style={styles.profileDetailLabel}>{'אימייל'}</Text>
+                <Text style={styles.profileDetailLabel}>{t('auth.email')}</Text>
                 <Text style={styles.profileDetailValue}>{userEmail}</Text>
               </View>
               <View style={[styles.profileRow, styles.profileRowBorder]}>
                 <MaterialIcons name="phone" size={18} color={colors.primary} />
-                <Text style={styles.profileDetailLabel}>{'טלפון'}</Text>
+                <Text style={styles.profileDetailLabel}>{t('supplier_detail.phone_label')}</Text>
                 <Text style={styles.profileDetailValue}>{userPhone}</Text>
               </View>
               <TouchableOpacity
@@ -333,7 +335,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
                 onPress={() => setIsEditing(true)}
               >
                 <MaterialIcons name="edit" size={16} color={colors.primary} />
-                <Text style={styles.editProfileText}>{'עריכת פרופיל'}</Text>
+                <Text style={styles.editProfileText}>{t('common.edit')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -342,7 +344,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         {/* Settings Section */}
         <DarkCard style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{'הגדרות'}</Text>
+            <Text style={styles.sectionHeaderText}>{t('menu.settings')}</Text>
           </View>
           {settingsItems.map((item, i) => (
             <View
@@ -364,7 +366,7 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         {/* Quick Links */}
         <DarkCard style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{'קישורים מהירים'}</Text>
+            <Text style={styles.sectionHeaderText}>{t('sections.quick_access')}</Text>
           </View>
           {quickLinks.map((item, i) => (
             <TouchableOpacity
@@ -396,44 +398,39 @@ const PersonalArea: React.FC<PersonalAreaProps> = ({
         <View style={styles.placeholderRow}>
           <DarkCard style={styles.placeholderCard}>
             <MaterialIcons name="lock" size={22} color={colors.textTertiary} />
-            <Text style={styles.placeholderLabel}>{'אבטחה'}</Text>
-            <Text style={styles.placeholderSoon}>{'בקרוב'}</Text>
+            <Text style={styles.placeholderLabel}>{t('personal_area.security_label')}</Text>
+            <Text style={styles.placeholderSoon}>{t('personal_area.coming_soon')}</Text>
           </DarkCard>
           <DarkCard style={styles.placeholderCard}>
             <MaterialIcons name="backup" size={22} color={colors.textTertiary} />
-            <Text style={styles.placeholderLabel}>{'גיבוי'}</Text>
-            <Text style={styles.placeholderSoon}>{'בקרוב'}</Text>
+            <Text style={styles.placeholderLabel}>{t('personal_area.backup_label')}</Text>
+            <Text style={styles.placeholderSoon}>{t('personal_area.coming_soon')}</Text>
           </DarkCard>
           <DarkCard style={styles.placeholderCard}>
             <MaterialIcons name="cloud-sync" size={22} color={colors.textTertiary} />
-            <Text style={styles.placeholderLabel}>{'סנכרון'}</Text>
-            <Text style={styles.placeholderSoon}>{'בקרוב'}</Text>
+            <Text style={styles.placeholderLabel}>{t('personal_area.sync_label')}</Text>
+            <Text style={styles.placeholderSoon}>{t('personal_area.coming_soon')}</Text>
           </DarkCard>
         </View>
 
         {/* Logout */}
         <TouchableOpacity
           style={styles.logoutBtn}
-          onPress={() => {
-            Alert.alert(
-              'התנתקות',
-              'האם אתה בטוח שברצונך להתנתק?',
-              [
-                { text: 'ביטול', style: 'cancel' },
-                {
-                  text: 'התנתק',
-                  style: 'destructive',
-                  onPress: () => {
-                    Alert.alert('התנתקת בהצלחה');
-                    goBack();
-                  },
-                },
-              ]
-            );
+          onPress={async () => {
+            const ok = await confirmDialog({
+              title: t('menu.logout'),
+              message: t('personal_area.logout_confirm'),
+              confirmText: t('menu.logout'),
+              destructive: true,
+            });
+            if (ok) {
+              Alert.alert(t('personal_area.logout_success'));
+              goBack();
+            }
           }}
         >
           <MaterialIcons name="logout" size={20} color={colors.error} />
-          <Text style={styles.logoutText}>{'התנתקות'}</Text>
+          <Text style={styles.logoutText}>{t('menu.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

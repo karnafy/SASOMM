@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SASOMM — ניהול שיפוץ בלי בלאגן</title>
+<link rel="icon" type="image/png" href="assets/logo/favicon.png">
+<link rel="apple-touch-icon" href="assets/logo/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@400;700;800&family=Rubik:wght@400;700;900&display=swap" rel="stylesheet">
@@ -98,6 +100,19 @@
     transition: transform .2s;
   }
   nav .cta-nav:hover { transform: scale(1.04); }
+  /* Secondary outline button — "כניסה לאפליקציה" */
+  nav .cta-nav-app {
+    background: transparent;
+    color: var(--cyan);
+    border: 1.5px solid var(--cyan);
+  }
+  nav .cta-nav-app:hover { background: rgba(0, 217, 217, 0.1); }
+  /* Group the two CTAs side-by-side instead of pushing them apart */
+  nav .nav-cta-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
 
   /* ========== SITE-WIDE BG CANVAS ========== */
   .site-bg-canvas {
@@ -135,7 +150,7 @@
     width: 95%;
     height: 38%;
     transform: translate(-50%, -50%);
-    background-image: url('../../LOGO/LOGO SASOMM-04.png');
+    background-image: url('assets/logo/LOGO SASOMM-04.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -577,19 +592,19 @@
   }
   .moment.large {
     grid-row: span 2;
-    background-image: url('../assets/images/cash-handoff-exterior.jpg');
+    background-image: url('assets/images/cash-handoff-exterior.jpg');
   }
   .moment.tm {
-    background-image: url('../assets/images/cash-closeup.jpg');
+    background-image: url('assets/images/cash-closeup.jpg');
   }
   .moment.tr {
-    background-image: url('../assets/images/cash-handoff-interior.jpg');
+    background-image: url('assets/images/cash-handoff-interior.jpg');
   }
   .moment.bm {
-    background-image: url('../assets/images/proud-couple-evening.jpg');
+    background-image: url('assets/images/proud-couple-evening.jpg');
   }
   .moment.br {
-    background-image: url('../assets/images/new-kitchen.jpg');
+    background-image: url('assets/images/new-kitchen.jpg');
   }
 
   /* ========== LIFESTYLE SECTION ========== */
@@ -606,7 +621,7 @@
     border-radius: 32px;
     overflow: hidden;
     position: relative;
-    background-image: url('../assets/images/proud-couple-home.jpg'); /* server: images/lifestyle/proud-couple-home.jpg */
+    background-image: url('assets/images/proud-couple-home.jpg'); /* server: images/lifestyle/proud-couple-home.jpg */
     background-size: cover;
     background-position: center;
     box-shadow:
@@ -850,13 +865,16 @@
 
 <!-- ========== NAV ========== -->
 <nav>
-  <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="logo">
+  <img src="assets/logo/LOGO SASOMM-04.png" alt="SASOMM" class="logo">
   <ul>
     <li><a href="#features">פיצ'רים</a></li>
     <li><a href="#about">אודות</a></li>
     <li><a href="#contact">צור קשר</a></li>
   </ul>
-  <a href="#download" class="cta-nav">הורד עכשיו</a>
+  <div class="nav-cta-group">
+    <a href="https://sasomm.karnaf.ai" class="cta-nav cta-nav-app" target="_blank" rel="noopener">כניסה לאפליקציה</a>
+    <a href="#download" class="cta-nav">הורד עכשיו</a>
+  </div>
 </nav>
 
 <!-- ========== SITE-WIDE SCROLL-LINKED BACKGROUND ========== -->
@@ -869,7 +887,7 @@
     <h1 class="display headline">
       ניהול שיפוץ<br>
       זה <span class="accent">בלאגן.</span><br>
-      <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="inline-logo">
+      <img src="assets/logo/LOGO SASOMM-04.png" alt="SASOMM" class="inline-logo">
       עושה את זה פשוט.
     </h1>
     <p class="subheadline">
@@ -891,7 +909,7 @@
   <!-- Phone mockup — real app screen -->
   <div class="mockup-wrap">
     <div class="phone">
-      <img src="../assets/images/app-home.jpg" alt="SASOMM app home screen" class="phone-screen">
+      <img src="assets/images/app-home.jpg" alt="SASOMM app home screen" class="phone-screen">
     </div>
   </div>
 </section>
@@ -905,17 +923,17 @@
   </div>
   <div class="features-grid">
     <div class="feature-card">
-      <div class="feature-mini"><img src="../assets/images/app-projects.jpg" alt="מסך פרויקטים"></div>
+      <div class="feature-mini"><img src="assets/images/app-projects.jpg" alt="מסך פרויקטים"></div>
       <h3 class="feature-title">הכל ביד אחת</h3>
       <p class="feature-desc">יתרה, הוצאות, הכנסות וקטגוריות במסך אחד. תחליף בין שקל, דולר ויורו בלחיצה.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-mini"><img src="../assets/images/app-insights.jpg" alt="מסך תובנות"></div>
+      <div class="feature-mini"><img src="assets/images/app-insights.jpg" alt="מסך תובנות"></div>
       <h3 class="feature-title">להבין לאן הולך הכסף</h3>
       <p class="feature-desc">גרפים חודשיים, ממוצעים, וחלוקת הוצאות לפי קטגוריה. תובנות אמיתיות, לא רק מספרים.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-mini"><img src="../assets/images/app-debts.jpg" alt="מסך חייבים"></div>
+      <div class="feature-mini"><img src="assets/images/app-debts.jpg" alt="מסך חייבים"></div>
       <h3 class="feature-title">לא לשכוח מי חייב למי</h3>
       <p class="feature-desc">רשימת חייבים, תזכורות מתוזמנות, ושליחת WhatsApp ישירות מהאפליקציה. אפס תשלומים שנופלים.</p>
     </div>
@@ -968,7 +986,7 @@
   <div class="lifestyle">
     <div class="lifestyle-photo"></div>
     <div class="lifestyle-copy">
-      <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="lifestyle-brand">
+      <img src="assets/logo/LOGO SASOMM-04.png" alt="SASOMM" class="lifestyle-brand">
       <h3>זה לא רק אפליקציה.<br>זה שקט נפשי באמצע הכאוס.</h3>
       <p>
         שיפוץ בית זה עשרות ספקים, מאות תשלומים, ועשרות פעמים ש״שכחת להעביר לדני את ה-1,900 שקל״.
@@ -1039,10 +1057,10 @@
 <footer id="contact">
   <div class="footer-grid">
     <div class="footer-brand">
-      <img src="../../LOGO/LOGO SASOMM-04.png" alt="SASOMM" class="brand-logo">
+      <img src="assets/logo/LOGO SASOMM-04.png" alt="SASOMM" class="brand-logo">
       <p>ניהול פיננסי לפרויקטים אישיים ולקבלני שיפוצים — פשוט, בעברית, בלי מורכבות.</p>
       <a href="https://karnafstudio.co.il/" class="karnaf-mark" aria-label="Studio Karnaf">
-        <img src="../logo_karnaf_new-02.png" alt="Studio Karnaf" style="display:block; height:56px; width:auto;">
+        <img src="assets/logo_karnaf_new-02.png" alt="Studio Karnaf" style="display:block; height:56px; width:auto;">
       </a>
     </div>
     <div class="footer-col">
@@ -1079,8 +1097,8 @@
 
     const isMobile = window.matchMedia('(max-width: 900px)').matches;
     const dir = isMobile
-      ? '../../PICT/frames_mobile'
-      : (supportsWebP() ? '../../PICT/frames_webp' : '../../PICT/frames_jpg');
+      ? 'assets/frames_mobile'
+      : (supportsWebP() ? 'assets/frames_webp' : 'assets/frames_jpg');
     const ext = dir.endsWith('webp') ? 'webp' : 'jpg';
 
     const framePath = (i) =>

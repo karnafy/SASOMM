@@ -3,12 +3,34 @@ import type { Database } from './database.types';
 
 let _supabase: SupabaseClient<Database> | null = null;
 
+const GLOBAL_KEY = '__sasomm_supabase_client__';
+
 /**
  * Initialize the Supabase client with explicit URL and key.
- * Must be called once at app startup before any data access.
+ * Idempotent: a single client is reused across hot-reloads via globalThis,
+ * preventing the "Multiple GoTrueClient instances detected" warning that
+ * leads to undefined auth behavior (lost sessions, dropped writes).
  */
 export function initSupabase(url: string, anonKey: string): SupabaseClient<Database> {
-  _supabase = createClient<Database>(url, anonKey);
+  const g = globalThis as unknown as Record<string, SupabaseClient<Database> | undefined>;
+  if (g[GLOBAL_KEY]) {
+    _supabase = g[GLOBAL_KEY]!;
+    return _supabase;
+  }
+  if (_supabase) {
+    g[GLOBAL_KEY] = _supabase;
+    return _supabase;
+  }
+  const isWeb = typeof window !== 'undefined' && typeof window.location !== 'undefined';
+  _supabase = createClient<Database>(url, anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: isWeb,
+      flowType: 'implicit',
+    },
+  });
+  g[GLOBAL_KEY] = _supabase;
   return _supabase;
 }
 

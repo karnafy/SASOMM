@@ -9,6 +9,7 @@
  */
 import React, { useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, fonts, spacing } from '../../theme';
 import { DarkCard } from '../ui/DarkCard';
 
@@ -110,6 +111,7 @@ function GridLines({ height, count }: { readonly height: number; readonly count:
 }
 
 export function MonthlyBarChart({ data, sym, convertAmount }: MonthlyBarChartProps) {
+  const { t } = useTranslation();
   const screenWidth = Dimensions.get('window').width;
   const chartOuterWidth = screenWidth - 56;
 
@@ -149,17 +151,17 @@ export function MonthlyBarChart({ data, sym, convertAmount }: MonthlyBarChartPro
 
   return (
     <DarkCard style={styles.wrapper}>
-      <Text style={styles.title}>הכנסות מול הוצאות</Text>
+      <Text style={styles.title}>{t('chart.income_vs_expenses')}</Text>
 
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-          <Text style={styles.legendText}>הכנסות</Text>
+          <Text style={styles.legendText}>{t('chart.income')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.error }]} />
-          <Text style={styles.legendText}>הוצאות</Text>
+          <Text style={styles.legendText}>{t('chart.expenses')}</Text>
         </View>
       </View>
 

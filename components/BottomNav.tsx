@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { AppScreen } from '@monn/shared';
 import { colors, fonts, glowFab, radii } from '../theme';
 
@@ -21,28 +22,29 @@ interface BottomNavProps {
 
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
-const navItems: {
-  screen: AppScreen | null;
-  icon: IconName;
-  label: string;
-  isCenter?: boolean;
-}[] = [
-  { screen: AppScreen.DASHBOARD, icon: 'home', label: 'בית' },
-  { screen: AppScreen.SUPPLIERS, icon: 'people', label: 'ספקים' },
-  { screen: null, icon: 'add', label: 'הוספה', isCenter: true },
-  { screen: AppScreen.PROJECTS, icon: 'folder', label: 'פרויקטים' },
-  { screen: AppScreen.DEBTS, icon: 'account-balance-wallet', label: 'חייבים' },
-];
-
-const quickActions: { screen: AppScreen; icon: IconName; label: string; color: string }[] = [
-  { screen: AppScreen.ADD_PROJECT, icon: 'create-new-folder', label: 'פרויקט', color: colors.primary },
-  { screen: AppScreen.ADD_EXPENSE, icon: 'remove-circle', label: 'הוצאה', color: colors.error },
-  { screen: AppScreen.ADD_INCOME, icon: 'add-circle', label: 'הכנסה', color: colors.success },
-  { screen: AppScreen.ADD_SUPPLIER, icon: 'person-add', label: 'ספק', color: colors.info },
-];
-
 export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps) {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navItems: {
+    screen: AppScreen | null;
+    icon: IconName;
+    label: string;
+    isCenter?: boolean;
+  }[] = [
+    { screen: AppScreen.DASHBOARD, icon: 'home', label: t('nav.home') },
+    { screen: AppScreen.SUPPLIERS, icon: 'people', label: t('nav.suppliers') },
+    { screen: null, icon: 'add', label: t('actions.add_expense'), isCenter: true },
+    { screen: AppScreen.PROJECTS, icon: 'folder', label: t('nav.projects') },
+    { screen: AppScreen.DEBTS, icon: 'account-balance-wallet', label: t('nav.debts') },
+  ];
+
+  const quickActions: { screen: AppScreen; icon: IconName; label: string; color: string }[] = [
+    { screen: AppScreen.ADD_PROJECT, icon: 'create-new-folder', label: t('quick.new_project'), color: colors.primary },
+    { screen: AppScreen.ADD_EXPENSE, icon: 'remove-circle', label: t('actions.expense'), color: colors.error },
+    { screen: AppScreen.ADD_INCOME, icon: 'add-circle', label: t('actions.income'), color: colors.success },
+    { screen: AppScreen.ADD_SUPPLIER, icon: 'person-add', label: t('quick.new_supplier'), color: colors.info },
+  ];
   const insets = useSafeAreaInsets();
   const isSuppliersActive = currentScreen === AppScreen.SUPPLIERS || currentScreen === AppScreen.CONTACTS;
 
@@ -180,6 +182,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    backgroundColor: colors.bgSecondary,
   },
   navBar: {
     backgroundColor: colors.bgSecondary,

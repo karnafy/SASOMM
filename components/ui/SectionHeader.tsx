@@ -10,34 +10,40 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, linkText, onLinkPress }: SectionHeaderProps) {
   return (
-    <View style={styles.row}>
-      {/* Link on the left end (RTL layout: end = left visually) */}
+    <View style={styles.wrap}>
+      {/* "הצג הכל" link — its own row above the title, aligned to the LEFT */}
       {linkText ? (
-        <Pressable onPress={onLinkPress} style={styles.link}>
-          <Text style={styles.linkText}>{linkText}</Text>
-        </Pressable>
+        <View style={styles.linkRow}>
+          <Pressable onPress={onLinkPress} style={styles.link}>
+            <Text style={styles.linkText}>{linkText}</Text>
+          </Pressable>
+        </View>
       ) : null}
 
-      {/* Title on the right start (RTL layout: start = right visually) */}
+      {/* Title — its own row, right-aligned */}
       <Text style={styles.title}>{title}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  wrap: {
     marginBottom: 14,
+    alignItems: 'flex-start',
+  },
+  linkRow: {
+    alignItems: 'flex-start',
+    marginBottom: 6,
   },
   title: {
     color: colors.textPrimary,
     fontFamily: fonts.bold,
     fontSize: 16,
+    textAlign: 'left',
   },
   link: {
     paddingVertical: 2,
+    paddingHorizontal: 4,
   },
   linkText: {
     color: colors.primary,

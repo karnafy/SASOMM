@@ -18,7 +18,9 @@ export enum AppScreen {
   REPORTS_CENTER = 'reports_center',
   SETTINGS = 'settings',
   DEBTS = 'debts',
-  ADD_DEBT = 'add_debt'
+  ADD_DEBT = 'add_debt',
+  RECURRING_TEMPLATES = 'recurring_templates',
+  SEND_REMINDER = 'send_reminder'
 }
 
 export type ReminderInterval = 'daily' | '2days' | '3days' | 'weekly' | 'biweekly' | 'monthly' | 'none';
@@ -47,7 +49,7 @@ export interface Debt {
 export type MainCategory = 'projects' | 'personal' | 'other';
 
 export const MAIN_CATEGORIES: Record<MainCategory, string> = {
-  projects: 'פרויקטים',
+  projects: 'עבודה',
   personal: 'אישי',
   other: 'שונות'
 };
@@ -82,6 +84,8 @@ export interface Expense {
   includesVat?: boolean;
   history?: AuditEntry[];
   created_at?: string;
+  recurringTemplateId?: string;
+  recurringOccurrenceIndex?: number;
 }
 
 export interface Income {
@@ -102,6 +106,33 @@ export interface Income {
   includesVat?: boolean;
   history?: AuditEntry[];
   created_at?: string;
+  recurringTemplateId?: string;
+  recurringOccurrenceIndex?: number;
+}
+
+export type RecurringFrequency = 'monthly';
+
+export interface RecurringTransaction {
+  id: string;
+  type: 'expense' | 'income';
+  projectId: string;
+  amount: number;
+  currency: Currency;
+  title: string;
+  tag?: string;
+  icon?: string;
+  color?: string;
+  supplierId?: string;
+  paymentMethod?: string;
+  includesVat: boolean;
+  frequency: RecurringFrequency;
+  dayOfMonth: number;
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  lastGeneratedUntilDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Supplier {

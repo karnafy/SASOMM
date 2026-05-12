@@ -10,11 +10,25 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
+  Linking,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@monn/shared';
+import { LanguagePicker } from '../components/ui/LanguagePicker';
 import { colors, fonts, glowButton, radii, spacing } from '../theme';
+
+const PRIVACY_URL = 'https://sasomm.com/privacy.html';
+const TERMS_URL = 'https://sasomm.com/terms.html';
+
+function openLegal(url: string): void {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else {
+    Linking.openURL(url).catch(() => undefined);
+  }
+}
 
 export default function Auth() {
   const { signIn, signUp, signInWithGoogle } = useAuth();
@@ -143,15 +157,11 @@ export default function Auth() {
         >
           {/* Logo / Header */}
           <View style={styles.logoSection}>
-            <LinearGradient
-              colors={[colors.primary, colors.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.logoGradient, glowButton]}
-            >
-              <MaterialIcons name="account-balance" size={36} color={colors.white} />
-            </LinearGradient>
-            <Text style={styles.logoText}>SASOMM</Text>
+            <Image
+              source={require('../assets/logo-sasomm.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={styles.subtitle}>{'ניהול פיננסי חכם'}</Text>
           </View>
 
@@ -339,6 +349,25 @@ export default function Auth() {
                   : 'יש לך חשבון? התחבר'}
               </Text>
             </TouchableOpacity>
+
+            {/* Legal consent — required for App Store, Google Play, GDPR */}
+            <Text style={styles.consentText}>
+              {isLogin ? 'המשך השימוש מהווה הסכמה ל' : 'בהרשמה אני מסכים ל'}
+              <Text style={styles.consentLink} onPress={() => openLegal(TERMS_URL)}>
+                {'תנאי השימוש'}
+              </Text>
+              {' ול'}
+              <Text style={styles.consentLink} onPress={() => openLegal(PRIVACY_URL)}>
+                {'מדיניות הפרטיות'}
+              </Text>
+              {'.'}
+            </Text>
+          </View>
+
+          {/* Language picker — placed under the auth card so visitors can switch
+              before signing in (required for App Store / Google Play submission). */}
+          <View style={styles.languageWrap}>
+            <LanguagePicker variant="inline" />
           </View>
 
           {/* Footer */}
@@ -370,12 +399,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
-  logoGradient: {
-    width: 76,
-    height: 76,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoImage: {
+    width: 96,
+    height: 96,
     marginBottom: spacing.md,
   },
   logoText: {
@@ -570,6 +596,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.medium,
     writingDirection: 'rtl',
+  },
+
+  /* Legal consent (privacy + terms) */
+  consentText: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    fontFamily: fonts.regular,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    lineHeight: 18,
+    writingDirection: 'rtl',
+  },
+  consentLink: {
+    color: colors.primary,
+    fontFamily: fonts.semibold,
+    textDecorationLine: 'underline',
+  },
+
+  languageWrap: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
   },
 
   /* Footer */

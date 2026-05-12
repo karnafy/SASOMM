@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
+import { useTranslation } from 'react-i18next';
 
 const openExternalURL = (url: string) => {
   if (Platform.OS === 'web') {
@@ -48,6 +49,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({
   globalCurrency,
   convertAmount,
 }) => {
+  const { t } = useTranslation();
   const symbol = currencySymbols[globalCurrency];
 
   const stats = useMemo(() => {
@@ -97,12 +99,14 @@ _הופק על ידי SASOMM_`;
       text = `*דו"ח פרויקטים - SASOMM*
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 ${projects
-        .map(
-          (p) => `*${p.name}*
+        .map((p) => {
+          const pIncome = (p.incomes || []).reduce((s, i) => s + i.amount, 0);
+          return `*${p.name}*
 תקציב: ${symbol}${convertAmount(p.budget).toLocaleString()}
+הכנסות: ${symbol}${convertAmount(pIncome).toLocaleString()}
 הוצאות: ${symbol}${convertAmount(p.spent).toLocaleString()}
-יתרה: ${symbol}${convertAmount(p.budget - p.spent).toLocaleString()}`
-        )
+יתרה: ${symbol}${convertAmount(pIncome - p.spent).toLocaleString()}`;
+        })
         .join('\n\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\n')}
 \━\━\━\━\━\━\━\━\━\━\━\━\━\━\━\━
 _הופק על ידי SASOMM_`;
@@ -146,20 +150,20 @@ _הופק על ידי SASOMM_`;
   }[] = [
     {
       icon: 'summarize',
-      label: 'דו"ח סיכום',
-      desc: 'סקירה כללית של הנתונים',
+      label: t('reports_center.report_summary'),
+      desc: t('reports_center.report_summary_desc'),
       type: 'summary',
     },
     {
       icon: 'folder-special',
-      label: 'דו"ח פרויקטים',
-      desc: 'פירוט כל הפרויקטים',
+      label: t('reports_center.report_projects'),
+      desc: t('reports_center.report_projects_desc'),
       type: 'projects',
     },
     {
       icon: 'groups',
-      label: 'דו"ח ספקים',
-      desc: 'חובות וזכויות',
+      label: t('reports_center.report_suppliers'),
+      desc: t('reports_center.report_suppliers_desc'),
       type: 'suppliers',
     },
   ];
@@ -168,7 +172,7 @@ _הופק על ידי SASOMM_`;
     <View style={styles.container}>
       {/* Header */}
       <GradientHeader>
-        <ScreenTopBar title={'מרכז הדו"חות'} onBack={goBack} />
+        <ScreenTopBar title={t('reports_center.page_title')} onBack={goBack} />
       </GradientHeader>
 
       <ScrollView
@@ -179,7 +183,7 @@ _הופק על ידי SASOMM_`;
         {/* Overview Stats - 2x2 GlassCard grid */}
         <View style={styles.overviewGrid}>
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'הכנסות'}</Text>
+            <Text style={styles.overviewLabel}>{t('reports_center.income')}</Text>
             <Text style={[styles.overviewValue, { color: colors.success }]}>
               {symbol}
               {convertAmount(stats.totalIncome).toLocaleString(undefined, {
@@ -189,7 +193,7 @@ _הופק על ידי SASOMM_`;
           </GlassCard>
 
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'הוצאות'}</Text>
+            <Text style={styles.overviewLabel}>{t('reports_center.expenses')}</Text>
             <Text style={[styles.overviewValue, { color: colors.error }]}>
               {symbol}
               {convertAmount(stats.totalSpent).toLocaleString(undefined, {
@@ -199,7 +203,7 @@ _הופק על ידי SASOMM_`;
           </GlassCard>
 
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'תקציב'}</Text>
+            <Text style={styles.overviewLabel}>{t('reports_center.budget')}</Text>
             <Text style={[styles.overviewValue, { color: colors.info }]}>
               {symbol}
               {convertAmount(stats.totalBudget).toLocaleString(undefined, {
@@ -209,7 +213,7 @@ _הופק על ידי SASOMM_`;
           </GlassCard>
 
           <GlassCard style={styles.overviewItem}>
-            <Text style={styles.overviewLabel}>{'יתרה נטו'}</Text>
+            <Text style={styles.overviewLabel}>{t('reports_center.net_balance')}</Text>
             <Text
               style={[
                 styles.overviewValue,
@@ -231,7 +235,7 @@ _הופק על ידי SASOMM_`;
               <MaterialIcons name="folder" size={20} color={colors.primary} />
             </View>
             <Text style={styles.statNumber}>{stats.projectCount}</Text>
-            <Text style={styles.statLabel}>{'פרויקטים'}</Text>
+            <Text style={styles.statLabel}>{t('reports_center.projects')}</Text>
           </DarkCard>
 
           <DarkCard style={styles.statCard}>
@@ -239,7 +243,7 @@ _הופק על ידי SASOMM_`;
               <MaterialIcons name="groups" size={20} color={colors.accent} />
             </View>
             <Text style={styles.statNumber}>{stats.supplierCount}</Text>
-            <Text style={styles.statLabel}>{'ספקים'}</Text>
+            <Text style={styles.statLabel}>{t('reports_center.suppliers')}</Text>
           </DarkCard>
 
           <DarkCard style={styles.statCard}>
@@ -247,7 +251,7 @@ _הופק על ידי SASOMM_`;
               <MaterialIcons name="receipt-long" size={20} color={colors.info} />
             </View>
             <Text style={styles.statNumber}>{stats.totalTransactions}</Text>
-            <Text style={styles.statLabel}>{'עסקאות'}</Text>
+            <Text style={styles.statLabel}>{t('reports_center.transactions')}</Text>
           </DarkCard>
         </View>
 
@@ -255,7 +259,7 @@ _הופק על ידי SASOMM_`;
         <DarkCard style={styles.exportCard}>
           <View style={styles.exportHeader}>
             <Text style={styles.exportHeaderText}>
-              {'שלח דו"ח בוואטסאפ'}
+              {t('reports_center.send_whatsapp')}
             </Text>
           </View>
           {reportTypes.map((item, i) => (
@@ -286,7 +290,7 @@ _הופק על ידי SASOMM_`;
         {stats.debtCount > 0 && (
           <DarkCard style={styles.debtCard}>
             <View style={styles.debtHeader}>
-              <Text style={styles.debtTitle}>{'סיכום חובות'}</Text>
+              <Text style={styles.debtTitle}>{t('reports_center.debts_summary')}</Text>
               <View style={styles.debtBadge}>
                 <Text style={styles.debtBadgeText}>
                   {symbol}

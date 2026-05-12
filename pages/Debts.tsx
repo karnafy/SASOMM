@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,8 @@ const openExternalURL = (url: string) => {
 };
 import * as ImagePicker from 'expo-image-picker';
 import * as Contacts from 'expo-contacts';
-import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection } from '@monn/shared';
+import { useTranslation } from 'react-i18next';
+import { AppScreen, Debt, Currency, ReminderInterval, Project, DebtDirection, Supplier, confirmDialog } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -40,6 +41,7 @@ interface DebtsProps {
   convertAmount: (amount: number) => number;
   projects: Project[];
   debts: Debt[];
+  suppliers?: Supplier[];
   onSaveDebt: (debt: Omit<Debt, 'id' | 'createdAt'> & { id?: string }) => void;
   onDeleteDebt: (id: string) => void;
   autoOpenAdd?: boolean;
@@ -68,12 +70,35 @@ const Debts: React.FC<DebtsProps> = ({
   convertAmount,
   projects,
   debts,
+  suppliers,
   onSaveDebt,
   onDeleteDebt,
   autoOpenAdd,
 }) => {
+  const { t } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showContactPicker, setShowContactPicker] = useState(false);
   const [activeDirection, setActiveDirection] = useState<DebtDirection>('owed_to_me');
+
+  // Unified contact list built from existing debts + suppliers, deduplicated
+  // by name+phone so the picker doesn't repeat the same person.
+  const contactPickerEntries = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Array<{ id: string; name: string; phone?: string; source: 'debt' | 'supplier' }> = [];
+    for (const d of debts) {
+      const key = `${d.personName}|${d.personPhone || ''}`.toLowerCase();
+      if (seen.has(key) || !d.personName.trim()) continue;
+      seen.add(key);
+      out.push({ id: `d-${d.id}`, name: d.personName, phone: d.personPhone, source: 'debt' });
+    }
+    for (const s of suppliers || []) {
+      const key = `${s.name}|${s.phone || ''}`.toLowerCase();
+      if (seen.has(key) || !s.name.trim()) continue;
+      seen.add(key);
+      out.push({ id: `s-${s.id}`, name: s.name, phone: s.phone, source: 'supplier' });
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }, [debts, suppliers]);
 
   useEffect(() => {
     if (autoOpenAdd) {
@@ -144,7 +169,27 @@ const Debts: React.FC<DebtsProps> = ({
 
   const handlePickContact = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('לא זמין', 'בחירת איש קשר זמינה רק בנייד');
+      // Web Contacts API is only available on mobile Chrome over HTTPS.
+      // Try it as a best-effort; otherwise tell the user to type manually.
+      const navAny = (typeof navigator !== 'undefined' ? (navigator as any) : null);
+      if (navAny?.contacts?.select) {
+        try {
+          const props = ['name', 'tel'];
+          const opts = { multiple: false };
+          const picked: any[] = await navAny.contacts.select(props, opts);
+          const c = picked?.[0];
+          if (c) {
+            const name = Array.isArray(c.name) ? c.name[0] : c.name;
+            const tel = Array.isArray(c.tel) ? c.tel[0] : c.tel;
+            if (name) setPersonName(String(name));
+            if (tel) setPersonPhone(String(tel));
+          }
+        } catch {
+          // user cancelled or unsupported
+        }
+        return;
+      }
+      Alert.alert('לא זמין', 'בחירת איש קשר זמינה רק בנייד (או ב-Chrome נייד עם HTTPS).');
       return;
     }
     try {
@@ -153,12 +198,33 @@ const Debts: React.FC<DebtsProps> = ({
         Alert.alert('שגיאה', 'נדרשת הרשאת גישה לאנשי קשר');
         return;
       }
-      const contact = await Contacts.presentContactPickerAsync();
+      const contact: any = await Contacts.presentContactPickerAsync();
       if (!contact) return;
-      if (contact.name) setPersonName(contact.name);
-      const phone = contact.phoneNumbers?.[0]?.number;
-      if (phone) setPersonPhone(phone);
+
+      // Build display name with fallbacks: name → firstName lastName → phone label
+      const fullName = [contact.firstName, contact.middleName, contact.lastName]
+        .filter((p) => typeof p === 'string' && p.trim().length > 0)
+        .join(' ')
+        .trim();
+      const resolvedName: string =
+        (typeof contact.name === 'string' && contact.name.trim().length > 0
+          ? contact.name.trim()
+          : fullName) || '';
+
+      const phoneEntry = Array.isArray(contact.phoneNumbers) ? contact.phoneNumbers[0] : undefined;
+      const resolvedPhone: string =
+        (phoneEntry && (phoneEntry.number || phoneEntry.digits)) || '';
+
+      if (resolvedName) setPersonName(resolvedName);
+      if (resolvedPhone) setPersonPhone(resolvedPhone);
+
+      if (!resolvedName && !resolvedPhone) {
+        // Surface raw fields so we can fix any unexpected shape.
+        console.warn('[handlePickContact] contact returned with no usable fields', contact);
+        Alert.alert('שים לב', 'לא הצלחנו לקרוא את פרטי איש הקשר. נסה ידנית.');
+      }
     } catch (err) {
+      console.error('[handlePickContact] error', err);
       Alert.alert('שגיאה', 'שגיאה בבחירת איש קשר');
     }
   };
@@ -231,19 +297,14 @@ const Debts: React.FC<DebtsProps> = ({
     resetForm();
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert(
-      'מחיקת חוב',
-      'האם אתה בטוח שברצונך למחוק חוב זה?',
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק',
-          style: 'destructive',
-          onPress: () => onDeleteDebt(id),
-        },
-      ]
-    );
+  const handleDelete = async (id: string) => {
+    const ok = await confirmDialog({
+      title: 'מחיקת חוב',
+      message: 'האם אתה בטוח שברצונך למחוק חוב זה?',
+      confirmText: 'מחק',
+      destructive: true,
+    });
+    if (ok) onDeleteDebt(id);
   };
 
   const handleMarkPaid = (debt: Debt) => {
@@ -252,7 +313,13 @@ const Debts: React.FC<DebtsProps> = ({
 
   const handleSendWhatsApp = (debt: Debt) => {
     if (!debt.personPhone) {
-      Alert.alert('שגיאה', 'אין מספר טלפון לאיש קשר זה');
+      const title = t('common.error');
+      const body = t('debts.err_no_phone');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`${title}\n\n${body}`);
+      } else {
+        Alert.alert(title, body);
+      }
       return;
     }
 
@@ -279,66 +346,144 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
     });
   };
 
+  const handleSendAllReminders = async () => {
+    const eligible = activeDebts.filter((d) => d.personPhone);
+    if (eligible.length === 0) {
+      const title = t('debts.reminders_title');
+      const body = t('debts.no_eligible_reminders');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`${title}\n\n${body}`);
+      } else {
+        Alert.alert(title, body);
+      }
+      return;
+    }
+    const ok = await confirmDialog({
+      title: t('debts.reminders_title'),
+      message: t('debts.confirm_send_all', { count: eligible.length }),
+      confirmText: t('debts.send_all'),
+    });
+    if (!ok) return;
+    for (const debt of eligible) {
+      // small stagger so the browser doesn't squash multiple window.opens
+      await new Promise((r) => setTimeout(r, 350));
+      handleSendWhatsApp(debt);
+    }
+  };
+
   const activeDebts = directionDebts.filter((d) => !d.isPaid);
   const paidDebts = directionDebts.filter((d) => d.isPaid);
 
   const isOwedToMe = activeDirection === 'owed_to_me';
-  const summaryLabel = isOwedToMe ? 'סה"כ חייבים לי' : 'סה"כ אני חייב';
-  const emptyLabel = isOwedToMe ? 'אין חובות פעילים' : 'אין תזכורות תשלום';
-  const personLabel = 'שם *';
+  const summaryLabel = isOwedToMe ? t('debts.total_owed_to_me') : t('debts.total_i_owe');
+  const emptyLabel = t('debts.empty_active');
+  const personLabel = t('debts.name_label');
   const summaryColor = isOwedToMe ? colors.error : colors.warning;
   const selectedProjectName = selectedProjectId
     ? projects.find((p) => p.id === selectedProjectId)?.name || ''
     : '';
 
+  const projectPickerModal = (
+    <Modal visible={showProjectPicker} transparent animationType="fade">
+      <Pressable
+        style={styles.pickerOverlay}
+        onPress={() => setShowProjectPicker(false)}
+      >
+        <View style={styles.pickerCard}>
+          <Text style={styles.pickerTitle}>{'בחר פרויקט'}</Text>
+          <TouchableOpacity
+            style={[
+              styles.pickerItem,
+              !selectedProjectId && styles.pickerItemActive,
+            ]}
+            onPress={() => {
+              setSelectedProjectId('');
+              setShowProjectPicker(false);
+            }}
+          >
+            <Text style={styles.pickerItemText}>{'ללא שיוך'}</Text>
+          </TouchableOpacity>
+          <ScrollView style={{ maxHeight: 300 }}>
+            {projects.map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[
+                  styles.pickerItem,
+                  selectedProjectId === p.id && styles.pickerItemActive,
+                ]}
+                onPress={() => {
+                  setSelectedProjectId(p.id);
+                  setShowProjectPicker(false);
+                }}
+              >
+                <Text style={styles.pickerItemText}>{p.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+
   return (
     <View style={styles.container}>
-      {/* Project Picker Modal */}
-      <Modal visible={showProjectPicker} transparent animationType="fade">
-        <Pressable
-          style={styles.pickerOverlay}
-          onPress={() => setShowProjectPicker(false)}
-        >
-          <View style={styles.pickerCard}>
-            <Text style={styles.pickerTitle}>{'בחר פרויקט'}</Text>
+      {/* Contact Picker Modal */}
+      <Modal visible={showContactPicker} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowContactPicker(false)}
+          />
+          <View style={styles.contactPickerCard}>
+            <Text style={styles.modalTitle}>{t('debts.pick_contact_title')}</Text>
+            {contactPickerEntries.length === 0 ? (
+              <Text style={styles.contactPickerEmpty}>
+                {t('debts.pick_contact_empty')}
+              </Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 360 }}>
+                {contactPickerEntries.map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={styles.contactPickerRow}
+                    onPress={() => {
+                      setPersonName(c.name);
+                      if (c.phone) setPersonPhone(c.phone);
+                      setShowContactPicker(false);
+                    }}
+                  >
+                    <View style={styles.contactPickerAvatar}>
+                      <MaterialIcons
+                        name={c.source === 'supplier' ? 'store' : 'person'}
+                        size={18}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.contactPickerName}>{c.name}</Text>
+                      {c.phone ? (
+                        <Text style={styles.contactPickerPhone}>{c.phone}</Text>
+                      ) : null}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
             <TouchableOpacity
-              style={[
-                styles.pickerItem,
-                !selectedProjectId && styles.pickerItemActive,
-              ]}
-              onPress={() => {
-                setSelectedProjectId('');
-                setShowProjectPicker(false);
-              }}
+              style={styles.contactPickerCancel}
+              onPress={() => setShowContactPicker(false)}
             >
-              <Text style={styles.pickerItemText}>{'ללא שיוך'}</Text>
+              <Text style={styles.contactPickerCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {projects.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[
-                    styles.pickerItem,
-                    selectedProjectId === p.id && styles.pickerItemActive,
-                  ]}
-                  onPress={() => {
-                    setSelectedProjectId(p.id);
-                    setShowProjectPicker(false);
-                  }}
-                >
-                  <Text style={styles.pickerItemText}>{p.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* Add/Edit Modal */}
       <Modal visible={showAddModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <Pressable
-            style={StyleSheet.absoluteFill}
+            style={styles.modalBackdrop}
             onPress={() => {
               setShowAddModal(false);
               resetForm();
@@ -405,6 +550,20 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 </TouchableOpacity>
               </View>
 
+              {/* Pick from contacts */}
+              {contactPickerEntries.length > 0 && (
+                <TouchableOpacity
+                  style={styles.contactPickerInlineBtn}
+                  onPress={() => setShowContactPicker(true)}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="contacts" size={18} color={colors.primary} />
+                  <Text style={styles.contactPickerText}>
+                    {t('debts.pick_from_contacts')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               {/* Person Name */}
               <Text style={styles.fieldLabel}>{personLabel}</Text>
               <TextInput
@@ -427,7 +586,8 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
                 />
-                {Platform.OS !== 'web' && (
+                {(Platform.OS !== 'web' ||
+                  (typeof navigator !== 'undefined' && (navigator as any)?.contacts?.select)) && (
                   <TouchableOpacity
                     style={styles.contactPickerBtn}
                     onPress={handlePickContact}
@@ -574,7 +734,10 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                     color: colors.textPrimary,
                     fontFamily: fonts.semibold,
                     width: '100%',
+                    boxSizing: 'border-box',
                     outline: 'none',
+                    direction: 'ltr',
+                    textAlign: 'left',
                   } as any}
                 />
               ) : (
@@ -635,6 +798,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
               </View>
             </ScrollView>
           </View>
+          {projectPickerModal}
         </View>
       </Modal>
 
@@ -644,7 +808,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
           <TouchableOpacity style={styles.addFab} onPress={openAddModal}>
             <MaterialIcons name="add" size={22} color={colors.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{'חובות'}</Text>
+          <Text style={styles.headerTitle}>{t('debts.page_title')}</Text>
           <View style={{ width: 44 }} />
         </View>
 
@@ -668,7 +832,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 activeDirection === 'owed_to_me' && styles.tabTextActive,
               ]}
             >
-              {'חייבים לי'}
+              {t('debts.owed_to_me')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -689,7 +853,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                 activeDirection === 'i_owe' && styles.tabTextActive,
               ]}
             >
-              {'אני חייב'}
+              {t('debts.i_owe')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -702,7 +866,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
             {totalDebt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </Text>
           <Text style={styles.summaryCount}>
-            {activeDebts.length} {isOwedToMe ? 'חובות פעילים' : 'תזכורות תשלום'}
+            {t(activeDebts.length === 1 ? 'debts.count_one' : 'debts.count_other', { count: activeDebts.length })}
           </Text>
         </GlassCard>
       </GradientHeader>
@@ -712,10 +876,24 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Bulk-reminder button — only for the "owed to me" tab */}
+        {isOwedToMe && activeDebts.length > 0 && (
+          <TouchableOpacity
+            style={styles.bulkReminderBtn}
+            onPress={handleSendAllReminders}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons name="notifications-active" size={20} color={colors.white} />
+            <Text style={styles.bulkReminderText}>
+              {t('debts.send_reminders_to_all')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Active Debts */}
         {activeDebts.length > 0 ? (
           <View style={styles.debtSection}>
-            <SectionHeader title="חובות פעילים" />
+            <SectionHeader title={t('debts.active')} />
             {activeDebts.map((debt) => (
               <DarkCard key={debt.id} style={styles.debtCard}>
                 <View style={styles.debtHeader}>
@@ -782,14 +960,22 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
 
                 {/* Actions */}
                 <View style={styles.debtActions}>
-                  {debt.personPhone && debt.direction !== 'i_owe' && (
+                  {debt.direction !== 'i_owe' && (
                     <TouchableOpacity
                       style={[styles.debtActionBtn, { flex: 1 }]}
-                      onPress={() => handleSendWhatsApp(debt)}
+                      onPress={() => {
+                        if (debt.personPhone) {
+                          handleSendWhatsApp(debt);
+                        } else {
+                          // No phone yet — open the edit modal so the user
+                          // can add one and the reminder becomes actionable.
+                          openEditModal(debt);
+                        }
+                      }}
                     >
                       <MaterialIcons name="chat" size={16} color={colors.success} />
                       <Text style={[styles.debtActionText, { color: colors.success }]}>
-                        {'שלח תזכורת'}
+                        {t('debts.send_reminder_btn')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -799,7 +985,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
                   >
                     <MaterialIcons name="check-circle" size={16} color={colors.primary} />
                     <Text style={[styles.debtActionText, { color: colors.primary }]}>
-                      {'שולם'}
+                      {t('debts.mark_paid')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -833,7 +1019,7 @@ ${debt.notes ? `הערות: ${debt.notes}` : ''}
         {/* Paid Debts */}
         {paidDebts.length > 0 && (
           <View style={styles.debtSection}>
-            <SectionHeader title="חובות ששולמו" />
+            <SectionHeader title={t('debts.paid')} />
             {paidDebts.map((debt) => (
               <DarkCard key={debt.id} style={styles.paidDebtCard}>
                 <View style={styles.paidDebtRow}>
@@ -1032,6 +1218,93 @@ const styles = StyleSheet.create({
     gap: 20,
   },
 
+  // Contact picker
+  contactPickerInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.bgTertiary,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
+  },
+  contactPickerText: {
+    color: colors.primary,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
+  contactPickerCard: {
+    width: '88%',
+    maxWidth: 420,
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii.xl,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.subtleBorder,
+  },
+  contactPickerEmpty: {
+    color: colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
+  contactPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: radii.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.subtleBorder,
+  },
+  contactPickerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.bgTertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactPickerName: {
+    color: colors.textPrimary,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
+  contactPickerPhone: {
+    color: colors.textTertiary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  contactPickerCancel: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  contactPickerCancelText: {
+    color: colors.textTertiary,
+    fontFamily: fonts.semibold,
+  },
+
+  // Bulk reminder
+  bulkReminderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: radii.lg,
+  },
+  bulkReminderText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 15,
+  },
+
   // Section
   debtSection: {
     gap: 12,
@@ -1134,6 +1407,7 @@ const styles = StyleSheet.create({
   },
   debtActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginTop: 12,
     paddingTop: 12,
@@ -1230,6 +1504,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    flex: 1,
   },
   modalCard: {
     backgroundColor: colors.bgSecondary,

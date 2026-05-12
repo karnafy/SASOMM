@@ -13,7 +13,8 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { AppScreen, Project, Currency, Supplier, MainCategory, MAIN_CATEGORIES } from '@monn/shared';
+import { useTranslation } from 'react-i18next';
+import { AppScreen, Project, Currency, Supplier, MainCategory, MAIN_CATEGORIES, confirmDialog } from '@monn/shared';
 import { Paths, File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
@@ -66,6 +67,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   globalCurrency,
   convertAmount,
 }) => {
+  const { t } = useTranslation();
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -88,9 +90,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   const totalIncome = (project.incomes || []).reduce((sum, i) => sum + i.amount, 0);
   const totalExpenses = project.spent;
-  const remaining = project.budget - totalExpenses;
-  const percentUsed =
-    project.budget > 0 ? Math.round((totalExpenses / project.budget) * 100) : 0;
+  const remaining = totalIncome - totalExpenses;
+  // Percent of budget covered by the current balance.
+  // Positive = how close to budget (green from left).
+  // Negative = how far below zero (red from right).
+  // > 100 = surplus past budget (capped to 100 in the bar; still shown numerically).
+  const percentUsed = project.budget > 0
+    ? Math.round((remaining / project.budget) * 100)
+    : 0;
 
   useEffect(() => {
     setTempBudget(convertAmount(project.budget).toFixed(0));
@@ -167,8 +174,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
     project.expenses.forEach((e) => {
       const supplierName = e.supplierId
-        ? suppliers.find((s) => s.id === e.supplierId)?.name || 'לא ידוע'
-        : 'ללא ספק';
+        ? suppliers.find((s) => s.id === e.supplierId)?.name || t('project_detail.unknown')
+        : t('project_detail.no_supplier');
       if (!expensesBySupplier[supplierName])
         expensesBySupplier[supplierName] = { name: supplierName, total: 0, count: 0 };
       expensesBySupplier[supplierName].total += e.amount;
@@ -235,7 +242,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const handleAddNoteImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('שגיאה', 'נדרשת הרשאה לגישה לגלריה');
+      Alert.alert(t('common.error'), t('project_detail.err_gallery_permission'));
       return;
     }
 
@@ -264,10 +271,10 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       csv += `תאריך הפקה: ${new Date().toLocaleDateString('he-IL')}\n\n`;
 
       csv += `=== סיכום כללי ===\n`;
-      csv += `תקציב,${project.budget}\n`;
+      csv += `תקציב משוער / הצעת מחיר,${project.budget}\n`;
+      csv += `סה"כ הכנסות / הון עצמי,${totalIncome}\n`;
       csv += `סה"כ הוצאות,${project.spent}\n`;
-      csv += `סה"כ הכנסות,${totalIncome}\n`;
-      csv += `יתרה,${remaining}\n`;
+      csv += `יתרה / רווח,${remaining}\n`;
       csv += `אחוז ניצול,${percentUsed}%\n\n`;
 
       csv += `=== הוצאות לפי ספק ===\n`;
@@ -338,14 +345,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             UTI: 'public.comma-separated-values-text',
           });
         } else {
-          Alert.alert('שגיאה', 'שיתוף קבצים אינו זמין במכשיר זה');
+          Alert.alert(t('common.error'), t('project_detail.err_share_unavailable'));
         }
       }
 
       setShowReportModal(false);
     } catch (error) {
       console.error('Error exporting CSV:', error);
-      Alert.alert('שגיאה', 'שגיאה בייצוא הדוח');
+      Alert.alert(t('common.error'), t('project_detail.err_export_failed'));
     }
   };
 
@@ -408,29 +415,29 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
             <div class="summary">
               <div class="summary-card budget">
-                <label>תקציב</label>
+                <label>תקציב משוער / הצעת מחיר</label>
                 <div class="value">${currencySymbols[globalCurrency]}${convertAmount(project.budget).toLocaleString()}</div>
+              </div>
+              <div class="summary-card income">
+                <label>הכנסות / הון עצמי</label>
+                <div class="value">${currencySymbols[globalCurrency]}${convertAmount(totalIncome).toLocaleString()}</div>
               </div>
               <div class="summary-card expense">
                 <label>הוצאות</label>
                 <div class="value">${currencySymbols[globalCurrency]}${convertAmount(project.spent).toLocaleString()}</div>
               </div>
-              <div class="summary-card income">
-                <label>הכנסות</label>
-                <div class="value">${currencySymbols[globalCurrency]}${convertAmount(totalIncome).toLocaleString()}</div>
-              </div>
               <div class="summary-card balance">
-                <label>יתרה</label>
+                <label>יתרה / רווח</label>
                 <div class="value">${remaining < 0 ? '-' : ''}${currencySymbols[globalCurrency]}${convertAmount(Math.abs(remaining)).toLocaleString()}</div>
               </div>
             </div>
 
             <div class="section">
-              <h2>התקדמות תקציב</h2>
+              <h2>יחס יתרה להכנסות</h2>
               <div class="progress-container">
-                <div class="progress-bar" style="width: ${Math.min(100, percentUsed)}%">${percentUsed}%</div>
+                <div class="progress-bar" style="width: ${Math.max(0, Math.min(100, percentUsed))}%">${percentUsed}%</div>
               </div>
-              <p style="font-size: 13px; color: #666;">נוצלו ${percentUsed}% מהתקציב</p>
+              <p style="font-size: 13px; color: #666;">${percentUsed}% מההכנסות נותרו כיתרה</p>
             </div>
 
             ${
@@ -578,7 +585,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       if (Platform.OS === 'web') {
         const win = window.open('', '_blank');
         if (!win) {
-          Alert.alert('שגיאה', 'חוסם חלונות קופצים מונע את פתיחת הדוח');
+          Alert.alert(t('common.error'), t('project_detail.err_popup_blocked'));
           return;
         }
         win.document.open();
@@ -602,30 +609,25 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             UTI: 'com.adobe.pdf',
           });
         } else {
-          Alert.alert('שגיאה', 'שיתוף קבצים אינו זמין במכשיר זה');
+          Alert.alert(t('common.error'), t('project_detail.err_share_unavailable'));
         }
       }
 
       setShowReportModal(false);
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      Alert.alert('שגיאה', 'שגיאה בייצוא הדוח');
+      Alert.alert(t('common.error'), t('project_detail.err_export_failed'));
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'מחיקה',
-      `האם אתה בטוח שברצונך למחוק את הפרויקט "${project.name}"?`,
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק',
-          style: 'destructive',
-          onPress: () => onDeleteProject?.(project.id),
-        },
-      ]
-    );
+  const handleDelete = async () => {
+    const ok = await confirmDialog({
+      title: t('project_detail.delete_confirm_title'),
+      message: `${t('project_detail.menu_delete')} "${project.name}"?`,
+      confirmText: t('project_detail.delete_confirm_text'),
+      destructive: true,
+    });
+    if (ok) onDeleteProject?.(project.id);
   };
 
   const handleChangeCategory = (newCategory: MainCategory) => {
@@ -649,14 +651,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   };
 
   const getProgressStatus = (): 'ok' | 'warning' | 'over' => {
-    return getProjectStatus();
+    if (remaining < 0) return 'over';
+    if (totalIncome > 0 && totalExpenses / totalIncome >= 0.9) return 'warning';
+    return 'ok';
   };
 
   // --- Menu items ---
 
   const menuItems = [
     {
-      label: 'עריכה',
+      label: t('project_detail.menu_edit'),
       icon: 'edit' as IconName,
       onPress: () => {
         setShowMenu(false);
@@ -664,14 +668,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       },
     },
     {
-      label: 'העבר קטגוריה',
+      label: t('project_detail.menu_move_category'),
       icon: 'drive-file-move' as IconName,
       onPress: () => {
         setShowCategoryModal(true);
       },
     },
     {
-      label: 'הפק דוח',
+      label: t('project_detail.menu_generate_report'),
       icon: 'summarize' as IconName,
       color: colors.primary,
       onPress: () => {
@@ -680,7 +684,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       },
     },
     {
-      label: 'מחיקה',
+      label: t('project_detail.menu_delete'),
       icon: 'delete' as IconName,
       color: colors.error,
       onPress: () => {
@@ -800,7 +804,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
           onPress={() => setShowCategoryModal(false)}
         >
           <Pressable style={styles.modalCard} onPress={() => {}}>
-            <Text style={styles.modalTitle}>העבר לקטגוריה</Text>
+            <Text style={styles.modalTitle}>{t('project_detail.modal_move_title')}</Text>
             <View style={styles.categoryList}>
               {(Object.entries(MAIN_CATEGORIES) as [MainCategory, string][]).map(
                 ([key, label]) => {
@@ -848,7 +852,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               onPress={() => setShowCategoryModal(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCancelText}>ביטול</Text>
+              <Text style={styles.modalCancelText}>{t('project_detail.modal_cancel')}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -866,8 +870,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <View style={styles.reportModalIconContainer}>
                 <MaterialIcons name="summarize" size={32} color={colors.primary} />
               </View>
-              <Text style={styles.reportModalTitle}>הפקת דוח פרויקט</Text>
-              <Text style={styles.reportModalSubtitle}>בחר את פורמט הדוח הרצוי</Text>
+              <Text style={styles.reportModalTitle}>{t('project_detail.report_title')}</Text>
+              <Text style={styles.reportModalSubtitle}>{t('project_detail.report_subtitle')}</Text>
             </View>
 
             {/* Export Options */}
@@ -882,8 +886,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   <MaterialIcons name="table-view" size={24} color={colors.success} />
                 </View>
                 <View style={styles.reportOptionText}>
-                  <Text style={styles.reportOptionTitle}>ייצוא ל-CSV</Text>
-                  <Text style={styles.reportOptionDesc}>טבלת נתונים לאקסל</Text>
+                  <Text style={styles.reportOptionTitle}>{t('project_detail.report_csv_title')}</Text>
+                  <Text style={styles.reportOptionDesc}>{t('project_detail.report_csv_desc')}</Text>
                 </View>
                 <MaterialIcons name="chevron-left" size={24} color={colors.textTertiary} />
               </TouchableOpacity>
@@ -898,8 +902,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   <MaterialIcons name="picture-as-pdf" size={24} color={colors.error} />
                 </View>
                 <View style={styles.reportOptionText}>
-                  <Text style={styles.reportOptionTitle}>ייצוא ל-PDF</Text>
-                  <Text style={styles.reportOptionDesc}>דוח מעוצב עם גרפים</Text>
+                  <Text style={styles.reportOptionTitle}>{t('project_detail.report_pdf_title')}</Text>
+                  <Text style={styles.reportOptionDesc}>{t('project_detail.report_pdf_desc')}</Text>
                 </View>
                 <MaterialIcons name="chevron-left" size={24} color={colors.textTertiary} />
               </TouchableOpacity>
@@ -907,12 +911,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
             {/* Report Info */}
             <View style={styles.reportInfoBox}>
-              <Text style={styles.reportInfoTitle}>הדוח כולל:</Text>
+              <Text style={styles.reportInfoTitle}>{t('project_detail.report_includes')}</Text>
               {[
-                'סיכום תקציב, הוצאות והכנסות',
-                'פילוח לפי ספקים וקטגוריות',
-                'גרפים ודיאגרמות (PDF)',
-                'פירוט כל העסקאות וההערות',
+                t('project_detail.report_inc_summary'),
+                t('project_detail.report_inc_breakdown'),
+                t('project_detail.report_inc_charts'),
+                t('project_detail.report_inc_details'),
               ].map((item, idx) => (
                 <View key={idx} style={styles.reportInfoItem}>
                   <MaterialIcons name="check-circle" size={16} color={colors.success} />
@@ -927,7 +931,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               onPress={() => setShowReportModal(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCancelText}>ביטול</Text>
+              <Text style={styles.modalCancelText}>{t('project_detail.modal_cancel')}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -950,7 +954,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <MaterialIcons name="arrow-forward" size={22} color={colors.white} />
             </TouchableOpacity>
 
-            <Text style={styles.headerLabel}>פרויקט</Text>
+            <Text style={styles.headerLabel}>{t('project_detail.header_label')}</Text>
 
             <TouchableOpacity
               style={styles.headerButton}
@@ -980,7 +984,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             {/* Budget row */}
             <View style={styles.budgetSection}>
               <View style={styles.budgetLabelRow}>
-                <Text style={styles.budgetLabel}>תקציב</Text>
+                <Text style={styles.budgetLabel}>{t('project_detail.budget_label')}</Text>
                 <TouchableOpacity
                   onPress={() => setIsEditingBudget(true)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -1011,15 +1015,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
             {/* Stats */}
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>הוצאות</Text>
-              <Text style={[styles.statValue, { color: colors.error }]}>
-                -{currencySymbols[globalCurrency]}
-                {formatAmount(totalExpenses)}
-              </Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>הכנסות</Text>
+              <Text style={styles.statLabel}>{t('project_detail.stat_income')}</Text>
               <Text style={[styles.statValue, { color: colors.success }]}>
                 +{currencySymbols[globalCurrency]}
                 {formatAmount(totalIncome)}
@@ -1027,7 +1023,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>יתרה</Text>
+              <Text style={styles.statLabel}>{t('project_detail.stat_expenses')}</Text>
+              <Text style={[styles.statValue, { color: colors.error }]}>
+                -{currencySymbols[globalCurrency]}
+                {formatAmount(totalExpenses)}
+              </Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>{t('project_detail.stat_balance')}</Text>
               <Text
                 style={[
                   styles.statValue,
@@ -1040,14 +1044,21 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </Text>
             </View>
 
-            {/* Progress Bar */}
+            {/* Progress Bar — signed: green from left when on track, red from right when in deficit */}
             <View style={styles.progressWrap}>
               <ProgressBar
                 percentage={percentUsed}
-                status={getProgressStatus()}
+                signed
                 style={styles.progressBar}
               />
-              <Text style={styles.progressText}>{percentUsed}% נוצל</Text>
+              <Text
+                style={[
+                  styles.progressText,
+                  { color: percentUsed < 0 ? colors.error : colors.success },
+                ]}
+              >
+                {percentUsed > 0 ? '+' : ''}{percentUsed}%
+              </Text>
             </View>
           </GlassCard>
         </GradientHeader>
@@ -1064,7 +1075,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <View style={[styles.actionIcon, { backgroundColor: colors.error + '1A' }]}>
                 <MaterialIcons name="remove-circle" size={22} color={colors.error} />
               </View>
-              <Text style={styles.actionButtonText}>הוסף הוצאה</Text>
+              <Text style={styles.actionButtonText}>{t('project_detail.add_expense')}</Text>
             </DarkCard>
             <DarkCard
               style={styles.actionButton}
@@ -1073,14 +1084,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <View style={[styles.actionIcon, { backgroundColor: colors.success + '1A' }]}>
                 <MaterialIcons name="add-circle" size={22} color={colors.success} />
               </View>
-              <Text style={styles.actionButtonText}>הוסף הכנסה</Text>
+              <Text style={styles.actionButtonText}>{t('project_detail.add_income')}</Text>
             </DarkCard>
           </View>
 
           {/* Linked Suppliers */}
           {linkedSuppliers.length > 0 && (
             <View style={styles.section}>
-              <SectionHeader title="ספקים משויכים" />
+              <SectionHeader title={t('project_detail.section_suppliers')} />
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -1134,7 +1145,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
           {/* Activities Section */}
           <View style={styles.section}>
             <View style={styles.activityHeader}>
-              <SectionHeader title="היסטוריית פעילות" />
+              <SectionHeader title={t('project_detail.section_activity')} />
               <View style={styles.activityHeaderActions}>
                 {/* Add Photo Button */}
                 <TouchableOpacity
@@ -1146,7 +1157,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   activeOpacity={0.7}
                 >
                   <MaterialIcons name="add-a-photo" size={18} color={colors.primary} />
-                  <Text style={styles.noteButtonText}>תמונה</Text>
+                  <Text style={styles.noteButtonText}>{t('project_detail.image_button')}</Text>
                 </TouchableOpacity>
                 {/* Add Note Button */}
                 <TouchableOpacity
@@ -1155,7 +1166,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   activeOpacity={0.7}
                 >
                   <MaterialIcons name="edit-note" size={18} color={colors.primary} />
-                  <Text style={styles.noteButtonText}>הערה</Text>
+                  <Text style={styles.noteButtonText}>{t('project_detail.note_button')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1166,7 +1177,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 <TextInput
                   value={noteText}
                   onChangeText={setNoteText}
-                  placeholder="כתוב הערה..."
+                  placeholder={t('project_detail.note_placeholder')}
                   placeholderTextColor={colors.textTertiary}
                   style={styles.noteInput}
                   multiline
@@ -1203,7 +1214,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.noteCancelText}>ביטול</Text>
+                    <Text style={styles.noteCancelText}>{t('project_detail.note_cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={handleAddNote}
@@ -1214,7 +1225,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     ]}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.noteSaveText}>שמור</Text>
+                    <Text style={styles.noteSaveText}>{t('project_detail.note_save')}</Text>
                   </TouchableOpacity>
                 </View>
               </DarkCard>
@@ -1279,12 +1290,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         isIncome={isIncome}
                         supplier={supplierName || undefined}
                         dateTime={dateTimeStr}
-                        typeLabel={isIncome ? 'הכנסה' : 'הוצאה'}
+                        typeLabel={isIncome ? t('project_detail.type_income') : t('project_detail.type_expense')}
                         typeColor={isIncome ? colors.success : colors.error}
                         attachmentCount={itemImgs.length}
                         firstAttachmentUri={itemImgs[0]}
                         onAttachmentPress={() => openImagePreview(itemImgs, 0)}
                         onPress={() => onNavigate(AppScreen.ACTIVITY_DETAIL, item.id)}
+                        isRecurring={Boolean((item as any).recurringTemplateId)}
                       />
                     );
                   }
@@ -1318,8 +1330,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       {/* Text */}
                       <View style={styles.activityTextContainer}>
                         <Text style={styles.activityTitle} numberOfLines={1}>
-                          {isImageOnly ? 'תמונה' : item.title}
+                          {isImageOnly ? t('project_detail.image_alt') : item.title}
                         </Text>
+                        {(item as any).oldValue && (item as any).newValue ? (
+                          <Text style={styles.activitySupplier} numberOfLines={1}>
+                            {`${(item as any).oldValue} \u2190 ${(item as any).newValue}`}
+                          </Text>
+                        ) : null}
                         {supplierName ? (
                           <Text style={styles.activitySupplier} numberOfLines={1}>
                             {supplierName}
@@ -1375,7 +1392,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               ) : (
                 <View style={styles.emptyActivities}>
                   <MaterialIcons name="history" size={32} color={colors.textTertiary} />
-                  <Text style={styles.emptyActivitiesText}>אין פעילות עדיין</Text>
+                  <Text style={styles.emptyActivitiesText}>{t('project_detail.empty_activities')}</Text>
                 </View>
               )}
             </DarkCard>
@@ -1389,8 +1406,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               >
                 <Text style={styles.showMoreText}>
                   {showAllActivities
-                    ? 'הצג פחות'
-                    : `הצג הכל (${allActivities.length})`}
+                    ? t('project_detail.show_less')
+                    : `${t('project_detail.show_more')} (${allActivities.length})`}
                 </Text>
                 <MaterialIcons
                   name={showAllActivities ? 'expand-less' : 'expand-more'}

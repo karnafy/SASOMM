@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, fonts, spacing, radii } from '../../theme';
 import { DarkCard } from '../ui/DarkCard';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -25,10 +26,10 @@ function getStatus(usage: number): 'ok' | 'warning' | 'over' {
   return 'ok';
 }
 
-function getStatusLabel(usage: number): string {
-  if (usage > 100) return 'חריגה מתקציב';
-  if (usage >= 80) return 'קרוב לתקציב';
-  return 'תקציב בריא';
+function getStatusKey(usage: number): 'over_budget' | 'near_limit' | 'healthy' {
+  if (usage > 100) return 'over_budget';
+  if (usage >= 80) return 'near_limit';
+  return 'healthy';
 }
 
 function getStatusColor(status: 'ok' | 'warning' | 'over'): string {
@@ -49,13 +50,15 @@ export function BudgetHealthCard({
   convertAmount,
   onNavigate,
 }: BudgetHealthCardProps) {
+  const { t } = useTranslation();
   const status = useMemo(() => getStatus(overallUsage), [overallUsage]);
-  const statusLabel = useMemo(() => getStatusLabel(overallUsage), [overallUsage]);
+  const statusKey = useMemo(() => getStatusKey(overallUsage), [overallUsage]);
+  const statusLabel = t(`budget_health.${statusKey}`);
   const statusColor = useMemo(() => getStatusColor(status), [status]);
 
   return (
     <DarkCard style={styles.card}>
-      <Text style={styles.title}>בריאות תקציב</Text>
+      <Text style={styles.title}>{t('budget_health.title')}</Text>
 
       {/* Overall usage gauge */}
       <View style={styles.gaugeContainer}>
@@ -75,7 +78,7 @@ export function BudgetHealthCard({
       {/* Over-budget projects list */}
       {overBudgetProjects.length > 0 && (
         <View style={styles.projectsSection}>
-          <Text style={styles.sectionTitle}>פרויקטים שחרגו מתקציב</Text>
+          <Text style={styles.sectionTitle}>{t('budget_health.projects_over')}</Text>
           {overBudgetProjects.map((project) => {
             const convertedOverspend = convertAmount(project.overspend);
             return (

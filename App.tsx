@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from '@expo-google-fonts/open-sans';
@@ -11,6 +11,7 @@ import {
 } from '@expo-google-fonts/open-sans';
 import {
   initSupabase,
+  initI18n,
   AuthProvider,
   useAuth,
   useProjects,
@@ -22,6 +23,7 @@ import {
   Currency,
   MainCategory,
   Project,
+  generateMissingRecurringOccurrences,
 } from '@monn/shared';
 
 import { colors } from './theme';
@@ -45,6 +47,8 @@ import PersonalArea from './pages/PersonalArea';
 import ReportsCenter from './pages/ReportsCenter';
 import Settings from './pages/Settings';
 import Debts from './pages/Debts';
+import RecurringTemplates from './pages/RecurringTemplates';
+import SendReminder from './pages/SendReminder';
 
 // Initialize Supabase with Expo env vars
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -84,6 +88,11 @@ function AppContent() {
     addNoteToProject,
     createSupplier,
     updateSupplier,
+    saveRecurringTemplate,
+    applyRecurringEdit,
+    pauseRecurringTemplate,
+    deleteRecurringTemplate,
+    deleteTransaction,
   } = useMutations(userId);
 
   // Navigation state
@@ -190,14 +199,31 @@ function AppContent() {
       id?: string,
       originalType?: 'expense' | 'income'
     ) => {
+      const showError = (msg: string) => {
+        if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+          window.alert(msg);
+        } else {
+          Alert.alert('שגיאה', msg);
+        }
+      };
+      console.log('[handleTransactionSave] START v2', { type, projectId, amount, currency, userId, editId: id });
+      if (typeof window !== 'undefined' && (window as any).__SASOMM_TRACE__) {
+        window.alert(`SAVE START:\nuserId=${userId || 'MISSING'}\nproject=${projectId}\namount=${amount}\ntype=${type}`);
+      }
+      if (!userId) {
+        showError('אינך מחובר (userId חסר). התחבר מחדש דרך התפריט.');
+        return;
+      }
       setIsSaving(true);
       try {
         await saveTransaction(type, projectId, {
           amount, currency, description, category, supplierId,
           receiptImages, paymentMethod, includesVat,
         }, id, originalType);
+        console.log('[handleTransactionSave] saveTransaction RESOLVED');
 
         await Promise.all([refetchProjects(), refetchSuppliers()]);
+        console.log('[handleTransactionSave] refetch DONE — navigating');
 
         if (id) {
           setSelectedExpenseId(id);
@@ -210,14 +236,15 @@ function AppContent() {
         } else {
           setCurrentScreen(AppScreen.DASHBOARD);
         }
-      } catch (error) {
-        console.error('Error saving transaction:', error);
-        Alert.alert('שגיאה', 'שגיאה בשמירה. נסה שוב.');
+      } catch (error: any) {
+        const msg = error?.message || error?.error_description || JSON.stringify(error);
+        console.error('[handleTransactionSave] FAILED', error);
+        showError(`שמירה נכשלה: ${msg}`);
       } finally {
         setIsSaving(false);
       }
     },
-    [saveTransaction, refetchProjects, refetchSuppliers, selectedSupplierId]
+    [saveTransaction, refetchProjects, refetchSuppliers, selectedSupplierId, userId]
   );
 
   // Handler: Create Project
@@ -366,6 +393,29 @@ function AppContent() {
     await signOut();
   }, [signOut]);
 
+  // Catch-up: generate any missing recurring occurrences for the user.
+  // Runs once per session (when userId becomes available). Failures are logged
+  // but never block UI — the app keeps working even if generation fails.
+  const recurringRanRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    if (recurringRanRef.current === userId) return;
+    recurringRanRef.current = userId;
+    (async () => {
+      try {
+        const result = await generateMissingRecurringOccurrences(userId);
+        if (result.rowsInserted > 0) {
+          await refetchProjects();
+        }
+        if (result.errors.length > 0) {
+          console.warn('Recurring generator errors:', result.errors);
+        }
+      } catch (err) {
+        console.warn('Recurring generator failed (non-blocking):', err);
+      }
+    })();
+  }, [userId, refetchProjects]);
+
   // Computed totals
   const totals = useMemo(() => {
     const totalBudget = projects.reduce((sum, p) => sum + p.budget, 0);
@@ -375,7 +425,7 @@ function AppContent() {
       budget: convertAmount(totalBudget),
       income: convertAmount(totalIncome),
       expenses: convertAmount(totalExpenses),
-      net: convertAmount(totalBudget - totalExpenses),
+      net: convertAmount(totalIncome - totalExpenses),
     };
   }, [projects, convertAmount]);
 
@@ -408,6 +458,17 @@ function AppContent() {
             projects={projects}
             suppliers={suppliers}
             onSave={handleTransactionSave}
+            onSaveRecurring={async (template) => {
+              await saveRecurringTemplate(template);
+              const result = await generateMissingRecurringOccurrences(userId!);
+              if (result.rowsInserted > 0) await refetchProjects();
+              if (template.projectId) {
+                setSelectedProjectId(template.projectId);
+                setCurrentScreen(AppScreen.PROJECT_DETAIL);
+              } else {
+                setCurrentScreen(AppScreen.DASHBOARD);
+              }
+            }}
             autoCapture={isScanIntent}
             initialType={initialTxType}
             preselectedSupplierId={selectedSupplierId}
@@ -417,13 +478,40 @@ function AppContent() {
           />
         );
       case AppScreen.EDIT_ACTIVITY:
-        return <AddExpense {...commonProps} projects={projects} suppliers={suppliers} onSave={handleTransactionSave} editActivity={activeActivity as any} />;
+        return (
+          <AddExpense
+            {...commonProps}
+            projects={projects}
+            suppliers={suppliers}
+            onSave={handleTransactionSave}
+            editActivity={activeActivity as any}
+            onSaveRecurring={async (template) => {
+              await saveRecurringTemplate(template);
+              const result = await generateMissingRecurringOccurrences(userId!);
+              if (result.rowsInserted > 0) await refetchProjects();
+            }}
+            onApplyRecurringEdit={async (templateId, type, scope, cursorDate, updates) => {
+              const u: any = { ...updates };
+              if (u.amount !== undefined && u.currency) {
+                u.amount = u.amount / CONVERSION_RATES[u.currency as Currency];
+                u.currency = 'ILS';
+              }
+              await applyRecurringEdit(templateId, type, scope, cursorDate, u);
+              await refetchProjects();
+            }}
+            onPauseTemplate={async (templateId) => {
+              await pauseRecurringTemplate(templateId, false);
+              await refetchProjects();
+            }}
+          />
+        );
       case AppScreen.ADD_PROJECT:
-        return <AddProject {...commonProps} onSave={handleCreateProject} preselectedMainCategory={selectedCategory || undefined} />;
+        return <AddProject {...commonProps} projects={projects} onSave={handleCreateProject} preselectedMainCategory={selectedCategory || undefined} />;
       case AppScreen.EDIT_PROJECT:
         return (
           <AddProject
             {...commonProps}
+            projects={projects}
             project={activeProject}
             onSave={async (name, budget, cat, mainCat) => {
               const budgetInILS = budget / CONVERSION_RATES[globalCurrency];
@@ -453,7 +541,20 @@ function AppContent() {
         );
       case AppScreen.ACTIVITY_DETAIL:
         const projectOfActivity = projects.find((p) => p.id === activeActivity?.projectId);
-        return <ActivityDetail {...commonProps} expense={activeActivity as any} suppliers={suppliers} project={projectOfActivity} onDeleteProject={handleDeleteProject} />;
+        return (
+          <ActivityDetail
+            {...commonProps}
+            expense={activeActivity as any}
+            suppliers={suppliers}
+            project={projectOfActivity}
+            onDeleteProject={handleDeleteProject}
+            onDeleteTransaction={async (type, transactionId, projectId) => {
+              await deleteTransaction(type, transactionId, projectId);
+              await refetchProjects();
+              await refetchSuppliers();
+            }}
+          />
+        );
       case AppScreen.SUPPLIER_DETAIL:
         return <SupplierDetail {...commonProps} supplier={activeSupplier} projects={projects} onUpdateSupplier={handleUpdateSupplier} />;
       case AppScreen.PERSONAL_AREA:
@@ -462,10 +563,27 @@ function AppContent() {
         return <ReportsCenter {...commonProps} projects={projects} suppliers={suppliers} />;
       case AppScreen.SETTINGS:
         return <Settings {...commonProps} setGlobalCurrency={setGlobalCurrency} />;
+      case AppScreen.SEND_REMINDER:
+        return <SendReminder {...commonProps} projects={projects} debts={debts} suppliers={suppliers} />;
       case AppScreen.DEBTS:
-        return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
+        return <Debts {...commonProps} projects={projects} debts={debts} suppliers={suppliers} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} />;
       case AppScreen.ADD_DEBT:
         return <Debts {...commonProps} projects={projects} debts={debts} onSaveDebt={saveDebt} onDeleteDebt={deleteDebt} autoOpenAdd />;
+      case AppScreen.RECURRING_TEMPLATES:
+        return (
+          <RecurringTemplates
+            {...commonProps}
+            projects={projects}
+            suppliers={suppliers}
+            onPause={async (id, isActive) => {
+              await pauseRecurringTemplate(id, isActive);
+            }}
+            onDelete={async (id, alsoDeleteRows) => {
+              await deleteRecurringTemplate(id, { deleteGeneratedRows: alsoDeleteRows });
+              await refetchProjects();
+            }}
+          />
+        );
       default:
         return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} userName={userName} />;
     }
@@ -516,8 +634,13 @@ export default function App() {
     OpenSans_700Bold,
     OpenSans_800ExtraBold,
   });
+  const [i18nReady, setI18nReady] = useState(false);
 
-  if (!fontsLoaded) return <LoadingScreen />;
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true)).catch(() => setI18nReady(true));
+  }, []);
+
+  if (!fontsLoaded || !i18nReady) return <LoadingScreen />;
 
   return (
     <SafeAreaProvider>

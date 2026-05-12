@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppScreen, Currency, useAuth, useProfile, exportUserData, importUserData } from '@monn/shared';
+import { AppScreen, Currency, useAuth, useProfile, exportUserData, importUserData, confirmDialog } from '@monn/shared';
+import { LanguagePicker } from '../components/ui/LanguagePicker';
 import type { ExportBundle } from '@monn/shared';
 import { supabase } from '@monn/shared';
 import { colors, fonts, radii, spacing } from '../theme';
@@ -218,67 +219,55 @@ const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!user?.id) {
       Alert.alert('שגיאה', 'משתמש לא מחובר');
       return;
     }
-    Alert.alert(
-      'שחזור מגיבוי',
-      'הנתונים מהקובץ יתווספו לחשבון שלך (לא ימחקו נתונים קיימים). להמשיך?',
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'המשך',
-          onPress: () => {
-            if (Platform.OS === 'web') {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = 'application/json';
-              input.onchange = async () => {
-                const file = input.files?.[0];
-                if (!file) return;
-                try {
-                  const text = await file.text();
-                  const bundle: ExportBundle = JSON.parse(text);
-                  await processImportedBundle(bundle);
-                } catch (err: any) {
-                  Alert.alert('שגיאה', 'הקובץ לא תקין');
-                }
-              };
-              input.click();
-            } else {
-              Alert.alert('בקרוב', 'ייבוא בנייד יתווסף בקרוב');
-            }
-          },
-        },
-      ]
-    );
+    const ok = await confirmDialog({
+      title: 'שחזור מגיבוי',
+      message: 'הנתונים מהקובץ יתווספו לחשבון שלך (לא ימחקו נתונים קיימים). להמשיך?',
+      confirmText: 'המשך',
+    });
+    if (!ok) return;
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const bundle: ExportBundle = JSON.parse(text);
+          await processImportedBundle(bundle);
+        } catch (err: any) {
+          Alert.alert('שגיאה', 'הקובץ לא תקין');
+        }
+      };
+      input.click();
+    } else {
+      Alert.alert('בקרוב', 'ייבוא בנייד יתווסף בקרוב');
+    }
   };
 
-  const handleClearData = () => {
-    Alert.alert(
-      'מחיקת נתונים',
-      'האם אתה בטוח שברצונך למחוק את כל הנתונים? פעולה זו בלתי הפיכה!',
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.multiRemove([
-                'user_profile',
-                SETTINGS_STORAGE_KEY,
-              ]);
-              Alert.alert('הנתונים נמחקו בהצלחה');
-            } catch (err) {
-              Alert.alert('שגיאה', 'לא ניתן למחוק את הנתונים');
-            }
-          },
-        },
-      ]
-    );
+  const handleClearData = async () => {
+    const ok = await confirmDialog({
+      title: 'מחיקת נתונים',
+      message: 'האם אתה בטוח שברצונך למחוק את כל הנתונים? פעולה זו בלתי הפיכה!',
+      confirmText: 'מחק',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await AsyncStorage.multiRemove([
+        'user_profile',
+        SETTINGS_STORAGE_KEY,
+      ]);
+      Alert.alert('הנתונים נמחקו בהצלחה');
+    } catch (err) {
+      Alert.alert('שגיאה', 'לא ניתן למחוק את הנתונים');
+    }
   };
 
   const handleBack = () => {
@@ -394,12 +383,12 @@ const Settings: React.FC<SettingsProps> = ({
         </View>
 
         {/* Language */}
-        <View style={[styles.settingItem, styles.settingItemBorder]}>
+        <View style={[styles.settingItem, styles.settingItemBorder, styles.languageItem]}>
           <View style={styles.settingLeft}>
             <MaterialIcons name="language" size={20} color={colors.primary} />
             <Text style={styles.settingLabel}>{'שפה'}</Text>
           </View>
-          <Text style={styles.settingValue}>{'עברית'}</Text>
+          <LanguagePicker variant="inline" />
         </View>
 
         {/* Notifications */}
@@ -908,6 +897,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingVertical: 15,
+  },
+  languageItem: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
   },
   settingItemBorder: {
     borderBottomWidth: 1,
