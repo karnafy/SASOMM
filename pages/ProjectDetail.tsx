@@ -23,6 +23,7 @@ import { colors, fonts, radii, spacing } from '../theme';
 import { GradientHeader } from '../components/ui/GradientHeader';
 import { GlassCard } from '../components/ui/GlassCard';
 import { DarkCard } from '../components/ui/DarkCard';
+import { CurrencyToggle } from '../components/ui/CurrencyToggle';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { SectionHeader } from '../components/ui/SectionHeader';
@@ -38,6 +39,7 @@ interface ProjectDetailProps {
   onUpdateProject: (project: Project) => Promise<void>;
   onAddNote: (projectId: string, note: string, images?: string[]) => Promise<void>;
   globalCurrency: Currency;
+  setGlobalCurrency?: (c: Currency) => void;
   convertAmount: (amount: number, from?: Currency, to?: Currency) => number;
 }
 
@@ -65,6 +67,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onUpdateProject,
   onAddNote,
   globalCurrency,
+  setGlobalCurrency,
   convertAmount,
 }) => {
   const { t } = useTranslation();
@@ -992,6 +995,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   <MaterialIcons name="edit" size={14} color={colors.textTertiary} />
                 </TouchableOpacity>
               </View>
+              {setGlobalCurrency && (
+                <View style={styles.currencyToggleWrap}>
+                  <CurrencyToggle selected={globalCurrency} onSelect={setGlobalCurrency} />
+                </View>
+              )}
               {isEditingBudget ? (
                 <View style={styles.budgetEditRow}>
                   <TextInput
@@ -1518,6 +1526,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     fontFamily: fonts.medium,
+  },
+  currencyToggleWrap: {
+    marginBottom: spacing.sm,
+    alignSelf: 'center',
   },
   budgetEditRow: {
     alignItems: 'center',

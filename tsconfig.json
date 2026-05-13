@@ -8,5 +8,6 @@
       "@monn/shared/*": ["../shared/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "../shared/**/*.ts", "../shared/**/*.tsx"]
+  "include": ["**/*.ts", "**/*.tsx", "../shared/**/*.ts", "../shared/**/*.tsx"],
+  "exclude": ["node_modules", "backend", "dist", "web-build"]
 }

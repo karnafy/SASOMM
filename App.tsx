@@ -533,6 +533,7 @@ function AppContent() {
             {...commonProps}
             project={activeProject}
             suppliers={suppliers}
+            setGlobalCurrency={setGlobalCurrency}
             onUpdateBudget={handleUpdateBudget}
             onDeleteProject={handleDeleteProject}
             onUpdateProject={handleUpdateProject}
