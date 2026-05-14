@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "SASOMM",
+    "slug": "sasomm",
+    "version": "1.0.0",
+    "scheme": "sasomm",
+    "orientation": "portrait",
+    "icon": "./assets/logo-sasomm.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0D0B1A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.karnafstudio.sasomm",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D0B1A"
+      },
+      "package": "com.karnafstudio.sasomm"
+    },
+    "web": {
+      "favicon": "./assets/logo-icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d4062d5e-5dde-4356-9815-e66731bdfaf5"
+      }
+    },
+    "owner": "karnafstudio",
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-web-browser"
+    ]
+  }
+}
