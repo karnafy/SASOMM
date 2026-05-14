@@ -23,7 +23,8 @@
     "v2:web": "cd V2.0 && npx expo start --web --port 8083",
     "v2:start": "cd V2.0 && npx expo start",
     "v2:android": "cd V2.0 && npx expo run:android",
-    "v2:ios": "cd V2.0 && npx expo run:ios"
+    "v2:ios": "cd V2.0 && npx expo run:ios",
+    "v2:up": "npm run v2:install && npm run v2:web"
   },
   "dependencies": {
     "@expo-google-fonts/open-sans": "^0.4.2",
