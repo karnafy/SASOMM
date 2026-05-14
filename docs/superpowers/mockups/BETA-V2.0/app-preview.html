@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SASOMM BETA V2.0 — Liquid Glass Redesign</title>
+<!-- Unified font: Open Sans with Hebrew support (matches theme.ts) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap&subset=hebrew" rel="stylesheet">
 <style>
   :root {
     --bg-deep:#06070C;
@@ -31,7 +35,10 @@
   * { box-sizing:border-box; }
   body {
     margin:0;
-    font-family:'Open Sans','Heebo','Segoe UI',system-ui,sans-serif;
+    font-family:'Open Sans','Segoe UI',system-ui,sans-serif;
+    font-feature-settings:'kern','liga';
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
     background:var(--bg-deep);
     color:var(--t-primary);
     min-height:100vh;
@@ -435,12 +442,57 @@
 
   /* ====== AUTH ====== */
   .auth-logo {
-    width:80px; height:80px; margin:36px auto 18px;
-    border-radius:24px;
-    background:var(--glow-fill);
+    width:120px; height:120px; margin:24px auto 18px;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 0 36px rgba(0,217,217,0.4);
+    filter:drop-shadow(0 0 24px rgba(0,217,217,0.35)) drop-shadow(0 0 8px rgba(185,103,255,0.25));
   }
+  .auth-logo img { width:100%; height:100%; object-fit:contain; }
+
+  /* ====== INLINE LOGO (top bars / loading) ====== */
+  .logo-mini { width:28px; height:28px; object-fit:contain; filter:drop-shadow(0 0 4px rgba(0,217,217,0.4)); }
+  .brand-strip {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:4px 0 12px 0;
+    margin-top:-4px;
+  }
+  .brand-strip img { height:22px; width:auto; object-fit:contain; filter:drop-shadow(0 0 6px rgba(0,217,217,0.35)); opacity:0.95; }
+  .brand-strip-text {
+    font-size:12px; font-weight:800; letter-spacing:1px;
+    background:linear-gradient(135deg, #5EEAD4, #B967FF);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .logo-loading {
+    width:140px; height:140px; object-fit:contain;
+    filter:drop-shadow(0 0 30px rgba(0,217,217,0.5)) drop-shadow(0 0 12px rgba(185,103,255,0.3));
+    animation:logoPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%, 100% { transform:scale(1); filter:drop-shadow(0 0 30px rgba(0,217,217,0.4)) drop-shadow(0 0 12px rgba(185,103,255,0.25)); }
+    50%      { transform:scale(1.06); filter:drop-shadow(0 0 50px rgba(0,217,217,0.7)) drop-shadow(0 0 22px rgba(185,103,255,0.45)); }
+  }
+
+  /* ====== LOADING SCREEN ====== */
+  .loading-stage {
+    height:100%; width:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:24px; padding:0 24px;
+  }
+  .loading-bar-track {
+    width:160px; height:4px; border-radius:var(--r-full);
+    background:rgba(255,255,255,0.06); overflow:hidden;
+    position:relative;
+  }
+  .loading-bar-fill {
+    position:absolute; top:0; left:0; bottom:0; width:40%;
+    background:var(--glow-fill); border-radius:var(--r-full);
+    box-shadow:0 0 12px rgba(0,217,217,0.5);
+    animation:loadingSlide 1.8s ease-in-out infinite;
+  }
+  @keyframes loadingSlide {
+    0%   { left:-40%; }
+    100% { left:100%; }
+  }
+  .loading-text { font-size:13px; color:var(--t-secondary); letter-spacing:0.5px; }
   .auth-brand {
     font-size:34px; font-weight:800; text-align:center;
     background:linear-gradient(135deg, #fff, #5EEAD4 50%, #B967FF);
@@ -452,6 +504,29 @@
   }
   .auth-link { text-align:center; color:var(--t-secondary); font-size:12px; margin-top:18px; }
   .auth-link a { color:var(--primary); font-weight:700; }
+
+  /* ====== GOOGLE BUTTON ====== */
+  .btn-google {
+    width:100%;
+    padding:13px;
+    background:#fff;
+    border:1px solid rgba(255,255,255,0.2);
+    border-radius:var(--r-lg);
+    color:#1F1F1F; font-weight:700; font-size:14px;
+    display:flex; flex-direction:row-reverse; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,0.3);
+  }
+  .btn-google svg { width:18px; height:18px; flex-shrink:0; }
+  .auth-divider {
+    display:flex; flex-direction:row-reverse; align-items:center; gap:10px;
+    margin:18px 0;
+    color:var(--t-tertiary); font-size:11px; font-weight:600;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
 
   /* ====== SETTINGS ====== */
   .settings-row {
@@ -578,12 +653,22 @@
       </div>
       <div class="screen-content">
         <div class="auth-logo">
-          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#06070C" stroke-width="2.5">
-            <path d="M3 9.5L12 4l9 5.5M5 11v8h14v-8M9 19v-6h6v6"/>
-          </svg>
+          <img src="../../../../assets/logo-sasomm.png" alt="SASOMM">
         </div>
         <div class="auth-brand">SASOMM</div>
         <div class="auth-tagline">ניהול תקציב פרויקטים</div>
+
+        <button class="btn-google">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+          </svg>
+          המשך עם Google
+        </button>
+
+        <div class="auth-divider">או באמצעות מייל</div>
 
         <div class="field">
           <div class="field-label">אימייל</div>
@@ -600,6 +685,23 @@
     </div></div>
   </div>
 
+  <!-- ===== 1.5 LOADING (between auth & dashboard) ===== -->
+  <div class="frame-block">
+    <div class="frame-label">מסך טעינה<div class="frame-label-route">/loading</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg>
+      </span></div>
+      <div class="screen-content" style="padding:0;">
+        <div class="loading-stage">
+          <img class="logo-loading" src="../../../../assets/logo-sasomm.png" alt="SASOMM">
+          <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+          <div class="loading-text">טוען נתונים...</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
   <!-- ===== 2. DASHBOARD ===== -->
   <div class="frame-block">
     <div class="frame-label">דף בית · דשבורד<div class="frame-label-route">/dashboard</div></div>
@@ -609,6 +711,7 @@
         <svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9"/></svg>
       </span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="greeting">שלום,</div>
         <h1 class="h1-mobile">קרנף סטודיו</h1>
 
@@ -689,6 +792,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg>
       </span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
           <div class="top-title">פרויקטים</div>
@@ -760,6 +864,7 @@
     <div class="phone"><div class="screen">
       <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
           <div class="top-title">שיפוץ מטבח</div>
@@ -810,6 +915,7 @@
     <div class="phone"><div class="screen">
       <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
           <div class="top-title">תנועה חדשה</div>
@@ -865,6 +971,7 @@
     <div class="phone"><div class="screen">
       <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
           <div class="top-title">ספקים</div>
@@ -922,6 +1029,7 @@
     <div class="phone"><div class="screen">
       <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
           <div class="top-title">חובות</div>
@@ -1002,6 +1110,7 @@
     <div class="phone"><div class="screen">
       <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
           <div class="top-title">פרויקט חדש</div>
@@ -1059,6 +1168,7 @@
     <div class="phone"><div class="screen">
       <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
       <div class="screen-content"><div class="scroll-content">
+        <div class="brand-strip"><img src="../../../../assets/logo-sasomm.png" alt="SASOMM"><div class="brand-strip-text">SASOMM</div></div>
         <div class="top-bar">
           <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
           <div class="top-title">הגדרות</div>
