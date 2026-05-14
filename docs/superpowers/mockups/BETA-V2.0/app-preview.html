@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SASOMM BETA V2.0 — Liquid Glass Redesign</title>
+<style>
+  :root {
+    --bg-deep:#06070C;
+    --bg-mid:#0C0E16;
+    --bg-card:rgba(22,26,38,0.55);
+    --bg-card-soft:rgba(22,26,38,0.35);
+    --bg-input:rgba(15,17,25,0.7);
+    --primary:#00D9D9;
+    --primary-light:#5EEAD4;
+    --primary-dark:#0891B2;
+    --accent:#B967FF;
+    --accent-soft:#7C4DFF;
+    --success:#10E5A4;
+    --warning:#FFB454;
+    --error:#FF6B7A;
+    --info:#5BA9FF;
+    --t-primary:#F1F4FB;
+    --t-secondary:#A8B3C7;
+    --t-tertiary:#6B7689;
+    --t-muted:#4A5266;
+    --glow-fill:linear-gradient(135deg, #00D9D9 0%, #5EEAD4 50%, #B967FF 100%);
+    --glow-border:linear-gradient(135deg, rgba(0,217,217,0.7) 0%, rgba(94,234,212,0.5) 40%, rgba(185,103,255,0.7) 100%);
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-full:999px;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    font-family:'Open Sans','Heebo','Segoe UI',system-ui,sans-serif;
+    background:var(--bg-deep);
+    color:var(--t-primary);
+    min-height:100vh;
+    padding:48px 24px;
+    background-image:
+      radial-gradient(circle at 8% 6%, rgba(0,217,217,0.08), transparent 50%),
+      radial-gradient(circle at 92% 90%, rgba(185,103,255,0.08), transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(94,234,212,0.04), transparent 60%);
+    background-attachment:fixed;
+  }
+
+  /* ====== HEADER ====== */
+  .doc-header { text-align:center; max-width:1100px; margin:0 auto 48px; }
+  .doc-title {
+    font-size:38px; font-weight:800; letter-spacing:-1px;
+    background:linear-gradient(135deg, #fff, #5EEAD4 40%, #B967FF 80%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin:0 0 12px;
+  }
+  .doc-sub { color:var(--t-secondary); font-size:15px; max-width:680px; margin:0 auto; line-height:1.6; }
+  .doc-meta {
+    display:inline-flex; align-items:center; gap:8px; padding:6px 14px;
+    background:rgba(0,217,217,0.08); border:1px solid rgba(0,217,217,0.3);
+    border-radius:var(--r-full); margin-top:18px;
+    font-size:11px; color:var(--primary); font-weight:700; letter-spacing:1px;
+  }
+  .pulse-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); box-shadow:0 0 10px var(--primary); animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { box-shadow:0 0 6px var(--primary); } 50% { box-shadow:0 0 14px var(--primary); } }
+
+  /* ====== GRID OF FRAMES ====== */
+  .frames-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));
+    gap:32px;
+    max-width:1600px;
+    margin:0 auto;
+    justify-items:center;
+  }
+  .frame-block { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .frame-label {
+    font-size:13px; font-weight:700; color:var(--t-secondary);
+    text-align:center; padding:6px 14px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(0,217,217,0.2);
+    border-radius:var(--r-full);
+  }
+  .frame-label-route { font-size:10px; color:var(--t-muted); margin-top:4px; font-family:'SF Mono', Menlo, monospace; }
+
+  /* ====== PHONE FRAME ====== */
+  .phone {
+    width:340px;
+    height:700px;
+    border-radius:42px;
+    background:#000;
+    padding:8px;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.7),
+      0 0 40px rgba(0,217,217,0.08),
+      inset 0 0 0 1px rgba(94,234,212,0.15);
+    position:relative;
+  }
+  .phone::before {
+    /* dynamic island */
+    content:''; position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:96px; height:24px; background:#000; border-radius:14px; z-index:10;
+  }
+  .screen {
+    width:100%; height:100%;
+    border-radius:34px;
+    overflow:hidden;
+    background:linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+    display:flex; flex-direction:column;
+    position:relative;
+  }
+  .screen-content {
+    flex:1; overflow:hidden;
+    padding:54px 18px 84px 18px;
+    /* Background ambient lights */
+    background-image:
+      radial-gradient(circle at 10% 5%, rgba(0,217,217,0.1), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(185,103,255,0.1), transparent 50%);
+  }
+  .screen-content::-webkit-scrollbar { display:none; }
+  .scroll-content { overflow-y:auto; height:100%; padding-bottom:20px; }
+  .scroll-content::-webkit-scrollbar { display:none; }
+
+  /* ====== STATUS BAR ====== */
+  .status-bar {
+    position:absolute; top:0; left:0; right:0; height:46px;
+    display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between;
+    padding:0 28px;
+    font-size:13px; font-weight:700; color:#fff;
+    z-index:5;
+  }
+  .sb-time { letter-spacing:0.5px; }
+  .sb-icons { display:flex; gap:5px; align-items:center; }
+  .sb-icons svg { width:14px; height:14px; }
+
+  /* ====== TOP HEADER (in-screen) ====== */
+  .top-bar {
+    display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between;
+    padding:6px 0 16px 0;
+  }
+  .top-back, .top-action {
+    width:36px; height:36px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(0,217,217,0.2);
+    border-radius:var(--r-full);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .top-title { font-size:15px; font-weight:700; color:var(--t-primary); }
+
+  /* ====== BOTTOM NAV ====== */
+  .bottom-nav {
+    position:absolute; bottom:0; left:0; right:0; height:74px;
+    background:rgba(8,9,15,0.85);
+    backdrop-filter:blur(30px) saturate(180%);
+    -webkit-backdrop-filter:blur(30px) saturate(180%);
+    border-top:1px solid rgba(0,217,217,0.15);
+    display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-around;
+    padding:0 12px 18px;
+  }
+  .bnav-item {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--t-tertiary); font-size:9px; font-weight:600;
+    cursor:pointer;
+  }
+  .bnav-item.active { color:var(--primary); }
+  .bnav-item svg { width:22px; height:22px; }
+  .bnav-fab {
+    width:54px; height:54px; margin-top:-22px;
+    background:var(--glow-fill);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 22px rgba(0,217,217,0.45), 0 0 0 4px var(--bg-deep);
+    color:#06070C;
+  }
+  .bnav-fab svg { width:24px; height:24px; }
+
+  /* ====== GLASS PRIMITIVES (in-screen) ====== */
+  .glass {
+    background:var(--bg-card);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-radius:var(--r-lg);
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow:0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .glass-glow {
+    background:var(--bg-card);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-radius:var(--r-lg);
+    position:relative;
+    border:1px solid rgba(0,217,217,0.25);
+    box-shadow:0 4px 18px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,217,217,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  /* ====== TYPE ====== */
+  .greeting { font-size:14px; color:var(--t-secondary); margin-bottom:4px; }
+  .h1-mobile { font-size:24px; font-weight:800; margin:0 0 16px; letter-spacing:-0.5px; }
+  .h2-mobile { font-size:14px; font-weight:700; color:var(--t-primary); margin:18px 0 10px; display:flex; justify-content:space-between; align-items:center; }
+  .h2-mobile .h2-link { font-size:11px; color:var(--primary); font-weight:600; }
+
+  /* ====== BALANCE CARD ====== */
+  .balance-card {
+    padding:20px;
+    margin-bottom:16px;
+    text-align:center;
+  }
+  .balance-label { font-size:11px; color:var(--t-secondary); margin-bottom:6px; letter-spacing:1px; text-transform:uppercase; }
+  .balance-value {
+    font-size:38px; font-weight:800;
+    background:linear-gradient(135deg, #fff, #5EEAD4 60%, #B967FF);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    letter-spacing:-1px; margin:4px 0;
+  }
+  .balance-row { display:flex; flex-direction:row-reverse; justify-content:space-around; margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.06); }
+  .balance-stat { text-align:center; flex:1; }
+  .balance-stat-val { font-size:14px; font-weight:700; color:var(--t-primary); }
+  .balance-stat-lbl { font-size:10px; color:var(--t-tertiary); margin-top:2px; }
+  .stat-up { color:var(--success); }
+  .stat-down { color:var(--error); }
+
+  /* ====== CURRENCY PILLS ====== */
+  .currency-pills {
+    display:flex; flex-direction:row-reverse; gap:6px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius:var(--r-full); padding:4px;
+    width:fit-content; margin:0 auto 16px;
+  }
+  .currency-pill {
+    padding:6px 14px; border-radius:var(--r-full);
+    font-size:11px; font-weight:700; color:var(--t-tertiary);
+    cursor:pointer;
+  }
+  .currency-pill.active {
+    background:linear-gradient(135deg, var(--primary), var(--accent-soft));
+    color:#fff;
+    box-shadow:0 0 12px rgba(0,217,217,0.4);
+  }
+
+  /* ====== ACTIVITY ROW ====== */
+  .activity-row {
+    display:flex; flex-direction:row-reverse; align-items:center; gap:12px;
+    padding:12px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.04);
+    border-radius:var(--r-md);
+    margin-bottom:6px;
+  }
+  .act-icon {
+    width:36px; height:36px; border-radius:var(--r-md);
+    background:linear-gradient(135deg, rgba(0,217,217,0.2), rgba(185,103,255,0.15));
+    border:1px solid rgba(0,217,217,0.3);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--primary);
+  }
+  .act-icon svg { width:18px; height:18px; }
+  .act-icon.income { background:linear-gradient(135deg, rgba(16,229,164,0.18), rgba(94,234,212,0.1)); border-color:rgba(16,229,164,0.3); color:var(--success); }
+  .act-icon.expense { background:linear-gradient(135deg, rgba(255,107,122,0.18), rgba(255,180,84,0.1)); border-color:rgba(255,107,122,0.3); color:var(--error); }
+  .act-info { flex:1; text-align:right; }
+  .act-title { font-size:13px; font-weight:600; color:var(--t-primary); }
+  .act-meta { font-size:10px; color:var(--t-tertiary); margin-top:1px; }
+  .act-amt { font-size:14px; font-weight:700; text-align:left; }
+
+  /* ====== PROJECT CARD ====== */
+  .project-card {
+    padding:14px; margin-bottom:10px;
+    cursor:pointer;
+  }
+  .pcard-header { display:flex; flex-direction:row-reverse; align-items:center; gap:10px; margin-bottom:10px; }
+  .pcard-icon {
+    width:38px; height:38px; border-radius:var(--r-md);
+    background:linear-gradient(135deg, var(--primary), var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    box-shadow:0 0 16px rgba(0,217,217,0.3);
+  }
+  .pcard-icon svg { width:18px; height:18px; }
+  .pcard-titles { flex:1; text-align:right; }
+  .pcard-name { font-size:13px; font-weight:700; color:var(--t-primary); }
+  .pcard-cat { font-size:10px; color:var(--t-tertiary); }
+  .pcard-status { font-size:9px; padding:3px 8px; border-radius:var(--r-full); font-weight:700; }
+  .ps-ok { background:rgba(16,229,164,0.15); color:var(--success); border:1px solid rgba(16,229,164,0.3); }
+  .ps-warn { background:rgba(255,180,84,0.15); color:var(--warning); border:1px solid rgba(255,180,84,0.3); }
+  .ps-over { background:rgba(255,107,122,0.15); color:var(--error); border:1px solid rgba(255,107,122,0.3); }
+
+  .progress-track {
+    height:6px; background:rgba(255,255,255,0.05); border-radius:var(--r-full); overflow:hidden;
+    margin:8px 0;
+  }
+  .progress-fill {
+    height:100%;
+    background:linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius:var(--r-full);
+    box-shadow:0 0 8px rgba(0,217,217,0.4);
+  }
+  .progress-fill.warn { background:linear-gradient(90deg, var(--warning), var(--error)); box-shadow:0 0 8px rgba(255,180,84,0.4); }
+
+  .pcard-stats { display:flex; flex-direction:row-reverse; justify-content:space-between; }
+  .pcard-stat { text-align:center; flex:1; }
+  .pcard-stat-val { font-size:12px; font-weight:700; color:var(--t-primary); }
+  .pcard-stat-lbl { font-size:9px; color:var(--t-tertiary); }
+
+  /* ====== FILTER PILLS ====== */
+  .filter-pills {
+    display:flex; flex-direction:row-reverse; gap:6px; overflow-x:auto;
+    padding-bottom:4px; margin-bottom:14px;
+  }
+  .filter-pills::-webkit-scrollbar { display:none; }
+  .filter-pill {
+    padding:7px 14px; border-radius:var(--r-full);
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.06);
+    color:var(--t-secondary); font-size:11px; font-weight:600;
+    white-space:nowrap; cursor:pointer;
+  }
+  .filter-pill.active {
+    background:rgba(0,217,217,0.12);
+    border-color:rgba(0,217,217,0.5);
+    color:var(--primary);
+    box-shadow:0 0 12px rgba(0,217,217,0.2);
+  }
+
+  /* ====== FORMS ====== */
+  .field {
+    margin-bottom:14px;
+  }
+  .field-label {
+    font-size:10px; font-weight:700; color:var(--t-secondary);
+    text-transform:uppercase; letter-spacing:0.5px;
+    margin-bottom:6px; text-align:right;
+  }
+  .field-input, .field-select, .field-textarea {
+    width:100%; padding:12px 14px;
+    background:var(--bg-input);
+    border:1px solid rgba(0,217,217,0.2);
+    border-radius:var(--r-md);
+    color:var(--t-primary);
+    font-size:14px; text-align:right;
+    font-family:inherit;
+  }
+  .field-textarea { min-height:80px; resize:vertical; }
+  .field-input:focus, .field-select:focus, .field-textarea:focus {
+    outline:none; border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(0,217,217,0.15);
+  }
+
+  .amount-row {
+    display:flex; flex-direction:row-reverse; gap:10px; align-items:stretch;
+  }
+  .amount-input {
+    flex:1;
+    padding:18px 16px;
+    background:var(--bg-input);
+    border:1px solid rgba(0,217,217,0.3);
+    border-radius:var(--r-lg);
+    font-size:28px; font-weight:800; text-align:right;
+    color:var(--t-primary);
+  }
+  .currency-select {
+    padding:0 18px;
+    background:rgba(0,217,217,0.08);
+    border:1px solid rgba(0,217,217,0.3);
+    border-radius:var(--r-lg);
+    color:var(--primary); font-weight:700; font-size:14px;
+    display:flex; align-items:center;
+  }
+
+  /* ====== TYPE TOGGLE (Expense/Income) ====== */
+  .type-toggle {
+    display:flex; flex-direction:row-reverse;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:var(--r-full);
+    padding:4px;
+    margin-bottom:18px;
+  }
+  .type-tab {
+    flex:1; padding:9px; text-align:center;
+    border-radius:var(--r-full);
+    font-size:12px; font-weight:700; color:var(--t-tertiary);
+    cursor:pointer;
+  }
+  .type-tab.exp.active {
+    background:linear-gradient(135deg, var(--error), #FF9580);
+    color:#fff;
+    box-shadow:0 0 12px rgba(255,107,122,0.4);
+  }
+  .type-tab.inc.active {
+    background:linear-gradient(135deg, var(--success), var(--primary-light));
+    color:#06070C;
+    box-shadow:0 0 12px rgba(16,229,164,0.4);
+  }
+
+  /* ====== BUTTONS ====== */
+  .btn-fill {
+    width:100%;
+    padding:14px;
+    background:var(--glow-fill);
+    border:0; border-radius:var(--r-lg);
+    color:#06070C; font-weight:800; font-size:14px;
+    box-shadow:0 6px 22px rgba(0,217,217,0.4);
+    cursor:pointer;
+  }
+  .btn-outline {
+    width:100%;
+    padding:13px;
+    background:transparent;
+    border:1px solid rgba(0,217,217,0.4);
+    border-radius:var(--r-lg);
+    color:var(--primary); font-weight:700; font-size:13px;
+    cursor:pointer;
+  }
+  .btn-outline-danger {
+    width:100%; padding:13px; background:transparent;
+    border:1px solid rgba(255,107,122,0.4); border-radius:var(--r-lg);
+    color:var(--error); font-weight:700; font-size:13px;
+  }
+
+  /* ====== SUPPLIER ROW ====== */
+  .supplier-row {
+    display:flex; flex-direction:row-reverse; align-items:center; gap:12px;
+    padding:12px;
+    margin-bottom:6px;
+  }
+  .supplier-avatar {
+    width:42px; height:42px; border-radius:50%;
+    background:linear-gradient(135deg, var(--primary), var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; color:#fff;
+    box-shadow:0 0 12px rgba(0,217,217,0.25);
+  }
+  .supplier-info { flex:1; text-align:right; }
+  .supplier-name { font-size:13px; font-weight:600; color:var(--t-primary); }
+  .supplier-meta { font-size:10px; color:var(--t-tertiary); }
+  .balance-amt { text-align:left; font-size:14px; font-weight:700; }
+
+  /* ====== AUTH ====== */
+  .auth-logo {
+    width:80px; height:80px; margin:36px auto 18px;
+    border-radius:24px;
+    background:var(--glow-fill);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 36px rgba(0,217,217,0.4);
+  }
+  .auth-brand {
+    font-size:34px; font-weight:800; text-align:center;
+    background:linear-gradient(135deg, #fff, #5EEAD4 50%, #B967FF);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    letter-spacing:-1px; margin:0 0 6px;
+  }
+  .auth-tagline {
+    text-align:center; color:var(--t-secondary); font-size:13px; margin-bottom:30px;
+  }
+  .auth-link { text-align:center; color:var(--t-secondary); font-size:12px; margin-top:18px; }
+  .auth-link a { color:var(--primary); font-weight:700; }
+
+  /* ====== SETTINGS ====== */
+  .settings-row {
+    display:flex; flex-direction:row-reverse; align-items:center; gap:12px;
+    padding:14px 16px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius:var(--r-md);
+    margin-bottom:6px;
+    cursor:pointer;
+  }
+  .settings-icon {
+    width:32px; height:32px; border-radius:var(--r-md);
+    background:rgba(0,217,217,0.1);
+    border:1px solid rgba(0,217,217,0.25);
+    display:flex; align-items:center; justify-content:center; color:var(--primary);
+  }
+  .settings-label { flex:1; text-align:right; font-size:13px; color:var(--t-primary); font-weight:500; }
+  .settings-value { font-size:11px; color:var(--t-tertiary); }
+
+  /* ====== DEBTS ====== */
+  .debt-card { padding:14px; margin-bottom:8px; }
+  .debt-head { display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .debt-name { font-size:13px; font-weight:700; color:var(--t-primary); }
+  .debt-amt-big { font-size:18px; font-weight:800; }
+  .debt-meta { display:flex; flex-direction:row-reverse; justify-content:space-between; font-size:10px; color:var(--t-tertiary); }
+  .debt-tag {
+    font-size:9px; padding:3px 8px; border-radius:var(--r-full); font-weight:700;
+    background:rgba(255,180,84,0.15); color:var(--warning); border:1px solid rgba(255,180,84,0.3);
+  }
+
+  /* ====== CATEGORY GRID (Dashboard) ====== */
+  .cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .cat-card { padding:12px; text-align:right; }
+  .cat-name { font-size:11px; color:var(--t-secondary); margin-bottom:4px; }
+  .cat-amount { font-size:16px; font-weight:800; color:var(--t-primary); }
+  .cat-bar { height:4px; background:rgba(255,255,255,0.05); border-radius:var(--r-full); margin-top:8px; overflow:hidden; }
+  .cat-bar-fill { height:100%; background:linear-gradient(90deg, var(--primary), var(--accent)); }
+
+  /* ====== PROJECT DETAIL TX LIST ====== */
+  .tx-row {
+    display:flex; flex-direction:row-reverse; align-items:center; gap:10px;
+    padding:10px 12px;
+    background:rgba(255,255,255,0.02);
+    border-right:3px solid var(--primary);
+    border-radius:var(--r-md);
+    margin-bottom:5px;
+  }
+  .tx-row.income { border-right-color:var(--success); }
+  .tx-row.expense { border-right-color:var(--error); }
+  .tx-info { flex:1; text-align:right; }
+  .tx-title { font-size:12px; font-weight:600; color:var(--t-primary); }
+  .tx-date { font-size:10px; color:var(--t-tertiary); }
+  .tx-amt { font-size:13px; font-weight:700; text-align:left; }
+
+  /* ====== ICON CHIP ROW ====== */
+  .icon-grid {
+    display:grid; grid-template-columns:repeat(5, 1fr); gap:8px;
+    margin-top:8px;
+  }
+  .icon-chip {
+    aspect-ratio:1; border-radius:var(--r-md);
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.06);
+    display:flex; align-items:center; justify-content:center; color:var(--t-secondary);
+    cursor:pointer;
+  }
+  .icon-chip.selected {
+    background:linear-gradient(135deg, rgba(0,217,217,0.2), rgba(185,103,255,0.15));
+    border-color:rgba(0,217,217,0.6);
+    color:var(--primary);
+    box-shadow:0 0 12px rgba(0,217,217,0.3);
+  }
+  .icon-chip svg { width:20px; height:20px; }
+
+  /* ====== OVERLAY (Notes section etc) ====== */
+  .info-banner {
+    padding:10px 12px;
+    background:linear-gradient(135deg, rgba(0,217,217,0.05), rgba(185,103,255,0.05));
+    border:1px solid rgba(0,217,217,0.15);
+    border-radius:var(--r-md);
+    font-size:11px; color:var(--t-secondary);
+    line-height:1.5; text-align:right;
+    margin-bottom:10px;
+  }
+
+  /* ====== FOOTER ====== */
+  .doc-footer {
+    text-align:center; max-width:800px; margin:60px auto 0;
+    padding:32px; border-top:1px solid rgba(255,255,255,0.06);
+  }
+  .doc-footer p { color:var(--t-tertiary); font-size:12px; line-height:1.7; }
+  .pill-note {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:var(--r-full);
+    background:rgba(185,103,255,0.1); border:1px solid rgba(185,103,255,0.3);
+    color:var(--accent); font-size:11px; font-weight:700;
+    margin:0 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ DOC HEADER ============ -->
+<header class="doc-header">
+  <h1 class="doc-title">SASOMM BETA V2.0</h1>
+  <div class="doc-meta"><span class="pulse-dot"></span>LIQUID GLASS · DESIGN PREVIEW · 2026-05-14</div>
+  <p class="doc-sub">סקיצה מלאה של האפליקציה במעטפת ויזואלית חדשה — ללא אימוג'ים, רק שפת ה‑Liquid Glass: זכוכית מטושטשת, גבולות גרדיאנט ניאון, רקעים כהים, וקווי מתאר זוהרים. הגרסה הנוכחית (Light Neumorphic) נשארת ב‑main, זו טיוטה לבחינת כיוון.</p>
+</header>
+
+<!-- ============ FRAMES GRID ============ -->
+<div class="frames-grid">
+
+  <!-- ===== 1. AUTH (Login) ===== -->
+  <div class="frame-block">
+    <div class="frame-label">התחברות<div class="frame-label-route">/auth</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar">
+        <span class="sb-time">9:41</span>
+        <span class="sb-icons">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg>
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z"/></svg>
+        </span>
+      </div>
+      <div class="screen-content">
+        <div class="auth-logo">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#06070C" stroke-width="2.5">
+            <path d="M3 9.5L12 4l9 5.5M5 11v8h14v-8M9 19v-6h6v6"/>
+          </svg>
+        </div>
+        <div class="auth-brand">SASOMM</div>
+        <div class="auth-tagline">ניהול תקציב פרויקטים</div>
+
+        <div class="field">
+          <div class="field-label">אימייל</div>
+          <input class="field-input" type="email" placeholder="example@email.com" value="karnafstudio@gmail.com">
+        </div>
+        <div class="field">
+          <div class="field-label">סיסמה</div>
+          <input class="field-input" type="password" placeholder="••••••••" value="password123">
+        </div>
+
+        <button class="btn-fill" style="margin-top:8px;">התחבר</button>
+        <div class="auth-link">אין לך חשבון? <a>צור חשבון חדש</a></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ===== 2. DASHBOARD ===== -->
+  <div class="frame-block">
+    <div class="frame-label">דף בית · דשבורד<div class="frame-label-route">/dashboard</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg>
+        <svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9"/></svg>
+      </span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="greeting">שלום,</div>
+        <h1 class="h1-mobile">קרנף סטודיו</h1>
+
+        <div class="currency-pills">
+          <div class="currency-pill active">₪ ILS</div>
+          <div class="currency-pill">$ USD</div>
+          <div class="currency-pill">€ EUR</div>
+        </div>
+
+        <div class="glass-glow balance-card">
+          <div class="balance-label">יתרה נטו</div>
+          <div class="balance-value">₪12,450</div>
+          <div class="balance-row">
+            <div class="balance-stat"><div class="balance-stat-val stat-up">₪48,200</div><div class="balance-stat-lbl">הכנסות</div></div>
+            <div class="balance-stat"><div class="balance-stat-val stat-down">₪35,750</div><div class="balance-stat-lbl">הוצאות</div></div>
+            <div class="balance-stat"><div class="balance-stat-val">₪52,000</div><div class="balance-stat-lbl">תקציב</div></div>
+          </div>
+        </div>
+
+        <h2 class="h2-mobile">קטגוריות <a class="h2-link">הצג הכל</a></h2>
+        <div class="cat-grid">
+          <div class="glass cat-card">
+            <div class="cat-name">פרויקטים</div>
+            <div class="cat-amount">₪22,400</div>
+            <div class="cat-bar"><div class="cat-bar-fill" style="width:68%"></div></div>
+          </div>
+          <div class="glass cat-card">
+            <div class="cat-name">אישי</div>
+            <div class="cat-amount">₪8,150</div>
+            <div class="cat-bar"><div class="cat-bar-fill" style="width:42%"></div></div>
+          </div>
+        </div>
+
+        <h2 class="h2-mobile">פעילות אחרונה <a class="h2-link">הצג הכל</a></h2>
+        <div class="activity-row">
+          <div class="act-icon income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg></div>
+          <div class="act-info"><div class="act-title">תשלום מלקוח</div><div class="act-meta">היום · שיפוץ מטבח</div></div>
+          <div class="act-amt stat-up">+₪8,000</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon expense"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7 7 7-7"/></svg></div>
+          <div class="act-info"><div class="act-title">חומרי בנייה</div><div class="act-meta">אתמול · שיפוץ מטבח</div></div>
+          <div class="act-amt stat-down">−₪1,420</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon expense"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7 7 7-7"/></svg></div>
+          <div class="act-info"><div class="act-title">דלק</div><div class="act-meta">12.05 · רכב</div></div>
+          <div class="act-amt stat-down">−₪320</div>
+        </div>
+      </div></div>
+      <div class="bottom-nav">
+        <div class="bnav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V19a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg>
+          <span>בית</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a5 5 0 0 1 12 0v1M16 11a3 3 0 1 0 0-6"/><path d="M21 21v-1c0-1.5-1-2.5-2-3"/></svg>
+          <span>ספקים</span>
+        </div>
+        <div class="bnav-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span>חובות</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h7v7H3zM14 5h7v7h-7zM3 16h7v5H3zM14 16h7v5h-7z"/></svg>
+          <span>פרויקטים</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ===== 3. PROJECTS LIST ===== -->
+  <div class="frame-block">
+    <div class="frame-label">פרויקטים<div class="frame-label-route">/projects</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg>
+      </span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
+          <div class="top-title">פרויקטים</div>
+          <div class="top-action"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+
+        <div class="filter-pills">
+          <div class="filter-pill active">הכל (18)</div>
+          <div class="filter-pill">פרויקטים</div>
+          <div class="filter-pill">אישי</div>
+          <div class="filter-pill">אחר</div>
+        </div>
+
+        <div class="glass-glow project-card">
+          <div class="pcard-header">
+            <div class="pcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V19H3z"/></svg></div>
+            <div class="pcard-titles"><div class="pcard-name">שיפוץ מטבח</div><div class="pcard-cat">בנייה ושיפוצים</div></div>
+            <span class="pcard-status ps-warn">87%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill warn" style="width:87%"></div></div>
+          <div class="pcard-stats">
+            <div class="pcard-stat"><div class="pcard-stat-val">₪14,500</div><div class="pcard-stat-lbl">תקציב</div></div>
+            <div class="pcard-stat"><div class="pcard-stat-val stat-down">₪12,610</div><div class="pcard-stat-lbl">הוצאות</div></div>
+            <div class="pcard-stat"><div class="pcard-stat-val">₪1,890</div><div class="pcard-stat-lbl">נותר</div></div>
+          </div>
+        </div>
+
+        <div class="glass-glow project-card">
+          <div class="pcard-header">
+            <div class="pcard-icon" style="background:linear-gradient(135deg, var(--info), var(--accent));"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z"/></svg></div>
+            <div class="pcard-titles"><div class="pcard-name">חופשה ביוון</div><div class="pcard-cat">טיולים · אישי</div></div>
+            <span class="pcard-status ps-ok">52%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:52%"></div></div>
+          <div class="pcard-stats">
+            <div class="pcard-stat"><div class="pcard-stat-val">₪8,000</div><div class="pcard-stat-lbl">תקציב</div></div>
+            <div class="pcard-stat"><div class="pcard-stat-val stat-down">₪4,160</div><div class="pcard-stat-lbl">הוצאות</div></div>
+            <div class="pcard-stat"><div class="pcard-stat-val">₪3,840</div><div class="pcard-stat-lbl">נותר</div></div>
+          </div>
+        </div>
+
+        <div class="glass-glow project-card">
+          <div class="pcard-header">
+            <div class="pcard-icon" style="background:linear-gradient(135deg, var(--success), var(--primary-light));"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M5 12l5-5M5 12l5 5"/></svg></div>
+            <div class="pcard-titles"><div class="pcard-name">לקוח: יוסי כהן</div><div class="pcard-cat">לקוחות</div></div>
+            <span class="pcard-status ps-ok">38%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:38%"></div></div>
+          <div class="pcard-stats">
+            <div class="pcard-stat"><div class="pcard-stat-val">₪25,000</div><div class="pcard-stat-lbl">תקציב</div></div>
+            <div class="pcard-stat"><div class="pcard-stat-val stat-down">₪9,500</div><div class="pcard-stat-lbl">הוצאות</div></div>
+            <div class="pcard-stat"><div class="pcard-stat-val">₪15,500</div><div class="pcard-stat-lbl">נותר</div></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="bottom-nav">
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V19H3z"/></svg><span>בית</span></div>
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a5 5 0 0 1 12 0v1"/></svg><span>ספקים</span></div>
+        <div class="bnav-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>חובות</span></div>
+        <div class="bnav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h7v7H3zM14 5h7v7h-7zM3 16h7v5H3zM14 16h7v5h-7z"/></svg><span>פרויקטים</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ===== 4. PROJECT DETAIL ===== -->
+  <div class="frame-block">
+    <div class="frame-label">פרויקט בודד<div class="frame-label-route">/projects/:id</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
+          <div class="top-title">שיפוץ מטבח</div>
+          <div class="top-action"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></div>
+        </div>
+
+        <div class="glass-glow balance-card">
+          <div class="balance-label">נותר בתקציב</div>
+          <div class="balance-value" style="font-size:30px;">₪1,890</div>
+          <div class="progress-track" style="margin:14px 0 6px;"><div class="progress-fill warn" style="width:87%"></div></div>
+          <div style="font-size:11px; color:var(--t-tertiary);">87% מתוך ₪14,500</div>
+          <div class="balance-row">
+            <div class="balance-stat"><div class="balance-stat-val">₪14,500</div><div class="balance-stat-lbl">תקציב</div></div>
+            <div class="balance-stat"><div class="balance-stat-val stat-down">₪12,610</div><div class="balance-stat-lbl">הוצאות</div></div>
+            <div class="balance-stat"><div class="balance-stat-val stat-up">₪3,200</div><div class="balance-stat-lbl">הכנסות</div></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button class="btn-outline" style="background:rgba(255,107,122,0.05); border-color:rgba(255,107,122,0.4); color:var(--error);">+ הוצאה</button>
+          <button class="btn-outline" style="background:rgba(16,229,164,0.05); border-color:rgba(16,229,164,0.4); color:var(--success);">+ הכנסה</button>
+        </div>
+
+        <h2 class="h2-mobile">תנועות (12)</h2>
+        <div class="tx-row income">
+          <div class="tx-info"><div class="tx-title">תשלום מלקוח</div><div class="tx-date">היום · אשראי</div></div>
+          <div class="tx-amt stat-up">+₪3,200</div>
+        </div>
+        <div class="tx-row expense">
+          <div class="tx-info"><div class="tx-title">חומרי בנייה</div><div class="tx-date">אתמול · אשראי · ספק: בנייני שלום</div></div>
+          <div class="tx-amt stat-down">−₪1,420</div>
+        </div>
+        <div class="tx-row expense">
+          <div class="tx-info"><div class="tx-title">חשבונית שיש</div><div class="tx-date">11.05 · העברה</div></div>
+          <div class="tx-amt stat-down">−₪3,800</div>
+        </div>
+        <div class="tx-row expense">
+          <div class="tx-info"><div class="tx-title">מקדמה לספק</div><div class="tx-date">08.05 · המחאה</div></div>
+          <div class="tx-amt stat-down">−₪2,500</div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <!-- ===== 5. ADD EXPENSE ===== -->
+  <div class="frame-block">
+    <div class="frame-label">הוסף תנועה<div class="frame-label-route">/add-expense</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+          <div class="top-title">תנועה חדשה</div>
+          <div style="width:36px"></div>
+        </div>
+
+        <div class="type-toggle">
+          <div class="type-tab exp active">הוצאה</div>
+          <div class="type-tab inc">הכנסה</div>
+        </div>
+
+        <div class="amount-row" style="margin-bottom:18px;">
+          <input class="amount-input" type="text" value="1,420" dir="ltr">
+          <div class="currency-select">₪ ILS</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">כותרת</div>
+          <input class="field-input" type="text" value="חומרי בנייה" placeholder="לדוגמה: דלק">
+        </div>
+
+        <div class="field">
+          <div class="field-label">קטגוריה</div>
+          <select class="field-select"><option>חומרים</option></select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">פרויקט</div>
+          <select class="field-select"><option>שיפוץ מטבח</option></select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">ספק (אופציונלי)</div>
+          <select class="field-select"><option>בנייני שלום בע״מ</option></select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">אמצעי תשלום</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="filter-pill active" style="text-align:center; padding:9px;">אשראי</button>
+            <button class="filter-pill" style="text-align:center; padding:9px;">מזומן</button>
+          </div>
+        </div>
+
+        <button class="btn-fill" style="margin-top:8px;">שמור תנועה</button>
+      </div></div>
+    </div></div>
+  </div>
+
+  <!-- ===== 6. CONTACTS / SUPPLIERS ===== -->
+  <div class="frame-block">
+    <div class="frame-label">ספקים<div class="frame-label-route">/contacts</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
+          <div class="top-title">ספקים</div>
+          <div class="top-action"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+
+        <input class="field-input" type="text" placeholder="חפש לפי שם או קטגוריה..." style="margin-bottom:14px;">
+
+        <div class="filter-pills">
+          <div class="filter-pill active">הכל (21)</div>
+          <div class="filter-pill">חייבים לי</div>
+          <div class="filter-pill">אני חייב</div>
+          <div class="filter-pill">מאופסו</div>
+        </div>
+
+        <div class="glass supplier-row">
+          <div class="supplier-avatar">ב</div>
+          <div class="supplier-info"><div class="supplier-name">בנייני שלום בע״מ</div><div class="supplier-meta">חומרי בנייה · 12.05</div></div>
+          <div class="balance-amt stat-down">−₪3,420</div>
+        </div>
+        <div class="glass supplier-row">
+          <div class="supplier-avatar">ש</div>
+          <div class="supplier-info"><div class="supplier-name">שיש אבן הגליל</div><div class="supplier-meta">שיש ואבן · 11.05</div></div>
+          <div class="balance-amt stat-down">−₪3,800</div>
+        </div>
+        <div class="glass supplier-row">
+          <div class="supplier-avatar">י</div>
+          <div class="supplier-info"><div class="supplier-name">יוסי כהן</div><div class="supplier-meta">לקוחות · 09.05</div></div>
+          <div class="balance-amt stat-up">+₪8,000</div>
+        </div>
+        <div class="glass supplier-row">
+          <div class="supplier-avatar">פ</div>
+          <div class="supplier-info"><div class="supplier-name">פז דלק</div><div class="supplier-meta">דלק · 08.05</div></div>
+          <div class="balance-amt" style="color:var(--t-tertiary);">₪0</div>
+        </div>
+        <div class="glass supplier-row">
+          <div class="supplier-avatar">א</div>
+          <div class="supplier-info"><div class="supplier-name">אלקטרו ארץ</div><div class="supplier-meta">חשמל · 05.05</div></div>
+          <div class="balance-amt stat-down">−₪1,200</div>
+        </div>
+      </div></div>
+      <div class="bottom-nav">
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V19H3z"/></svg><span>בית</span></div>
+        <div class="bnav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a5 5 0 0 1 12 0v1"/></svg><span>ספקים</span></div>
+        <div class="bnav-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>חובות</span></div>
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h7v7H3zM14 5h7v7h-7zM3 16h7v5H3zM14 16h7v5h-7z"/></svg><span>פרויקטים</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ===== 7. DEBTS ===== -->
+  <div class="frame-block">
+    <div class="frame-label">חובות<div class="frame-label-route">/debts</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
+          <div class="top-title">חובות</div>
+          <div class="top-action"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+
+        <div class="glass-glow balance-card">
+          <div class="balance-label">סה״כ פתוח</div>
+          <div class="balance-value" style="font-size:30px;">₪8,250</div>
+          <div class="balance-row">
+            <div class="balance-stat"><div class="balance-stat-val stat-up">₪5,500</div><div class="balance-stat-lbl">חייבים לי</div></div>
+            <div class="balance-stat"><div class="balance-stat-val stat-down">₪2,750</div><div class="balance-stat-lbl">אני חייב</div></div>
+          </div>
+        </div>
+
+        <div class="filter-pills">
+          <div class="filter-pill active">פעילים (7)</div>
+          <div class="filter-pill">שולמו</div>
+          <div class="filter-pill">חייבים לי</div>
+          <div class="filter-pill">אני חייב</div>
+        </div>
+
+        <div class="glass-glow debt-card">
+          <div class="debt-head">
+            <div>
+              <div class="debt-name">דניאל ברק</div>
+              <div style="font-size:11px; color:var(--t-tertiary); margin-top:2px;">הלוואה · שיפוץ מטבח</div>
+            </div>
+            <div class="debt-amt-big stat-up">+₪3,200</div>
+          </div>
+          <div class="debt-meta">
+            <span class="debt-tag">תזכורת בעוד 3 ימים</span>
+            <span>הלוואה: 02.05.2026</span>
+          </div>
+        </div>
+
+        <div class="glass-glow debt-card">
+          <div class="debt-head">
+            <div>
+              <div class="debt-name">חברת חשמל</div>
+              <div style="font-size:11px; color:var(--t-tertiary); margin-top:2px;">חשבון פתוח</div>
+            </div>
+            <div class="debt-amt-big stat-down">−₪1,250</div>
+          </div>
+          <div class="debt-meta">
+            <span style="font-size:9px; padding:3px 8px; border-radius:var(--r-full); background:rgba(255,107,122,0.15); color:var(--error); border:1px solid rgba(255,107,122,0.3); font-weight:700;">איחור — 4 ימים</span>
+            <span>תשלום: 10.05.2026</span>
+          </div>
+        </div>
+
+        <div class="glass-glow debt-card">
+          <div class="debt-head">
+            <div>
+              <div class="debt-name">אורית שמרון</div>
+              <div style="font-size:11px; color:var(--t-tertiary); margin-top:2px;">פיצוי לקוחה</div>
+            </div>
+            <div class="debt-amt-big stat-up">+₪2,300</div>
+          </div>
+          <div class="debt-meta">
+            <span class="debt-tag">תזכורת שבועית</span>
+            <span>פתוח: 28.04.2026</span>
+          </div>
+        </div>
+      </div></div>
+      <div class="bottom-nav">
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V19H3z"/></svg><span>בית</span></div>
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a5 5 0 0 1 12 0v1"/></svg><span>ספקים</span></div>
+        <div class="bnav-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="bnav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>חובות</span></div>
+        <div class="bnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h7v7H3zM14 5h7v7h-7zM3 16h7v5H3zM14 16h7v5h-7z"/></svg><span>פרויקטים</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ===== 8. ADD PROJECT ===== -->
+  <div class="frame-block">
+    <div class="frame-label">פרויקט חדש<div class="frame-label-route">/add-project</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+          <div class="top-title">פרויקט חדש</div>
+          <div style="width:36px"></div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">שם הפרויקט</div>
+          <input class="field-input" type="text" value="שיפוץ מטבח" placeholder="לדוגמה: חופשה ביוון">
+        </div>
+
+        <div class="amount-row" style="margin-bottom:18px;">
+          <input class="amount-input" type="text" value="14,500" dir="ltr">
+          <div class="currency-select">₪ ILS</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">קטגוריה ראשית</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+            <button class="filter-pill active" style="text-align:center; padding:9px;">פרויקטים</button>
+            <button class="filter-pill" style="text-align:center; padding:9px;">אישי</button>
+            <button class="filter-pill" style="text-align:center; padding:9px;">אחר</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">תת‑קטגוריה</div>
+          <select class="field-select"><option>בנייה ושיפוצים</option></select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">בחר אייקון</div>
+          <div class="icon-grid">
+            <div class="icon-chip selected"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V19H3z"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1.5-6h15l1.5 6M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12l5 5L22 4"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M9 21l3-3 3 3"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12V7l7-5 7 5v5M5 12h14M5 12v8h14v-8"/></svg></div>
+            <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10"/></svg></div>
+          </div>
+        </div>
+
+        <button class="btn-fill" style="margin-top:8px;">צור פרויקט</button>
+      </div></div>
+    </div></div>
+  </div>
+
+  <!-- ===== 9. SETTINGS ===== -->
+  <div class="frame-block">
+    <div class="frame-label">הגדרות<div class="frame-label-route">/settings</div></div>
+    <div class="phone"><div class="screen">
+      <div class="status-bar"><span class="sb-time">9:41</span><span class="sb-icons"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 5h22M1 12h22M1 19h22"/></svg></span></div>
+      <div class="screen-content"><div class="scroll-content">
+        <div class="top-bar">
+          <div class="top-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
+          <div class="top-title">הגדרות</div>
+          <div style="width:36px"></div>
+        </div>
+
+        <div class="glass-glow" style="padding:18px; text-align:center; margin-bottom:18px;">
+          <div style="width:72px; height:72px; border-radius:50%; margin:0 auto 10px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fff; box-shadow:0 0 24px rgba(0,217,217,0.35);">ק</div>
+          <div style="font-weight:700; color:var(--t-primary);">קרנף סטודיו</div>
+          <div style="font-size:11px; color:var(--t-secondary); margin-top:2px;">karnafstudio@gmail.com</div>
+        </div>
+
+        <h2 class="h2-mobile">העדפות</h2>
+
+        <div class="settings-row">
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></div>
+          <div class="settings-label">מטבע ברירת מחדל</div>
+          <div class="settings-value">₪ ILS</div>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--t-tertiary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/></svg></div>
+          <div class="settings-label">שפה</div>
+          <div class="settings-value">עברית</div>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--t-tertiary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 3v18 M3 12h18"/></svg></div>
+          <div class="settings-label">ערכת נושא</div>
+          <div class="settings-value">Liquid Glass</div>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--t-tertiary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/><path d="M12 6v6l4 2"/></svg></div>
+          <div class="settings-label">תזכורות והתראות</div>
+          <div class="settings-value">פעיל</div>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--t-tertiary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <h2 class="h2-mobile">תמיכה</h2>
+
+        <div class="settings-row">
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+          <div class="settings-label">דווח בעיה / הצעה</div>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--t-tertiary)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-icon" style="background:rgba(255,107,122,0.1); border-color:rgba(255,107,122,0.3); color:var(--error);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></div>
+          <div class="settings-label" style="color:var(--error);">התנתק</div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="doc-footer">
+  <p>
+    9 מסכים · אותם רכיבים · אותה שפה ויזואלית · אפס אימוג'ים — רק אייקונים וקטוריים (SVG inline).<br>
+    <span class="pill-note">סקיצה</span>
+    <span class="pill-note">לא מתממש</span>
+    <span class="pill-note">BETA V2.0</span>
+    <br>
+    הקוד הקיים (Light Neumorphic) ב‑`pages/*` נשאר ללא שינוי עד אישור סופי.
+    אחרי החלטה — מיגרציה הדרגתית מסך‑מסך עם feature flag.
+  </p>
+</footer>
+
+</body>
+</html>
