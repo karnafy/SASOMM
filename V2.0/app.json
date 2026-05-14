@@ -1,15 +1,18 @@
 {
   "expo": {
-    "name": "SASOMM",
+    "name": "SASOMM V2",
     "slug": "sasomm",
-    "version": "1.0.0",
+    "version": "2.0.0-beta.1",
     "scheme": "sasomm",
     "orientation": "portrait",
     "icon": "./assets/logo-sasomm.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "backgroundColor": "#0D0B1A"
+      "backgroundColor": "#06070C"
+    },
+    "experiments": {
+      "baseUrl": "/v2"
     },
     "ios": {
       "supportsTablet": true,
