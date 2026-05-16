@@ -194,11 +194,17 @@ const styles = StyleSheet.create({
     width: 260,
   },
   menuCard: {
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: 'rgba(22,26,38,0.92)',
     borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: 'rgba(0,217,217,0.3)',
+    ...(Platform.OS === 'web' ? {
+      // @ts-ignore web-only
+      backdropFilter: 'blur(30px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0,217,217,0.15)',
+    } as any : {}),
   },
   menuTitle: {
     fontSize: 10,
@@ -268,11 +274,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: radii.full,
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: 'rgba(0,217,217,0.06)',
     borderWidth: 1,
-    borderColor: colors.subtleBorder,
+    borderColor: 'rgba(0,217,217,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 0 12px rgba(0,217,217,0.15)' } as any : {}),
   },
   headerLeftCluster: {
     flexDirection: 'row',
@@ -286,9 +293,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     height: 44,
     borderRadius: radii.full,
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: 'rgba(0,217,217,0.06)',
     borderWidth: 1,
-    borderColor: colors.subtleBorder,
+    borderColor: 'rgba(0,217,217,0.3)',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 0 12px rgba(0,217,217,0.15)' } as any : {}),
   },
   langButtonText: {
     color: colors.white,

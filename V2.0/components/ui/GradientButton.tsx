@@ -1,13 +1,17 @@
-import React from 'react';
+// V2.0 GradientButton — cyan→mint→purple gradient with press animation.
+// Same API as v1.
+// New: 3-stop gradient (was 2-stop), press scale animation, layered glow shadow.
+import React, { useRef } from 'react';
 import {
+  Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
-  View,
   ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, glowButton, radii, fonts } from '../../theme';
+import { colors, gradients, glowButton, radii, fonts } from '../../theme';
 
 type Variant = 'primary' | 'outline' | 'danger';
 
@@ -26,54 +30,64 @@ export function GradientButton({
   disabled = false,
   style,
 }: GradientButtonProps) {
-  const handlePress = () => {
-    if (!disabled) {
-      onPress();
-    }
-  };
+  const scale = useRef(new Animated.Value(1)).current;
+  const handlePressIn = () =>
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 60, bounciness: 0 }).start();
+  const handlePressOut = () =>
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 6 }).start();
+  const handlePress = () => { if (!disabled) onPress(); };
 
   if (variant === 'outline') {
     return (
-      <Pressable
-        onPress={handlePress}
-        style={[styles.outlineButton, disabled && styles.disabled, style]}
-        disabled={disabled}
-      >
-        <Text style={[styles.outlineText, disabled && styles.disabledText]}>
-          {label}
-        </Text>
-      </Pressable>
+      <Animated.View style={[{ transform: [{ scale }] }, style]}>
+        <Pressable
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={[styles.outlineButton, disabled && styles.disabled]}
+          disabled={disabled}
+        >
+          <Text style={[styles.outlineText, disabled && styles.disabledText]}>{label}</Text>
+        </Pressable>
+      </Animated.View>
     );
   }
 
   if (variant === 'danger') {
     return (
-      <Pressable
-        onPress={handlePress}
-        style={[styles.dangerButton, disabled && styles.disabled, style]}
-        disabled={disabled}
-      >
-        <Text style={[styles.dangerText, disabled && styles.disabledText]}>
-          {label}
-        </Text>
-      </Pressable>
+      <Animated.View style={[{ transform: [{ scale }] }, style]}>
+        <Pressable
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={[styles.dangerButton, disabled && styles.disabled]}
+          disabled={disabled}
+        >
+          <Text style={[styles.dangerText, disabled && styles.disabledText]}>{label}</Text>
+        </Pressable>
+      </Animated.View>
     );
   }
 
-  // primary variant
+  // primary — full gradient + glow
   return (
-    <Pressable onPress={handlePress} disabled={disabled} style={style}>
-      <LinearGradient
-        colors={[colors.primary, colors.primaryDark]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.gradient, disabled && styles.disabled]}
+    <Animated.View style={[{ transform: [{ scale }] }, style]}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled}
       >
-        <Text style={[styles.primaryText, disabled && styles.disabledText]}>
-          {label}
-        </Text>
-      </LinearGradient>
-    </Pressable>
+        <LinearGradient
+          colors={gradients.glowFill as unknown as readonly [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.gradient, disabled && styles.disabled]}
+        >
+          <Text style={[styles.primaryText, disabled && styles.disabledText]}>{label}</Text>
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -88,7 +102,8 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: colors.bgPrimary,
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.bold,
+    fontWeight: '800',
     fontSize: 15,
     letterSpacing: 0.3,
   },
@@ -100,11 +115,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.transparent,
+    backgroundColor: 'rgba(0,217,217,0.05)',
   },
   outlineText: {
     color: colors.primary,
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.bold,
+    fontWeight: '700',
     fontSize: 15,
     letterSpacing: 0.3,
   },
@@ -116,18 +132,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.transparent,
+    backgroundColor: 'rgba(255,107,122,0.05)',
   },
   dangerText: {
     color: colors.error,
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.bold,
+    fontWeight: '700',
     fontSize: 15,
     letterSpacing: 0.3,
   },
-  disabled: {
-    opacity: 0.5,
-  },
-  disabledText: {
-    opacity: 0.5,
-  },
+  disabled: { opacity: 0.5 },
+  disabledText: { opacity: 0.5 },
 });

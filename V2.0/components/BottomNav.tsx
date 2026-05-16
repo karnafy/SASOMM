@@ -97,7 +97,7 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
                   activeOpacity={0.8}
                 >
                   <LinearGradient
-                    colors={[colors.primary, colors.primaryDark]}
+                    colors={[colors.primary, colors.primaryLight, colors.accent]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={[styles.centerButton, glowFab]}
@@ -151,11 +151,20 @@ const styles = StyleSheet.create({
     right: 16,
   },
   quickActionsCard: {
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: 'rgba(22,26,38,0.92)',
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: 'rgba(0,217,217,0.3)',
     borderRadius: radii.lg,
     padding: 20,
+    // @ts-ignore web-only
+    backdropFilter: 'blur(30px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+    // boxShadow for the lifted glass feel
+    shadowColor: '#00D9D9',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 32,
+    elevation: 16,
   },
   quickActionsGrid: {
     flexDirection: 'row',
@@ -182,12 +191,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: 'rgba(8,9,15,0.85)',
+    // @ts-ignore web-only blur for glass strip
+    backdropFilter: 'blur(30px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(30px) saturate(180%)',
   },
   navBar: {
-    backgroundColor: colors.bgSecondary,
+    backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: colors.subtleBorder,
+    borderTopColor: 'rgba(0,217,217,0.15)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',

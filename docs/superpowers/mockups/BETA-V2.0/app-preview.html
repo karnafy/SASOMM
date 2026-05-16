@@ -594,6 +594,46 @@
     background:rgba(255,180,84,0.15); color:var(--warning); border:1px solid rgba(255,180,84,0.3);
   }
 
+  /* ====== BIG ACTION BUTTONS (Dashboard) — expense/income ====== */
+  .action-row {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+    margin:6px 0 16px;
+  }
+  .action-btn {
+    padding:18px 14px;
+    border-radius:var(--r-lg);
+    display:flex; flex-direction:row-reverse; align-items:center; justify-content:center;
+    gap:10px;
+    font-weight:800; font-size:14px;
+    cursor:pointer;
+    position:relative;
+    border:0;
+  }
+  .action-btn.expense {
+    background:linear-gradient(135deg, var(--error), #FF9580);
+    color:#fff;
+    box-shadow:0 6px 22px rgba(255,107,122,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .action-btn.income {
+    background:linear-gradient(135deg, var(--success), var(--primary-light));
+    color:#06070C;
+    box-shadow:0 6px 22px rgba(16,229,164,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .action-btn svg { width:24px; height:24px; }
+
+  /* ====== QUICK ACCESS GRID (Dashboard) ====== */
+  .qaccess-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:8px; }
+  .qaccess-item { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; }
+  .qaccess-icon {
+    width:48px; height:48px; border-radius:var(--r-lg);
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(0,217,217,0.25);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--primary);
+  }
+  .qaccess-icon.warning { border-color:rgba(255,180,84,0.4); color:var(--warning); }
+  .qaccess-label { font-size:10px; color:var(--t-secondary); font-weight:600; text-align:center; }
+
   /* ====== CATEGORY GRID (Dashboard) ====== */
   .cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
   .cat-card { padding:12px; text-align:right; }
@@ -763,6 +803,39 @@
             <div class="balance-stat"><div class="balance-stat-val stat-up">₪48,200</div><div class="balance-stat-lbl">הכנסות</div></div>
             <div class="balance-stat"><div class="balance-stat-val stat-down">₪35,750</div><div class="balance-stat-lbl">הוצאות</div></div>
             <div class="balance-stat"><div class="balance-stat-val">₪52,000</div><div class="balance-stat-lbl">תקציב</div></div>
+          </div>
+        </div>
+
+        <!-- Big income/expense action buttons -->
+        <div class="action-row">
+          <button class="action-btn expense">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+            הוצאה
+          </button>
+          <button class="action-btn income">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+            הכנסה
+          </button>
+        </div>
+
+        <!-- Quick access -->
+        <h2 class="h2-mobile">גישה מהירה</h2>
+        <div class="qaccess-row">
+          <div class="qaccess-item">
+            <div class="qaccess-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h7v7H3zM14 5h7v7h-7zM3 16h7v5H3zM14 16h7v5h-7z"/></svg></div>
+            <div class="qaccess-label">פרויקט חדש</div>
+          </div>
+          <div class="qaccess-item">
+            <div class="qaccess-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a5 5 0 0 1 12 0v1M16 11a3 3 0 1 0 0-6"/></svg></div>
+            <div class="qaccess-label">ספק חדש</div>
+          </div>
+          <div class="qaccess-item">
+            <div class="qaccess-icon warning"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></div>
+            <div class="qaccess-label">חוב חדש</div>
+          </div>
+          <div class="qaccess-item">
+            <div class="qaccess-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
+            <div class="qaccess-label">תזכורת</div>
           </div>
         </div>
 
