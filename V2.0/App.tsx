@@ -27,6 +27,7 @@ import {
   generateMissingRecurringOccurrences,
 } from '@monn/shared';
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from './theme';
 import LoadingScreen from './components/LoadingScreen';
 import BottomNav from './components/BottomNav';
@@ -640,6 +641,22 @@ function AppContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Ambient Liquid Glass backdrop — cyan glow top-right + purple bottom-left.
+          Lives behind every screen as a global atmospheric layer. */}
+      <LinearGradient
+        colors={['rgba(0,217,217,0.10)', 'transparent']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.3, y: 0.6 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(185,103,255,0.10)']}
+        start={{ x: 0.4, y: 0.3 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
       {isSaving && (
         <View style={styles.savingOverlay}>
           <View style={styles.savingCard}>
@@ -713,19 +730,30 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(6,7,12,0.7)',
     zIndex: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
   savingCard: {
-    backgroundColor: colors.white,
+    backgroundColor: 'rgba(22,26,38,0.92)',
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,217,217,0.4)',
+    // @ts-ignore web-only
+    backdropFilter: 'blur(30px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+    shadowColor: '#00D9D9',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
   },
   savingText: {
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     fontSize: 16,
+    fontWeight: '700',
   },
 });
