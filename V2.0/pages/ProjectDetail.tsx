@@ -1089,8 +1089,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               onPress={() => onNavigate(AppScreen.ADD_EXPENSE, undefined, false, 'expense')}
               activeOpacity={0.8}
             >
-              <Text style={styles.bigActionLabel}>{t('project_detail.add_expense')}</Text>
-              <MaterialIcons name="remove-circle-outline" size={28} color={colors.white} />
+              <Text style={[styles.bigActionLabel, styles.bigActionLabelExpense]}>+ {t('project_detail.add_expense')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1098,8 +1097,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               onPress={() => onNavigate(AppScreen.ADD_INCOME, undefined, false, 'income')}
               activeOpacity={0.8}
             >
-              <Text style={styles.bigActionLabel}>{t('project_detail.add_income')}</Text>
-              <MaterialIcons name="add-circle-outline" size={28} color={colors.white} />
+              <Text style={[styles.bigActionLabel, styles.bigActionLabelIncome]}>+ {t('project_detail.add_income')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -1721,29 +1719,31 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   bigActionIncome: {
-    backgroundColor: 'rgba(0,232,143,0.85)',
-    borderColor: 'rgba(0,232,143,0.95)',
-    shadowColor: '#00E88F',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
+    backgroundColor: 'rgba(16,229,164,0.05)',
+    borderColor: 'rgba(16,229,164,0.5)',
+    shadowColor: '#10E5A4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
     elevation: 8,
   },
   bigActionExpense: {
-    backgroundColor: 'rgba(255,77,106,0.85)',
-    borderColor: 'rgba(255,77,106,0.95)',
-    shadowColor: '#FF4D6A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
+    backgroundColor: 'rgba(255,107,122,0.05)',
+    borderColor: 'rgba(255,107,122,0.5)',
+    shadowColor: '#FF6B7A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
     elevation: 8,
   },
   bigActionLabel: {
     fontSize: 22,
     fontFamily: fonts.bold,
-    color: colors.white,
+    fontWeight: '700',
     writingDirection: 'rtl',
   },
+  bigActionLabelIncome: { color: '#10E5A4' },
+  bigActionLabelExpense: { color: '#FF6B7A' },
 
   // Section
   section: {
