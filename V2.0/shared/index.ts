@@ -28,6 +28,10 @@ export { generateMissingRecurringOccurrences } from './lib/generateRecurringOccu
 // UI helpers
 export { confirmDialog } from './lib/confirmDialog';
 
+// Admin BO
+export { ADMIN_EMAIL, isAdmin, isAdminScreen } from './admin/guard';
+export type { AuthLikeUser } from './admin/guard';
+
 // Internationalization (i18next)
 export {
   default as i18n,

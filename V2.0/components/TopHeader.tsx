@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { AppScreen, getCurrentLocale, isRTL } from '@monn/shared';
+import { AppScreen, getCurrentLocale, isRTL, useAuth, isAdmin } from '@monn/shared';
 import { LanguagePicker } from './ui/LanguagePicker';
 import { colors, radii, spacing, fonts } from '../theme';
 
@@ -38,9 +38,11 @@ const menuItemsConfig: { tKey: string; icon: IconName; screen: AppScreen }[] = [
 
 export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const currentLocale = getCurrentLocale();
+  const isAdminUser = isAdmin(user as any);
 
   const handleShareApp = async () => {
     setIsMenuOpen(false);
@@ -104,6 +106,24 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
                 </TouchableOpacity>
               ))}
 
+              {isAdminUser && (
+                <>
+                  <View style={styles.menuDivider} />
+                  <TouchableOpacity
+                    style={styles.menuRow}
+                    onPress={() => {
+                      setIsMenuOpen(false);
+                      onNavigate(AppScreen.ADMIN_OVERVIEW);
+                    }}
+                  >
+                    <MaterialIcons name="admin-panel-settings" size={20} color="#B967FF" />
+                    <Text style={[styles.menuRowLabel, { color: '#B967FF' }]}>
+                      ניהול מערכת (BO)
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
               <View style={styles.menuDivider} />
 
               <TouchableOpacity
@@ -151,6 +171,8 @@ export default function TopHeader({ onNavigate, onLogout }: TopHeaderProps) {
         <TouchableOpacity
           style={styles.headerLogoSlot}
           onPress={() => onNavigate(AppScreen.DASHBOARD)}
+          onLongPress={isAdminUser ? () => onNavigate(AppScreen.ADMIN_OVERVIEW) : undefined}
+          delayLongPress={800}
           activeOpacity={0.7}
         >
           <Image

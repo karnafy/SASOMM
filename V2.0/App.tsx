@@ -52,6 +52,18 @@ import Debts from './pages/Debts';
 import RecurringTemplates from './pages/RecurringTemplates';
 import SendReminder from './pages/SendReminder';
 
+// Admin BO screens (lazy — only Web)
+import { AdminLayout } from './pages/admin/AdminLayout';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminUserDetail from './pages/admin/AdminUserDetail';
+import AdminMessages from './pages/admin/AdminMessages';
+import AdminFeedbackTodo from './pages/admin/AdminFeedbackTodo';
+import AdminFinancials from './pages/admin/AdminFinancials';
+import AdminReports from './pages/admin/AdminReports';
+import AdminSystem from './pages/admin/AdminSystem';
+import { isAdmin, isAdminScreen } from './shared/admin/guard';
+
 // Initialize Supabase with Expo env vars
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -126,6 +138,7 @@ function AppContent() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+  const [selectedAdminUserId, setSelectedAdminUserId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<MainCategory | null>(null);
   const [isScanIntent, setIsScanIntent] = useState(false);
   const [initialTxType, setInitialTxType] = useState<'expense' | 'income'>('expense');
@@ -629,6 +642,23 @@ function AppContent() {
             }}
           />
         );
+      // Admin BO screens
+      case AppScreen.ADMIN_OVERVIEW:
+        return <AdminOverview />;
+      case AppScreen.ADMIN_USERS:
+        return <AdminUsers onSelectUser={(id) => { setSelectedAdminUserId(id); setCurrentScreen(AppScreen.ADMIN_USER_DETAIL); }} />;
+      case AppScreen.ADMIN_USER_DETAIL:
+        return <AdminUserDetail userId={selectedAdminUserId ?? ''} onBack={() => setCurrentScreen(AppScreen.ADMIN_USERS)} />;
+      case AppScreen.ADMIN_MESSAGES:
+        return <AdminMessages />;
+      case AppScreen.ADMIN_FEEDBACK_TODO:
+        return <AdminFeedbackTodo />;
+      case AppScreen.ADMIN_FINANCIALS:
+        return <AdminFinancials />;
+      case AppScreen.ADMIN_REPORTS:
+        return <AdminReports />;
+      case AppScreen.ADMIN_SYSTEM:
+        return <AdminSystem />;
       default:
         return <Dashboard {...commonProps} projects={projects} suppliers={suppliers} totals={totals as any} setGlobalCurrency={setGlobalCurrency} onLogout={handleLogout} userName={userName} />;
     }
@@ -638,6 +668,27 @@ function AppContent() {
     AppScreen.ADD_EXPENSE, AppScreen.ADD_INCOME, AppScreen.ADD_PROJECT,
     AppScreen.ADD_SUPPLIER, AppScreen.EDIT_PROJECT, AppScreen.EDIT_ACTIVITY,
   ].includes(currentScreen);
+
+  // ---- Admin BO mode: hide top header + bottom nav, wrap in AdminLayout ----
+  const inAdminMode = isAdminScreen(currentScreen);
+  if (inAdminMode) {
+    if (!isAdmin(user)) {
+      // Non-admin somehow reached admin screen — bounce home
+      setCurrentScreen(AppScreen.DASHBOARD);
+      return null;
+    }
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <AdminLayout
+          currentScreen={currentScreen}
+          onNavigate={(s) => setCurrentScreen(s)}
+          onExit={() => setCurrentScreen(AppScreen.DASHBOARD)}
+        >
+          {renderScreen()}
+        </AdminLayout>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

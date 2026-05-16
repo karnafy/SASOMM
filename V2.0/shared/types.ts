@@ -20,7 +20,17 @@ export enum AppScreen {
   DEBTS = 'debts',
   ADD_DEBT = 'add_debt',
   RECURRING_TEMPLATES = 'recurring_templates',
-  SEND_REMINDER = 'send_reminder'
+  SEND_REMINDER = 'send_reminder',
+
+  // Admin BO — gated by ADMIN_EMAIL, only visible on Web
+  ADMIN_OVERVIEW = 'admin_overview',
+  ADMIN_USERS = 'admin_users',
+  ADMIN_USER_DETAIL = 'admin_user_detail',
+  ADMIN_MESSAGES = 'admin_messages',
+  ADMIN_FEEDBACK_TODO = 'admin_feedback_todo',
+  ADMIN_FINANCIALS = 'admin_financials',
+  ADMIN_REPORTS = 'admin_reports',
+  ADMIN_SYSTEM = 'admin_system'
 }
 
 export type ReminderInterval = 'daily' | '2days' | '3days' | 'weekly' | 'biweekly' | 'monthly' | 'none';
